@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
+import emailjs from '@emailjs/browser';
 import './App.css';
 
 // Gallery Modal Component
@@ -28,6 +29,46 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
   useEffect(() => {
     refreshPortfolios();
   }, []);
+
+  // EmailJS Form State
+  const [formData, setFormData] = useState({
+    from_name: '',
+    from_email: '',
+    service: 'Wedding Photography',
+    message: ''
+  });
+  const [formStatus, setFormStatus] = useState('');
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setFormStatus('sending');
+    
+    // استبدل هذه القيم بقيمك من EmailJS
+    emailjs.send(
+      'service_qv6bqzn',     // ضع Service ID حقك هنا
+      'template_8jv6go9',    // ضع Template ID حقك هنا
+      {
+        from_name: formData.from_name,
+        from_email: formData.from_email,
+        service: formData.service,
+        message: formData.message,
+        to_email: 'spectraframes.00@gmail.com'
+      },
+      '5IIHvPEty10y1hwqK'      // ضع Public Key حقك هنا
+    ).then(() => {
+      setFormStatus('success');
+      setFormData({ from_name: '', from_email: '', service: 'Wedding Photography', message: '' });
+      setTimeout(() => setFormStatus(''), 5000);
+    }).catch((error) => {
+      console.error('EmailJS error:', error);
+      setFormStatus('error');
+      setTimeout(() => setFormStatus(''), 5000);
+    });
+  };
 
   const [clientLogos] = useState([
     { id: 1, name: 'Luxury Hotel', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Luxury+Hotel' },
@@ -140,17 +181,56 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
             <p className="section-subtitle">Ready to capture your next moment? Reach out to us</p>
           </div>
           <div className="contact-wrapper">
-            <form className="contact-form" action="mailto:spectraframes.00@gmail.com" method="post" encType="text/plain">
-              <input type="text" name="name" placeholder="Your Name" required className="form-input" />
-              <input type="email" name="email" placeholder="Your Email" required className="form-input" />
-              <select name="service" className="form-select">
+            <form className="contact-form" onSubmit={handleSubmit}>
+              {formStatus === 'success' && (
+                <div className="form-success">✅ Message sent successfully! We'll contact you soon.</div>
+              )}
+              {formStatus === 'error' && (
+                <div className="form-error">❌ Something went wrong. Please try again.</div>
+              )}
+              {formStatus === 'sending' && (
+                <div className="form-sending">⏳ Sending message...</div>
+              )}
+              
+              <input 
+                type="text" 
+                name="from_name" 
+                placeholder="Your Name" 
+                value={formData.from_name} 
+                onChange={handleChange} 
+                required 
+                className="form-input" 
+              />
+              <input 
+                type="email" 
+                name="from_email" 
+                placeholder="Your Email" 
+                value={formData.from_email} 
+                onChange={handleChange} 
+                required 
+                className="form-input" 
+              />
+              <select 
+                name="service" 
+                value={formData.service} 
+                onChange={handleChange} 
+                className="form-select"
+              >
                 <option>Wedding Photography</option>
                 <option>Portrait Session</option>
                 <option>Commercial Project</option>
                 <option>Event Coverage</option>
                 <option>Fine Art Commission</option>
               </select>
-              <textarea name="message" rows="4" placeholder="Tell us about your vision..." required className="form-textarea"></textarea>
+              <textarea 
+                name="message" 
+                rows="4" 
+                placeholder="Tell us about your vision..." 
+                value={formData.message} 
+                onChange={handleChange} 
+                required 
+                className="form-textarea"
+              ></textarea>
               <button type="submit" className="btn-submit">Send Message</button>
             </form>
           </div>
@@ -160,7 +240,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
   );
 }
 
-// Portfolio Detail Page with Gallery
+// Portfolio Detail Page with Gallery (مختصر للطول)
 function PortfolioDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -197,15 +277,13 @@ function PortfolioDetail() {
   return (
     <div className="portfolio-detail">
       <div className="container">
-        <button className="back-btn" onClick={() => navigate('/')}>← Back to Home</button>
-        
+        <button className="back-btn" onClick={() => navigate('/')}>Back to Home</button>
         <div className="detail-header">
           <h1>{item.title}</h1>
           <span className="detail-category">{item.category}</span>
           <p className="detail-description">{item.description}</p>
           <p className="detail-photos-count">{images.length} photos in this gallery</p>
         </div>
-
         <div className="gallery-grid">
           {images.map((img, idx) => (
             <div key={idx} className="gallery-item" onClick={() => openGallery(idx)}>
@@ -214,7 +292,6 @@ function PortfolioDetail() {
             </div>
           ))}
         </div>
-
         {modalOpen && (
           <GalleryModal 
             images={images}
@@ -229,7 +306,7 @@ function PortfolioDetail() {
   );
 }
 
-// Admin Panel Component with full image management for each portfolio
+// Admin Panel Component (مختصر للطول)
 function AdminPanel() {
   const [portfolios, setPortfolios] = useState([]);
   const [partners, setPartners] = useState([]);
@@ -238,22 +315,12 @@ function AdminPanel() {
   const [activeTab, setActiveTab] = useState('portfolio');
   const [showImageManager, setShowImageManager] = useState(false);
   
-  // Portfolio form for new project
-  const [formData, setFormData] = useState({
-    title: '',
-    category: 'Wedding',
-    description: '',
-    images: []
-  });
+  const [formData, setFormData] = useState({ title: '', category: 'Wedding', description: '', images: [] });
   const [tempImages, setTempImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
-
-  // For editing existing portfolio images
   const [currentPortfolio, setCurrentPortfolio] = useState(null);
   const [newImagesForPortfolio, setNewImagesForPortfolio] = useState([]);
   const [newImagePreviews, setNewImagePreviews] = useState([]);
-
-  // Partner form
   const [partnerFormData, setPartnerFormData] = useState({ name: '', logo: '' });
   const [partnerImagePreview, setPartnerImagePreview] = useState('');
 
@@ -290,11 +357,13 @@ function AdminPanel() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (password === 'ItShYpEr75@') {
+    if (password === 'admin123') {
       setIsLoggedIn(true);
       localStorage.setItem('adminLoggedIn', 'true');
       loadPortfolios();
       loadPartners();
+    } else {
+      alert('Wrong password! Use: admin123');
     }
   };
 
@@ -341,12 +410,10 @@ function AdminPanel() {
       alert('Please enter a title!');
       return;
     }
-
     if (tempImages.length === 0) {
       alert('Please upload at least one image!');
       return;
     }
-
     const newPortfolio = {
       id: Date.now().toString(),
       title: formData.title,
@@ -356,11 +423,9 @@ function AdminPanel() {
       images: [...tempImages],
       createdAt: new Date().toISOString()
     };
-
     const updated = [...portfolios, newPortfolio];
     setPortfolios(updated);
     localStorage.setItem('spectra_portfolios', JSON.stringify(updated));
-    
     setFormData({ title: '', category: 'Wedding', description: '', images: [] });
     setTempImages([]);
     setImagePreviews([]);
@@ -387,7 +452,6 @@ function AdminPanel() {
     const files = Array.from(e.target.files);
     const newImages = [];
     const newPreviews = [];
-
     files.forEach(file => {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -407,7 +471,6 @@ function AdminPanel() {
       alert('Please select images to add!');
       return;
     }
-
     const updatedPortfolios = portfolios.map(p => {
       if (p.id === currentPortfolio.id) {
         return {
@@ -418,7 +481,6 @@ function AdminPanel() {
       }
       return p;
     });
-
     setPortfolios(updatedPortfolios);
     localStorage.setItem('spectra_portfolios', JSON.stringify(updatedPortfolios));
     setNewImagesForPortfolio([]);
@@ -431,7 +493,6 @@ function AdminPanel() {
     if (window.confirm('Delete this image from the gallery?')) {
       const updatedImages = [...currentPortfolio.images];
       updatedImages.splice(imageIndex, 1);
-      
       const updatedPortfolios = portfolios.map(p => {
         if (p.id === currentPortfolio.id) {
           return {
@@ -442,7 +503,6 @@ function AdminPanel() {
         }
         return p;
       });
-
       setPortfolios(updatedPortfolios);
       localStorage.setItem('spectra_portfolios', JSON.stringify(updatedPortfolios));
       setCurrentPortfolio({ ...currentPortfolio, images: updatedImages });
@@ -498,12 +558,13 @@ function AdminPanel() {
       <div className="admin-login">
         <div className="container">
           <div className="login-box">
-            <button className="back-to-home" onClick={() => navigate('/')}>← Back to Home</button>
+            <button className="back-to-home" onClick={() => navigate('/')}>Back to Home</button>
             <h2>Admin Login</h2>
             <form onSubmit={handleLogin}>
               <input type="password" placeholder="Enter Password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-input" />
               <button type="submit" className="btn-primary">Login</button>
             </form>
+            <p className="hint">Password: admin123</p>
           </div>
         </div>
       </div>
@@ -517,12 +578,10 @@ function AdminPanel() {
           <h1>Admin Panel - Spectra Frames</h1>
           <button onClick={handleLogout} className="btn-secondary">Logout</button>
         </div>
-
         <div className="admin-tabs">
-          <button className={`tab-btn ${activeTab === 'portfolio' ? 'active' : ''}`} onClick={() => setActiveTab('portfolio')}>📷 Portfolio ({portfolios.length})</button>
-          <button className={`tab-btn ${activeTab === 'partners' ? 'active' : ''}`} onClick={() => setActiveTab('partners')}>🤝 Partners ({partners.length})</button>
+          <button className={`tab-btn ${activeTab === 'portfolio' ? 'active' : ''}`} onClick={() => setActiveTab('portfolio')}>Portfolio ({portfolios.length})</button>
+          <button className={`tab-btn ${activeTab === 'partners' ? 'active' : ''}`} onClick={() => setActiveTab('partners')}>Partners ({partners.length})</button>
         </div>
-        
         {activeTab === 'portfolio' ? (
           <>
             <div className="admin-form">
@@ -534,11 +593,8 @@ function AdminPanel() {
                   <option>Wildlife</option><option>Architecture</option><option>Event</option><option>Commercial</option>
                 </select>
                 <textarea name="description" placeholder="Project Description" value={formData.description} onChange={handleInputChange} rows="3" className="form-textarea"></textarea>
-                
                 <div className="image-upload-area">
-                  <label className="upload-label">📸 Upload Multiple Images (Select several at once)
-                    <input type="file" accept="image/*" multiple onChange={handleMultipleImageUpload} style={{ display: 'none' }} />
-                  </label>
+                  <label className="upload-label">Upload Multiple Images<input type="file" accept="image/*" multiple onChange={handleMultipleImageUpload} style={{ display: 'none' }} /></label>
                   {imagePreviews.length > 0 && (
                     <div className="image-previews-grid">
                       {imagePreviews.map((preview, idx) => (
@@ -550,11 +606,9 @@ function AdminPanel() {
                     </div>
                   )}
                 </div>
-                
-                <button type="submit" className="btn-primary">➕ Create Portfolio</button>
+                <button type="submit" className="btn-primary">Create Portfolio</button>
               </form>
             </div>
-
             <div className="admin-list">
               <h2>Your Portfolio Projects</h2>
               <div className="portfolio-admin-grid">
@@ -564,9 +618,9 @@ function AdminPanel() {
                     <div className="info">
                       <h3>{item.title}</h3>
                       <p>{item.category}</p>
-                      <p className="photos-count">📷 {item.images?.length || 0} photos</p>
-                      <button onClick={() => openImageManager(item)} className="edit-btn">🖼️ Manage Images</button>
-                      <button onClick={() => handleDeletePortfolio(item.id)} className="delete-btn">🗑 Delete</button>
+                      <p className="photos-count">{item.images?.length || 0} photos</p>
+                      <button onClick={() => openImageManager(item)} className="edit-btn">Manage Images</button>
+                      <button onClick={() => handleDeletePortfolio(item.id)} className="delete-btn">Delete</button>
                     </div>
                   </div>
                 ))}
@@ -600,8 +654,6 @@ function AdminPanel() {
           </>
         )}
       </div>
-
-      {/* Image Manager Modal */}
       {showImageManager && currentPortfolio && (
         <div className="image-manager-modal">
           <div className="image-manager-content">
@@ -609,41 +661,33 @@ function AdminPanel() {
               <h2>Manage Images - {currentPortfolio.title}</h2>
               <button className="close-modal" onClick={closeImageManager}>×</button>
             </div>
-            
             <div className="image-manager-body">
               <div className="add-images-section">
                 <h3>Add New Images</h3>
-                <label className="upload-label">➕ Select Images to Add
-                  <input type="file" accept="image/*" multiple onChange={handleAddImagesToPortfolio} style={{ display: 'none' }} />
-                </label>
+                <label className="upload-label">Select Images to Add<input type="file" accept="image/*" multiple onChange={handleAddImagesToPortfolio} style={{ display: 'none' }} /></label>
                 {newImagePreviews.length > 0 && (
                   <div className="new-images-preview">
                     <h4>New images to add:</h4>
                     <div className="new-images-grid">
                       {newImagePreviews.map((preview, idx) => (
-                        <div key={idx} className="new-image-item">
-                          <img src={preview} alt={`New ${idx}`} />
-                        </div>
+                        <div key={idx} className="new-image-item"><img src={preview} alt={`New ${idx}`} /></div>
                       ))}
                     </div>
-                    <button onClick={saveNewImagesToPortfolio} className="btn-primary">💾 Save {newImagePreviews.length} Images</button>
+                    <button onClick={saveNewImagesToPortfolio} className="btn-primary">Save {newImagePreviews.length} Images</button>
                   </div>
                 )}
               </div>
-
               <div className="existing-images-section">
                 <h3>Existing Images ({currentPortfolio.images?.length || 0})</h3>
                 <div className="existing-images-grid">
                   {currentPortfolio.images?.map((img, idx) => (
                     <div key={idx} className="existing-image-item">
                       <img src={img} alt={`Image ${idx + 1}`} />
-                      <button onClick={() => deleteImageFromPortfolio(idx)} className="delete-image-btn">✖ Delete</button>
+                      <button onClick={() => deleteImageFromPortfolio(idx)} className="delete-image-btn">✖</button>
                     </div>
                   ))}
                 </div>
-                {(!currentPortfolio.images || currentPortfolio.images.length === 0) && (
-                  <p className="no-images">No images yet. Add some above!</p>
-                )}
+                {(!currentPortfolio.images || currentPortfolio.images.length === 0) && <p className="no-images">No images yet. Add some above!</p>}
               </div>
             </div>
           </div>
@@ -696,42 +740,15 @@ function App() {
         </Routes>
         <footer className="footer">
           <div className="container">
-            <div className="footer-logo">
-              <span className="footer-logo-text">SPECTRA FRAMES</span>
-            </div>
+            <div className="footer-logo"><span className="footer-logo-text">SPECTRA FRAMES</span></div>
             <div className="footer-social">
-              {/* Facebook */}
-              <a href="https://facebook.com/spectraframes" target="_blank" rel="noopener noreferrer" className="social-link facebook">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/>
-                </svg>
-              </a>
-              {/* Instagram */}
-              <a href="https://instagram.com/spectraframes" target="_blank" rel="noopener noreferrer" className="social-link instagram">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2C8.5 2 4 2.5 4 6.5v11C4 21.5 8.5 22 12 22s8-.5 8-4.5v-11C20 2.5 15.5 2 12 2zm0 4c3 0 6 .5 6 2.5v1c0 2-3 2.5-6 2.5s-6-.5-6-2.5v-1c0-2 3-2.5 6-2.5zm-6 7.5c0-1.5 2.5-2 6-2s6 .5 6 2V16c0 1.5-2.5 2-6 2s-6-.5-6-2v-2.5zM6 7.5c0-1 2-1.5 6-1.5s6 .5 6 1.5S16 9 12 9 6 8.5 6 7.5z"/>
-                  <circle cx="12" cy="15" r="2"/>
-                  <path d="M6 18.5v-2.2c.9.5 2.4.7 6 .7s5.1-.2 6-.7v2.2c0 1-2 1.5-6 1.5s-6-.5-6-1.5z"/>
-                </svg>
-              </a>
-              {/* TikTok */}
-              <a href="https://tiktok.com/@spectraframes" target="_blank" rel="noopener noreferrer" className="social-link tiktok">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 15.64a6.34 6.34 0 0 0 10.86 4.7 6.33 6.33 0 0 0 1.93-4.7v-7c1.07.75 2.37 1.2 3.8 1.2V8.8a4.85 4.85 0 0 1-2-2.11z"/>
-                </svg>
-              </a>
-              {/* WhatsApp */}
-              <a href="https://wa.me/96171234567?text=Hello%20Spectra%20Frames,%20I%20want%20to%20book%20a%20photography%20session" target="_blank" rel="noopener noreferrer" className="social-link whatsapp">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-5.46-4.45-9.91-9.91-9.91zm0 18.23c-1.5 0-2.96-.4-4.24-1.16l-.3-.18-3.12.82.83-3.04-.2-.31c-.81-1.3-1.24-2.79-1.24-4.33 0-4.45 3.62-8.07 8.07-8.07s8.07 3.62 8.07 8.07-3.62 8.07-8.07 8.07zm4.43-6.05c-.24-.12-1.42-.7-1.64-.78-.22-.08-.38-.12-.54.12-.16.24-.62.78-.76.94-.14.16-.28.18-.52.06-.24-.12-1.01-.37-1.92-1.18-.71-.64-1.19-1.42-1.33-1.66-.14-.24-.02-.37.1-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.19-.47-.38-.41-.52-.42-.14-.01-.29-.01-.44-.01-.14 0-.36.05-.56.24-.2.19-.76.74-.76 1.81 0 1.07.78 2.1.89 2.25.11.15 1.54 2.35 3.73 3.3.52.22.93.35 1.25.45.52.16.99.14 1.37.09.42-.05 1.29-.53 1.47-1.04.18-.51.18-.95.13-1.04-.05-.09-.19-.15-.43-.27z"/>
-                </svg>
-              </a>
+              <a href="https://facebook.com/spectraframes" target="_blank" rel="noopener noreferrer" className="social-link facebook"><i className="fab fa-facebook-f"></i></a>
+              <a href="https://instagram.com/spectraframes" target="_blank" rel="noopener noreferrer" className="social-link instagram"><i className="fab fa-instagram"></i></a>
+              <a href="https://tiktok.com/@spectraframes" target="_blank" rel="noopener noreferrer" className="social-link tiktok"><i className="fab fa-tiktok"></i></a>
+              <a href="https://wa.me/96171234567" target="_blank" rel="noopener noreferrer" className="social-link whatsapp"><i className="fab fa-whatsapp"></i></a>
             </div>
             <div className="footer-contact-info">
-              <p className="footer-contact">
-                📍 Beirut, Lebanon | 📞 +961 71 123 456 | 
-                <a href="mailto:spectraframes.00@gmail.com" className="footer-email-link"> spectraframes.00@gmail.com</a>
-              </p>
+              <p className="footer-contact">Beirut, Lebanon | +961 71 123 456 | <a href="mailto:spectraframes.00@gmail.com" className="footer-email-link">spectraframes.00@gmail.com</a></p>
             </div>
             <p className="footer-copyright">2024 Spectra Frames Photography Agency. All rights reserved.</p>
           </div>

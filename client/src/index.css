@@ -1,4 +1,33 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&display=swap');
+@import '@fortawesome/fontawesome-free/css/all.min.css';
+
+/* ============================================
+   منع التكبير (Zoom) على الجوال
+   ============================================ */
+
+/* منع التكبير التلقائي في جميع المتصفحات */
+html, body {
+  touch-action: pan-x pan-y;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* منع التكبير التلقائي عند النقر على الحقول في iOS */
+input, 
+select, 
+textarea, 
+button {
+  font-size: 16px !important;
+}
+
+/* تأكد من عدم وجود zoom تلقائي */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ============================================
+   STYLES BASE
+   ============================================ */
 
 * {
   margin: 0;
@@ -11,127 +40,87 @@ body {
   color: #F2F2F2;
   font-family: 'Cinzel', 'Segoe UI', serif;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html {
   scroll-behavior: smooth;
 }
 
-.container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 24px;
+/* ============================================
+   جعل الأزرار والحقول سهلة اللمس على الجوال
+   ============================================ */
+
+button, 
+a, 
+.btn-primary, 
+.btn-secondary, 
+.btn-submit,
+.social-link,
+.portfolio-card,
+.gallery-item,
+.tab-btn,
+.delete-btn,
+.edit-btn,
+.upload-label {
+  cursor: pointer;
+  -webkit-tap-highlight-color: rgba(212, 175, 55, 0.3);
 }
 
-/* Buttons */
-.btn-primary {
+/* منع تحديد النص عند الضغط المطول */
+button, a, .portfolio-card, .gallery-item {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ============================================
+   تحسين التمرير على الجوال
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #2a2a2a;
+}
+
+::-webkit-scrollbar-thumb {
   background: #D4AF37;
-  border: none;
-  padding: 14px 40px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  border-radius: 50px;
-  font-family: 'Cinzel', serif;
-  color: #1A1A1A;
-  transition: all 0.3s;
+  border-radius: 4px;
 }
 
-.btn-primary:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
+::-webkit-scrollbar-thumb:hover {
+  background: #c49f2e;
 }
 
-.btn-secondary {
-  background: transparent;
-  border: 2px solid #D4AF37;
-  color: #D4AF37;
-  padding: 14px 40px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  border-radius: 50px;
-  transition: all 0.3s;
-  font-family: 'Cinzel', serif;
+/* ============================================
+   تحسينات إضافية للجوال
+   ============================================ */
+
+/* منع الـ zoom عند النقر المزدوج */
+@media (max-width: 768px) {
+  body {
+    touch-action: manipulation;
+  }
 }
 
-.btn-secondary:hover {
-  background: #D4AF37;
-  color: #1A1A1A;
-  transform: translateY(-3px);
+/* تحسين حجم الخطوط على الجوال */
+@media (max-width: 576px) {
+  body {
+    font-size: 14px;
+  }
 }
 
-/* Portfolio Grid */
-.portfolio-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 30px;
-  margin-top: 40px;
+/* إزالة الخلفية الرمادية عند النقر على العناصر في iOS */
+input, button, select, textarea {
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 0;
 }
 
-.portfolio-card {
-  position: relative;
-  border-radius: 15px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: transform 0.3s;
-  background: #1A1A1A;
-}
-
-.portfolio-card:hover {
-  transform: translateY(-10px);
-}
-
-.portfolio-img {
-  width: 100%;
-  height: 280px;
-  object-fit: cover;
-  transition: transform 0.5s;
-}
-
-.portfolio-card:hover .portfolio-img {
-  transform: scale(1.05);
-}
-
-.portfolio-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.95));
-  padding: 30px 20px 20px;
-  transform: translateY(100%);
-  transition: transform 0.3s;
-}
-
-.portfolio-card:hover .portfolio-overlay {
-  transform: translateY(0);
-}
-
-.portfolio-category {
-  color: #D4AF37;
-  font-size: 13px;
-  display: block;
-  margin-bottom: 8px;
-}
-
-.portfolio-title {
-  color: #F2F2F2;
-  font-size: 22px;
-  margin-bottom: 10px;
-  font-family: 'Cinzel', serif;
-}
-
-.section-title {
-  font-size: 48px;
-  color: #D4AF37;
-  margin-bottom: 15px;
-  font-family: 'Cinzel', serif;
-  text-align: center;
-}
-
-.section-subtitle {
-  color: #B8B0A8;
-  font-size: 18px;
-  text-align: center;
+/* تحسين شكل الأزرار على الجوال */
+button, .btn-primary, .btn-secondary, .btn-submit {
+  touch-action: manipulation;
 }
