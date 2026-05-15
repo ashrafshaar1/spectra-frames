@@ -28,9 +28,16 @@ function GalleryModal({ images, currentIndex, onClose, onNext, onPrev }) {
 
 // Home Page Component
 function HomePage({ scrollToSection, portfolios, refreshPortfolios, clients, refreshClients }) {
+  const [services, setServices] = useState([]);
+
   useEffect(() => {
     refreshPortfolios();
     refreshClients();
+    // Load services from server
+    fetch(`${API_URL}/services`)
+      .then(res => res.json())
+      .then(data => setServices(data))
+      .catch(err => console.error('Failed to load services:', err));
   }, []);
 
   const [formStatus, setFormStatus] = useState('');
@@ -160,17 +167,11 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios, clients, ref
             <p className="section-subtitle">Professional photography tailored to your needs</p>
           </div>
           <div className="services-grid">
-            {[
-              { title: 'Wedding Photography', desc: 'Capturing your special day with elegance and emotion' },
-              { title: 'Portrait Sessions', desc: 'Professional portraits and personal branding' },
-              { title: 'Commercial', desc: 'High-end product and corporate photography' },
-              { title: 'Fine Art', desc: 'Artistic and conceptual visual stories' },
-              { title: 'Event Coverage', desc: 'Corporate events and special occasions' },
-              { title: 'Content Creation', desc: 'Social media and marketing content' }
-            ].map((service, index) => (
-              <div key={index} className="service-card">
+            {services.map((service) => (
+              <div key={service.id} className="service-card">
+                <div className="service-icon">{service.icon || '📸'}</div>
                 <h3 className="service-title">{service.title}</h3>
-                <p className="service-desc">{service.desc}</p>
+                <p className="service-desc">{service.description}</p>
               </div>
             ))}
           </div>
@@ -192,11 +193,9 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios, clients, ref
               <input type="email" name="email" placeholder="Your Email" value={formData.email} onChange={handleChange} required className="form-input" />
               <input type="tel" name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleChange} className="form-input" />
               <select name="service" value={formData.service} onChange={handleChange} className="form-select">
-                <option>Wedding Photography</option>
-                <option>Portrait Session</option>
-                <option>Commercial Project</option>
-                <option>Event Coverage</option>
-                <option>Fine Art Commission</option>
+                {services.map((service) => (
+                  <option key={service.id} value={service.title}>{service.title}</option>
+                ))}
               </select>
               <textarea name="message" rows="4" placeholder="Tell us about your vision..." value={formData.message} onChange={handleChange} required className="form-textarea"></textarea>
               <button type="submit" className="btn-submit">Send Message</button>
@@ -273,6 +272,7 @@ function AdminPanel() {
   const [partners, setPartners] = useState([]);
   const [clients, setClients] = useState([]);
   const [inquiries, setInquiries] = useState([]);
+  const [services, setServices] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState('portfolio');
@@ -290,10 +290,15 @@ function AdminPanel() {
   const [partnerImagePreview, setPartnerImagePreview] = useState('');
   const [clientFormData, setClientFormData] = useState({ name: '', logo: '' });
   const [clientImagePreview, setClientImagePreview] = useState('');
+  
+  // Service States
+  const [serviceFormData, setServiceFormData] = useState({ title: '', description: '', icon: '📸' });
+  const [editingService, setEditingService] = useState(null);
+  const [editServiceForm, setEditServiceForm] = useState({ title: '', description: '', icon: '' });
 
   const navigate = useNavigate();
 
-  // Upload image to server - Same function used for Portfolio, Clients, and Partners
+  // Upload image to server
   const uploadToServer = async (base64Image) => {
     try {
       console.log('📤 Uploading image to server...');
@@ -329,7 +334,6 @@ function AdminPanel() {
     try {
       const res = await fetch(`${API_URL}/partners`);
       const data = await res.json();
-      // Remove duplicates
       const unique = data.filter((item, index, self) => index === self.findIndex(i => i.id === item.id));
       setPartners(unique);
     } catch (err) {
@@ -341,7 +345,6 @@ function AdminPanel() {
     try {
       const res = await fetch(`${API_URL}/clients`);
       const data = await res.json();
-      // Remove duplicates
       const unique = data.filter((item, index, self) => index === self.findIndex(i => i.id === item.id));
       setClients(unique);
     } catch (err) {
@@ -359,11 +362,22 @@ function AdminPanel() {
     }
   };
 
+  const loadServices = async () => {
+    try {
+      const res = await fetch(`${API_URL}/services`);
+      const data = await res.json();
+      setServices(data);
+    } catch (err) {
+      setServices([]);
+    }
+  };
+
   const refreshAllData = () => {
     loadPortfolios();
     loadPartners();
     loadClients();
     loadInquiries();
+    loadServices();
   };
 
   useEffect(() => {
@@ -719,6 +733,67 @@ function AdminPanel() {
     }
   };
 
+  // Service Handlers
+  const handleAddService = async (e) => {
+    e.preventDefault();
+    if (!serviceFormData.title || !serviceFormData.description) {
+      alert('Please fill title and description!');
+      return;
+    }
+    
+    const res = await fetch(`${API_URL}/services`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(serviceFormData)
+    });
+    
+    if (res.ok) {
+      alert('Service added!');
+      setServiceFormData({ title: '', description: '', icon: '📸' });
+      loadServices();
+    }
+  };
+
+  const handleDeleteService = async (id) => {
+    if (window.confirm('Delete this service?')) {
+      const res = await fetch(`${API_URL}/services/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        alert('Deleted!');
+        loadServices();
+      }
+    }
+  };
+
+  const handleEditService = (service) => {
+    setEditingService(service);
+    setEditServiceForm({
+      title: service.title,
+      description: service.description,
+      icon: service.icon || '📸'
+    });
+  };
+
+  const handleUpdateService = async (e) => {
+    e.preventDefault();
+    const res = await fetch(`${API_URL}/services/${editingService.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editServiceForm)
+    });
+    
+    if (res.ok) {
+      alert('Service updated!');
+      setEditingService(null);
+      setEditServiceForm({ title: '', description: '', icon: '' });
+      loadServices();
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingService(null);
+    setEditServiceForm({ title: '', description: '', icon: '' });
+  };
+
   if (!isLoggedIn) {
     return (
       <div className="admin-login">
@@ -751,6 +826,7 @@ function AdminPanel() {
           <button className={`tab-btn ${activeTab === 'portfolio' ? 'active' : ''}`} onClick={() => setActiveTab('portfolio')}>Portfolio ({portfolios.length})</button>
           <button className={`tab-btn ${activeTab === 'partners' ? 'active' : ''}`} onClick={() => setActiveTab('partners')}>Partners ({partners.length})</button>
           <button className={`tab-btn ${activeTab === 'clients' ? 'active' : ''}`} onClick={() => setActiveTab('clients')}>Clients ({clients.length})</button>
+          <button className={`tab-btn ${activeTab === 'services' ? 'active' : ''}`} onClick={() => setActiveTab('services')}>Services ({services.length})</button>
           <button className={`tab-btn ${activeTab === 'inquiries' ? 'active' : ''}`} onClick={() => setActiveTab('inquiries')}>Inquiries ({inquiries.length})</button>
         </div>
         
@@ -872,6 +948,80 @@ function AdminPanel() {
             </div>
           </>
         )}
+
+        {activeTab === 'services' && (
+          <>
+            <div className="admin-form">
+              <h2>{editingService ? 'Edit Service' : 'Add New Service'}</h2>
+              <form onSubmit={editingService ? handleUpdateService : handleAddService}>
+                <input 
+                  type="text" 
+                  name="title" 
+                  placeholder="Service Title" 
+                  value={editingService ? editServiceForm.title : serviceFormData.title} 
+                  onChange={(e) => editingService 
+                    ? setEditServiceForm({ ...editServiceForm, title: e.target.value })
+                    : setServiceFormData({ ...serviceFormData, title: e.target.value })
+                  } 
+                  required 
+                  className="form-input" 
+                />
+                <textarea 
+                  name="description" 
+                  placeholder="Service Description" 
+                  value={editingService ? editServiceForm.description : serviceFormData.description} 
+                  onChange={(e) => editingService 
+                    ? setEditServiceForm({ ...editServiceForm, description: e.target.value })
+                    : setServiceFormData({ ...serviceFormData, description: e.target.value })
+                  } 
+                  rows="3" 
+                  required 
+                  className="form-textarea"
+                />
+                <input 
+                  type="text" 
+                  name="icon" 
+                  placeholder="Icon (emoji)" 
+                  value={editingService ? editServiceForm.icon : serviceFormData.icon} 
+                  onChange={(e) => editingService 
+                    ? setEditServiceForm({ ...editServiceForm, icon: e.target.value })
+                    : setServiceFormData({ ...serviceFormData, icon: e.target.value })
+                  } 
+                  className="form-input" 
+                />
+                <p className="image-size-hint">💡 Example icons: 📸, 💍, 👤, 🏢, 🎨, 🎬, 📱</p>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button type="submit" className="btn-primary">
+                    {editingService ? 'Update Service' : 'Add Service'}
+                  </button>
+                  {editingService && (
+                    <button type="button" onClick={handleCancelEdit} className="btn-secondary">
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
+            <div className="admin-list">
+              <h2>Services List ({services.length})</h2>
+              <div className="services-admin-grid">
+                {services.map(service => (
+                  <div key={service.id} className="service-admin-card">
+                    <div className="service-icon">{service.icon || '📸'}</div>
+                    <div className="info">
+                      <h3>{service.title}</h3>
+                      <p>{service.description}</p>
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                        <button onClick={() => handleEditService(service)} className="edit-btn">Edit</button>
+                        <button onClick={() => handleDeleteService(service.id)} className="delete-btn">Delete</button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
         
         {activeTab === 'inquiries' && (
           <div className="admin-list">
@@ -959,7 +1109,6 @@ function App() {
     try {
       const res = await fetch(`${API_URL}/clients`);
       const data = await res.json();
-      // Remove duplicates
       const unique = data.filter((item, index, self) => index === self.findIndex(i => i.id === item.id));
       setClients(unique);
     } catch (err) {
