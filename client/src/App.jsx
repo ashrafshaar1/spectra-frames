@@ -385,14 +385,15 @@ function AdminPanel() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Upload multiple images for new portfolio - Max 20MB each
   const handleMultipleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     const newImages = [];
     const newPreviews = [];
 
     files.forEach(file => {
-      if (file.size > 500000) {
-        alert(`Image ${file.name} is too large! Please use images smaller than 500KB`);
+      if (file.size > 20 * 1024 * 1024) {
+        alert(`Image ${file.name} is too large! Maximum size is 20MB`);
         return;
       }
       const reader = new FileReader();
@@ -462,13 +463,14 @@ function AdminPanel() {
     setShowImageManager(true);
   };
 
+  // Add images to existing portfolio - Max 20MB each
   const handleAddImagesToPortfolio = (e) => {
     const files = Array.from(e.target.files);
     const newImages = [];
     const newPreviews = [];
     files.forEach(file => {
-      if (file.size > 500000) {
-        alert(`Image ${file.name} is too large! Please use images smaller than 500KB`);
+      if (file.size > 20 * 1024 * 1024) {
+        alert(`Image ${file.name} is too large! Maximum size is 20MB`);
         return;
       }
       const reader = new FileReader();
@@ -535,11 +537,12 @@ function AdminPanel() {
     setNewImagePreviews([]);
   };
 
+  // Partner logo upload - Max 5MB
   const handlePartnerImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 200000) {
-        alert('Logo too large! Please use image smaller than 200KB');
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Logo too large! Maximum size is 5MB');
         return;
       }
       const reader = new FileReader();
@@ -616,8 +619,10 @@ function AdminPanel() {
                 </select>
                 <textarea name="description" placeholder="Project Description" value={formData.description} onChange={handleInputChange} rows="3" className="form-textarea"></textarea>
                 <div className="image-upload-area">
-                  <label className="upload-label">Upload Multiple Images (Max 500KB each)<input type="file" accept="image/*" multiple onChange={handleMultipleImageUpload} style={{ display: 'none' }} /></label>
-                  <p className="image-size-hint">Maximum image size: 500KB</p>
+                  <label className="upload-label">📸 Upload Multiple Images (Max 20MB each)
+                    <input type="file" accept="image/*" multiple onChange={handleMultipleImageUpload} style={{ display: 'none' }} />
+                  </label>
+                  <p className="image-size-hint">Maximum image size: 20MB</p>
                   {imagePreviews.length > 0 && (
                     <div className="image-previews-grid">
                       {imagePreviews.map((preview, idx) => (
@@ -629,7 +634,7 @@ function AdminPanel() {
                     </div>
                   )}
                 </div>
-                <button type="submit" className="btn-primary">Create Portfolio</button>
+                <button type="submit" className="btn-primary">➕ Create Portfolio</button>
               </form>
             </div>
             <div className="admin-list">
@@ -641,9 +646,9 @@ function AdminPanel() {
                     <div className="info">
                       <h3>{item.title}</h3>
                       <p>{item.category}</p>
-                      <p className="photos-count">{item.images?.length || 0} photos</p>
-                      <button onClick={() => openImageManager(item)} className="edit-btn">Manage Images</button>
-                      <button onClick={() => handleDeletePortfolio(item.id)} className="delete-btn">Delete</button>
+                      <p className="photos-count">📷 {item.images?.length || 0} photos</p>
+                      <button onClick={() => openImageManager(item)} className="edit-btn">🖼️ Manage Images</button>
+                      <button onClick={() => handleDeletePortfolio(item.id)} className="delete-btn">🗑 Delete</button>
                     </div>
                   </div>
                 ))}
@@ -657,8 +662,10 @@ function AdminPanel() {
               <form onSubmit={handleAddPartner}>
                 <input type="text" name="name" placeholder="Partner Name" value={partnerFormData.name} onChange={(e) => setPartnerFormData({ ...partnerFormData, name: e.target.value })} required className="form-input" />
                 <div className="image-upload-area">
-                  <label className="upload-label">Upload Logo (Max 200KB)<input type="file" accept="image/*" onChange={handlePartnerImageUpload} style={{ display: 'none' }} /></label>
-                  <p className="image-size-hint">Maximum logo size: 200KB</p>
+                  <label className="upload-label">🤝 Upload Logo (Max 5MB)
+                    <input type="file" accept="image/*" onChange={handlePartnerImageUpload} style={{ display: 'none' }} />
+                  </label>
+                  <p className="image-size-hint">Maximum logo size: 5MB</p>
                   {partnerImagePreview && <div className="image-preview"><img src={partnerImagePreview} alt="Preview" /><button type="button" onClick={() => { setPartnerImagePreview(''); setPartnerFormData({ ...partnerFormData, logo: '' }); }}>Remove</button></div>}
                 </div>
                 <button type="submit" className="btn-primary">Add Partner</button>
@@ -688,7 +695,10 @@ function AdminPanel() {
             <div className="image-manager-body">
               <div className="add-images-section">
                 <h3>Add New Images</h3>
-                <label className="upload-label">Select Images to Add (Max 500KB each)<input type="file" accept="image/*" multiple onChange={handleAddImagesToPortfolio} style={{ display: 'none' }} /></label>
+                <label className="upload-label">➕ Select Images to Add (Max 20MB each)
+                  <input type="file" accept="image/*" multiple onChange={handleAddImagesToPortfolio} style={{ display: 'none' }} />
+                </label>
+                <p className="image-size-hint">Maximum image size: 20MB</p>
                 {newImagePreviews.length > 0 && (
                   <div className="new-images-preview">
                     <h4>New images to add:</h4>
@@ -697,7 +707,7 @@ function AdminPanel() {
                         <div key={idx} className="new-image-item"><img src={preview} alt={`New ${idx}`} /></div>
                       ))}
                     </div>
-                    <button onClick={saveNewImagesToPortfolio} className="btn-primary">Save {newImagePreviews.length} Images</button>
+                    <button onClick={saveNewImagesToPortfolio} className="btn-primary">💾 Save {newImagePreviews.length} Images</button>
                   </div>
                 )}
               </div>
