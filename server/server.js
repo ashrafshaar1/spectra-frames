@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;  // منفذ جديد
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
@@ -24,14 +24,16 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Ensure uploads directory exists
-if (!fs.existsSync(path.join(__dirname, 'uploads'))) {
-  fs.mkdirSync(path.join(__dirname, 'uploads'), { recursive: true });
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('✅ Uploads folder created:', uploadsDir);
 }
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, 'uploads/'));
+    cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -42,7 +44,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
   storage,
-  limits: { fileSize: 20 * 1024 * 1024 },
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB limit
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -56,37 +58,55 @@ const upload = multer({
 
 // Upload single image
 app.post('/api/upload-image', upload.single('image'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded' });
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    
+    const imageUrl = `https://spectra-frames-api.onrender.com/uploads/${req.file.filename}`;
+    console.log('✅ Image uploaded:', imageUrl);
+    res.json({ success: true, url: imageUrl });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ error: 'Upload failed' });
   }
-  
-  const imageUrl = `http://localhost:3001/uploads/${req.file.filename}`;
-  res.json({ success: true, url: imageUrl });
 });
 
 // Upload multiple images
 app.post('/api/upload-multiple', upload.array('images', 50), (req, res) => {
-  if (!req.files || req.files.length === 0) {
-    return res.status(400).json({ error: 'No files uploaded' });
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'No files uploaded' });
+    }
+    
+    const urls = req.files.map(file => {
+      return `https://spectra-frames-api.onrender.com/uploads/${file.filename}`;
+    });
+    
+    console.log(`✅ ${urls.length} images uploaded`);
+    res.json({ success: true, urls: urls });
+  } catch (error) {
+    console.error('Multiple upload error:', error);
+    res.status(500).json({ error: 'Upload failed' });
   }
-  
-  const urls = req.files.map(file => {
-    return `http://localhost:3001/uploads/${file.filename}`;
-  });
-  
-  res.json({ success: true, urls: urls });
 });
 
 // Delete image
 app.delete('/api/delete-image', (req, res) => {
-  const { filename } = req.body;
-  const filePath = path.join(__dirname, 'uploads', filename);
-  
-  if (fs.existsSync(filePath)) {
-    fs.unlinkSync(filePath);
-    res.json({ success: true, message: 'Image deleted' });
-  } else {
-    res.status(404).json({ error: 'Image not found' });
+  try {
+    const { filename } = req.body;
+    const filePath = path.join(uploadsDir, filename);
+    
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log('✅ Image deleted:', filename);
+      res.json({ success: true, message: 'Image deleted' });
+    } else {
+      res.status(404).json({ error: 'Image not found' });
+    }
+  } catch (error) {
+    console.error('Delete error:', error);
+    res.status(500).json({ error: 'Delete failed' });
   }
 });
 
@@ -97,7 +117,7 @@ let portfolios = [
     id: '1',
     title: 'Wedding Elegance',
     category: 'Wedding',
-    imageUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600',
+    coverImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600',
     images: [
       'https://images.unsplash.com/photo-1519741497674-611481863552?w=600',
       'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600',
@@ -109,7 +129,7 @@ let portfolios = [
     id: '2',
     title: 'Urban Stories',
     category: 'Street',
-    imageUrl: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600',
+    coverImage: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600',
     images: [
       'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600',
       'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600'
@@ -120,7 +140,7 @@ let portfolios = [
     id: '3',
     title: 'Natural Beauty',
     category: 'Landscape',
-    imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600',
+    coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600',
     images: [
       'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600',
       'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600'
@@ -131,7 +151,7 @@ let portfolios = [
     id: '4',
     title: 'Portrait Soul',
     category: 'Portrait',
-    imageUrl: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600',
+    coverImage: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600',
     images: [
       'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600',
       'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600'
@@ -142,7 +162,7 @@ let portfolios = [
     id: '5',
     title: 'Wild Symphony',
     category: 'Wildlife',
-    imageUrl: 'https://images.unsplash.com/photo-1564760055775-d63b17a55c44?w=600',
+    coverImage: 'https://images.unsplash.com/photo-1564760055775-d63b17a55c44?w=600',
     images: [
       'https://images.unsplash.com/photo-1564760055775-d63b17a55c44?w=600',
       'https://images.unsplash.com/photo-1549366021-9f761d450615?w=600'
@@ -153,7 +173,7 @@ let portfolios = [
     id: '6',
     title: 'Architectural Geometry',
     category: 'Architecture',
-    imageUrl: 'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=600',
+    coverImage: 'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=600',
     images: [
       'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=600',
       'https://images.unsplash.com/photo-1511818966892-d7d671e672a2?w=600'
@@ -167,10 +187,12 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Photography agency API is running' });
 });
 
+// Get all portfolio items
 app.get('/api/portfolio', (req, res) => {
   res.json(portfolios);
 });
 
+// Get single portfolio item
 app.get('/api/portfolio/:id', (req, res) => {
   const item = portfolios.find(p => p.id === req.params.id);
   if (item) {
@@ -180,6 +202,7 @@ app.get('/api/portfolio/:id', (req, res) => {
   }
 });
 
+// Submit contact inquiry
 app.post('/api/inquiries', (req, res) => {
   const { name, email, phone, message, serviceType } = req.body;
   
@@ -198,7 +221,7 @@ app.post('/api/inquiries', (req, res) => {
   };
   
   inquiries.push(newInquiry);
-  console.log('New inquiry received:', newInquiry);
+  console.log('📧 New inquiry received:', newInquiry.name, '-', newInquiry.email);
   
   res.status(201).json({ 
     success: true, 
@@ -207,11 +230,12 @@ app.post('/api/inquiries', (req, res) => {
   });
 });
 
+// Get all inquiries
 app.get('/api/inquiries', (req, res) => {
   res.json(inquiries);
 });
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📁 Uploads folder: ${path.join(__dirname, 'uploads')}`);
+  console.log(`📁 Uploads folder: ${uploadsDir}`);
 });
