@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
-import emailjs from '@emailjs/browser';
 import './App.css';
 
 // Gallery Modal Component
@@ -30,44 +29,54 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
     refreshPortfolios();
   }, []);
 
-  // EmailJS Form State
+  // Form state for contact form
+  const [formStatus, setFormStatus] = useState('');
   const [formData, setFormData] = useState({
-    from_name: '',
-    from_email: '',
+    name: '',
+    email: '',
     service: 'Wedding Photography',
     message: ''
   });
-  const [formStatus, setFormStatus] = useState('');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setFormStatus('sending');
     
-    // استبدل هذه القيم بقيمك من EmailJS
-    emailjs.send(
-      'service_qv6bqzn',     // ضع Service ID حقك هنا
-      'template_8jv6go9',    // ضع Template ID حقك هنا
-      {
-        from_name: formData.from_name,
-        from_email: formData.from_email,
-        service: formData.service,
-        message: formData.message,
-        to_email: 'spectraframes.00@gmail.com'
-      },
-      '5IIHvPEty10y1hwqK'      // ضع Public Key حقك هنا
-    ).then(() => {
-      setFormStatus('success');
-      setFormData({ from_name: '', from_email: '', service: 'Wedding Photography', message: '' });
-      setTimeout(() => setFormStatus(''), 5000);
-    }).catch((error) => {
-      console.error('EmailJS error:', error);
+    try {
+      const response = await fetch('https://formsubmit.co/ajax/spectraframes.00@gmail.com', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          service: formData.service,
+          message: formData.message,
+          _captcha: false,
+          _template: 'box',
+          _subject: `New message from ${formData.name} - Spectra Frames`
+        })
+      });
+      
+      if (response.ok) {
+        setFormStatus('success');
+        setFormData({ name: '', email: '', service: 'Wedding Photography', message: '' });
+        setTimeout(() => setFormStatus(''), 5000);
+      } else {
+        setFormStatus('error');
+        setTimeout(() => setFormStatus(''), 5000);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
       setFormStatus('error');
       setTimeout(() => setFormStatus(''), 5000);
-    });
+    }
   };
 
   const [clientLogos] = useState([
@@ -194,18 +203,18 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
               
               <input 
                 type="text" 
-                name="from_name" 
+                name="name" 
                 placeholder="Your Name" 
-                value={formData.from_name} 
+                value={formData.name} 
                 onChange={handleChange} 
                 required 
                 className="form-input" 
               />
               <input 
                 type="email" 
-                name="from_email" 
+                name="email" 
                 placeholder="Your Email" 
-                value={formData.from_email} 
+                value={formData.email} 
                 onChange={handleChange} 
                 required 
                 className="form-input" 
@@ -240,7 +249,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
   );
 }
 
-// Portfolio Detail Page with Gallery (مختصر للطول)
+// Portfolio Detail Page with Gallery
 function PortfolioDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -306,7 +315,7 @@ function PortfolioDetail() {
   );
 }
 
-// Admin Panel Component (مختصر للطول)
+// Admin Panel Component
 function AdminPanel() {
   const [portfolios, setPortfolios] = useState([]);
   const [partners, setPartners] = useState([]);
@@ -382,6 +391,10 @@ function AdminPanel() {
     const newPreviews = [];
 
     files.forEach(file => {
+      if (file.size > 500000) {
+        alert(`Image ${file.name} is too large! Please use images smaller than 500KB`);
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         newImages.push(reader.result);
@@ -414,6 +427,7 @@ function AdminPanel() {
       alert('Please upload at least one image!');
       return;
     }
+    
     const newPortfolio = {
       id: Date.now().toString(),
       title: formData.title,
@@ -453,6 +467,10 @@ function AdminPanel() {
     const newImages = [];
     const newPreviews = [];
     files.forEach(file => {
+      if (file.size > 500000) {
+        alert(`Image ${file.name} is too large! Please use images smaller than 500KB`);
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         newImages.push(reader.result);
@@ -520,6 +538,10 @@ function AdminPanel() {
   const handlePartnerImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 200000) {
+        alert('Logo too large! Please use image smaller than 200KB');
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setPartnerImagePreview(reader.result);
@@ -594,7 +616,8 @@ function AdminPanel() {
                 </select>
                 <textarea name="description" placeholder="Project Description" value={formData.description} onChange={handleInputChange} rows="3" className="form-textarea"></textarea>
                 <div className="image-upload-area">
-                  <label className="upload-label">Upload Multiple Images<input type="file" accept="image/*" multiple onChange={handleMultipleImageUpload} style={{ display: 'none' }} /></label>
+                  <label className="upload-label">Upload Multiple Images (Max 500KB each)<input type="file" accept="image/*" multiple onChange={handleMultipleImageUpload} style={{ display: 'none' }} /></label>
+                  <p className="image-size-hint">Maximum image size: 500KB</p>
                   {imagePreviews.length > 0 && (
                     <div className="image-previews-grid">
                       {imagePreviews.map((preview, idx) => (
@@ -634,7 +657,8 @@ function AdminPanel() {
               <form onSubmit={handleAddPartner}>
                 <input type="text" name="name" placeholder="Partner Name" value={partnerFormData.name} onChange={(e) => setPartnerFormData({ ...partnerFormData, name: e.target.value })} required className="form-input" />
                 <div className="image-upload-area">
-                  <label className="upload-label">Upload Logo<input type="file" accept="image/*" onChange={handlePartnerImageUpload} style={{ display: 'none' }} /></label>
+                  <label className="upload-label">Upload Logo (Max 200KB)<input type="file" accept="image/*" onChange={handlePartnerImageUpload} style={{ display: 'none' }} /></label>
+                  <p className="image-size-hint">Maximum logo size: 200KB</p>
                   {partnerImagePreview && <div className="image-preview"><img src={partnerImagePreview} alt="Preview" /><button type="button" onClick={() => { setPartnerImagePreview(''); setPartnerFormData({ ...partnerFormData, logo: '' }); }}>Remove</button></div>}
                 </div>
                 <button type="submit" className="btn-primary">Add Partner</button>
@@ -664,7 +688,7 @@ function AdminPanel() {
             <div className="image-manager-body">
               <div className="add-images-section">
                 <h3>Add New Images</h3>
-                <label className="upload-label">Select Images to Add<input type="file" accept="image/*" multiple onChange={handleAddImagesToPortfolio} style={{ display: 'none' }} /></label>
+                <label className="upload-label">Select Images to Add (Max 500KB each)<input type="file" accept="image/*" multiple onChange={handleAddImagesToPortfolio} style={{ display: 'none' }} /></label>
                 {newImagePreviews.length > 0 && (
                   <div className="new-images-preview">
                     <h4>New images to add:</h4>
