@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
 import './App.css';
+import { FaFacebookF, FaInstagram, FaTiktok, FaWhatsapp } from 'react-icons/fa';
 
 // API URL
 const API_URL = 'https://spectra-frames-api.onrender.com/api';
@@ -1120,16 +1121,16 @@ function App() {
             </div>
             <div className="footer-social">
               <a href="https://facebook.com/spectraframes" target="_blank" rel="noopener noreferrer" className="social-link facebook">
-                <i className="fab fa-facebook-f"></i>
+                <FaFacebookF />
               </a>
               <a href="https://instagram.com/spectraframes" target="_blank" rel="noopener noreferrer" className="social-link instagram">
-                <i className="fab fa-instagram"></i>
+                <FaInstagram />
               </a>
               <a href="https://tiktok.com/@spectraframes" target="_blank" rel="noopener noreferrer" className="social-link tiktok">
-                <i className="fab fa-tiktok"></i>
+                <FaTiktok />
               </a>
               <a href="https://wa.me/96171234567" target="_blank" rel="noopener noreferrer" className="social-link whatsapp">
-                <i className="fab fa-whatsapp"></i>
+                <FaWhatsapp />
               </a>
             </div>
             <div className="footer-contact-info">
