@@ -60,7 +60,7 @@ app.post('/api/upload-image', upload.single('image'), (req, res) => {
     return res.status(400).json({ error: 'No file uploaded' });
   }
   
-  const imageUrl = `http://localhost:3001/uploads/${req.file.filename}`;
+  const imageUrl = `https://spectra-frames-api.onrender.com/uploads/${req.file.filename}`;
   res.json({ success: true, url: imageUrl });
 });
 
@@ -71,7 +71,7 @@ app.post('/api/upload-multiple', upload.array('images', 50), (req, res) => {
   }
   
   const urls = req.files.map(file => {
-    return `http://localhost:3001/uploads/${file.filename}`;
+    return `https://spectra-frames-api.onrender.com/uploads/${file.filename}`;
   });
   
   res.json({ success: true, urls: urls });
