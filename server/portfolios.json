@@ -18,15 +18,5 @@
       "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600"
     ],
     "description": "Street photography from around the world"
-  },
-  {
-    "id": "3",
-    "title": "Natural Beauty",
-    "category": "Landscape",
-    "coverImage": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600",
-    "images": [
-      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600"
-    ],
-    "description": "Breathtaking landscapes and nature scenes"
   }
 ]

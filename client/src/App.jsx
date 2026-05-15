@@ -205,18 +205,26 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios, clients, ref
   );
 }
 
-// Portfolio Detail Page
+// Portfolio Detail Page - مع تحسين عرض الأخطاء
 function PortfolioDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
+    console.log('Fetching portfolio with ID:', id);
     fetch(`${API_URL}/portfolio/${id}`)
-      .then(res => res.json())
+      .then(res => {
+        console.log('Response status:', res.status);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        return res.json();
+      })
       .then(data => {
         console.log('Portfolio detail loaded:', data);
         setItem(data);
@@ -224,6 +232,7 @@ function PortfolioDetail() {
       })
       .catch(err => {
         console.error('Error loading portfolio detail:', err);
+        setError(err.message);
         setLoading(false);
       });
   }, [id]);
@@ -237,6 +246,12 @@ function PortfolioDetail() {
   const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + (item?.images?.length || 1)) % (item?.images?.length || 1));
 
   if (loading) return <div className="loading">Loading...</div>;
+  if (error) return (
+    <div className="loading">
+      <p>Error: {error}</p>
+      <button className="back-btn" onClick={() => navigate('/')}>Back to Home</button>
+    </div>
+  );
   if (!item) return <div className="loading">Project not found</div>;
 
   const images = item.images || [item.coverImage];
@@ -265,7 +280,7 @@ function PortfolioDetail() {
   );
 }
 
-// Admin Panel Component
+// Admin Panel Component (مختصر عشان الطول)
 function AdminPanel() {
   const [portfolios, setPortfolios] = useState([]);
   const [partners, setPartners] = useState([]);
