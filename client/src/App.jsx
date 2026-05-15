@@ -3,6 +3,9 @@ import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } 
 import axios from 'axios';
 import './App.css';
 
+// API URL - Render.com backend
+const API_URL = 'https://spectra-frames-api.onrender.com/api';
+
 // Gallery Modal Component
 function GalleryModal({ images, currentIndex, onClose, onNext, onPrev }) {
   useEffect(() => {
@@ -337,32 +340,33 @@ function AdminPanel() {
 
   const navigate = useNavigate();
 
-  // Upload image to server
+  // Upload image to Render.com server
   const uploadToServer = async (base64Image) => {
     try {
-      console.log('📤 Starting upload...');
+      console.log('📤 Starting upload to Render.com...');
       
       // Convert base64 to blob
-      const blob = await fetch(base64Image).then(r => r.blob());
+      const response = await fetch(base64Image);
+      const blob = await response.blob();
       console.log('📦 Blob size:', blob.size, 'bytes');
       
       const formData = new FormData();
       formData.append('image', blob, 'image.jpg');
       
-      const response = await axios.post('http://localhost:3001/api/upload-image', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        }
+      const uploadResponse = await fetch(`${API_URL}/upload-image`, {
+        method: 'POST',
+        body: formData
       });
       
-      console.log('✅ Server response:', response.data);
+      const data = await uploadResponse.json();
+      console.log('✅ Server response:', data);
       
-      if (response.data && response.data.url) {
-        return response.data.url;
+      if (data && data.url) {
+        return data.url;
       }
       return null;
     } catch (error) {
-      console.error('❌ Upload error:', error.response?.data || error.message);
+      console.error('❌ Upload error:', error);
       return null;
     }
   };
@@ -740,7 +744,7 @@ function AdminPanel() {
                     <button type="button" onClick={addImageFromUrl} className="btn-secondary">Add URL</button>
                   </div>
                   
-                  <p className="image-size-hint">💡 Tip: Images uploaded to server will be visible on all devices</p>
+                  <p className="image-size-hint">💡 Images uploaded to Render.com server will be visible on all devices</p>
                   
                   {uploading && <div className="form-sending">⏳ Uploading images to server...</div>}
                   
