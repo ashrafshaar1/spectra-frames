@@ -205,7 +205,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios, clients, ref
   );
 }
 
-// Portfolio Detail Page - مع تحسين عرض الأخطاء
+// Portfolio Detail Page - مع تحسين عرض الأخطاء وفحص ID
 function PortfolioDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -216,25 +216,44 @@ function PortfolioDetail() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
-    console.log('Fetching portfolio with ID:', id);
-    fetch(`${API_URL}/portfolio/${id}`)
-      .then(res => {
-        console.log('Response status:', res.status);
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    const fetchPortfolio = async () => {
+      try {
+        console.log('🔍 Fetching portfolio with ID:', id);
+        console.log('📡 API URL:', `${API_URL}/portfolio/${id}`);
+        
+        const response = await fetch(`${API_URL}/portfolio/${id}`);
+        console.log('📡 Response status:', response.status);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error(`Portfolio with ID "${id}" not found on server`);
+          }
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-        return res.json();
-      })
-      .then(data => {
-        console.log('Portfolio detail loaded:', data);
+        
+        const data = await response.json();
+        console.log('✅ Portfolio data loaded:', data);
+        
+        if (!data || !data.id) {
+          throw new Error('Invalid portfolio data received');
+        }
+        
         setItem(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error loading portfolio detail:', err);
+        setError(null);
+      } catch (err) {
+        console.error('❌ Error loading portfolio detail:', err);
         setError(err.message);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+    
+    if (id) {
+      fetchPortfolio();
+    } else {
+      setError('No portfolio ID provided');
+      setLoading(false);
+    }
   }, [id]);
 
   const openGallery = (index) => {
@@ -246,15 +265,35 @@ function PortfolioDetail() {
   const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + (item?.images?.length || 1)) % (item?.images?.length || 1));
 
   if (loading) return <div className="loading">Loading...</div>;
-  if (error) return (
-    <div className="loading">
-      <p>Error: {error}</p>
-      <button className="back-btn" onClick={() => navigate('/')}>Back to Home</button>
-    </div>
-  );
-  if (!item) return <div className="loading">Project not found</div>;
+  
+  if (error) {
+    return (
+      <div className="portfolio-detail">
+        <div className="container">
+          <div className="loading" style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <p style={{ color: '#dc3545', marginBottom: '20px' }}>⚠️ Error: {error}</p>
+            <p style={{ color: '#B8B0A8', marginBottom: '30px' }}>The portfolio item you're looking for might have been deleted or the ID is incorrect.</p>
+            <button className="back-btn" onClick={() => navigate('/')}>← Back to Home</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!item) {
+    return (
+      <div className="portfolio-detail">
+        <div className="container">
+          <div className="loading" style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <p style={{ color: '#D4AF37', marginBottom: '30px' }}>Project not found</p>
+            <button className="back-btn" onClick={() => navigate('/')}>← Back to Home</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const images = item.images || [item.coverImage];
+  const images = item.images || (item.coverImage ? [item.coverImage] : []);
 
   return (
     <div className="portfolio-detail">
@@ -274,13 +313,21 @@ function PortfolioDetail() {
             </div>
           ))}
         </div>
-        {modalOpen && <GalleryModal images={images} currentIndex={currentImageIndex} onClose={() => setModalOpen(false)} onNext={nextImage} onPrev={prevImage} />}
+        {modalOpen && (
+          <GalleryModal 
+            images={images} 
+            currentIndex={currentImageIndex} 
+            onClose={() => setModalOpen(false)} 
+            onNext={nextImage} 
+            onPrev={prevImage} 
+          />
+        )}
       </div>
     </div>
   );
 }
 
-// Admin Panel Component (مختصر عشان الطول)
+// Admin Panel Component
 function AdminPanel() {
   const [portfolios, setPortfolios] = useState([]);
   const [partners, setPartners] = useState([]);
