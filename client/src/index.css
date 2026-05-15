@@ -1,9 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&display=swap');
 
-/* ============================================
-   منع التكبير (Zoom) على الجوال
-   ============================================ */
-
 html, body {
   touch-action: pan-x pan-y;
   -webkit-text-size-adjust: 100%;
@@ -15,17 +11,10 @@ input, select, textarea, button {
 }
 
 * {
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* ============================================
-   STYLES BASE
-   ============================================ */
-
-* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -33,33 +22,11 @@ body {
   color: #F2F2F2;
   font-family: 'Cinzel', 'Segoe UI', serif;
   overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 html {
   scroll-behavior: smooth;
 }
-
-/* ============================================
-   جعل الأزرار والحقول سهلة اللمس على الجوال
-   ============================================ */
-
-button, a, .btn-primary, .btn-secondary, .btn-submit,
-.social-link, .portfolio-card, .gallery-item, .tab-btn,
-.delete-btn, .edit-btn, .upload-label {
-  cursor: pointer;
-  -webkit-tap-highlight-color: rgba(212, 175, 55, 0.3);
-}
-
-button, a, .portfolio-card, .gallery-item {
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-/* ============================================
-   تحسين التمرير على الجوال
-   ============================================ */
 
 ::-webkit-scrollbar {
   width: 8px;
@@ -76,30 +43,4 @@ button, a, .portfolio-card, .gallery-item {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #c49f2e;
-}
-
-/* ============================================
-   تحسينات إضافية للجوال
-   ============================================ */
-
-@media (max-width: 768px) {
-  body {
-    touch-action: manipulation;
-  }
-}
-
-@media (max-width: 576px) {
-  body {
-    font-size: 14px;
-  }
-}
-
-input, button, select, textarea {
-  -webkit-appearance: none;
-  appearance: none;
-  border-radius: 0;
-}
-
-button, .btn-primary, .btn-secondary, .btn-submit {
-  touch-action: manipulation;
 }
