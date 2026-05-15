@@ -4,22 +4,16 @@
    منع التكبير (Zoom) على الجوال
    ============================================ */
 
-/* منع التكبير التلقائي في جميع المتصفحات */
 html, body {
   touch-action: pan-x pan-y;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
-/* منع التكبير التلقائي عند النقر على الحقول في iOS */
-input, 
-select, 
-textarea, 
-button {
+input, select, textarea, button {
   font-size: 16px !important;
 }
 
-/* تأكد من عدم وجود zoom تلقائي */
 * {
   -webkit-tap-highlight-color: transparent;
 }
@@ -51,23 +45,13 @@ html {
    جعل الأزرار والحقول سهلة اللمس على الجوال
    ============================================ */
 
-button, 
-a, 
-.btn-primary, 
-.btn-secondary, 
-.btn-submit,
-.social-link,
-.portfolio-card,
-.gallery-item,
-.tab-btn,
-.delete-btn,
-.edit-btn,
-.upload-label {
+button, a, .btn-primary, .btn-secondary, .btn-submit,
+.social-link, .portfolio-card, .gallery-item, .tab-btn,
+.delete-btn, .edit-btn, .upload-label {
   cursor: pointer;
   -webkit-tap-highlight-color: rgba(212, 175, 55, 0.3);
 }
 
-/* منع تحديد النص عند الضغط المطول */
 button, a, .portfolio-card, .gallery-item {
   user-select: none;
   -webkit-user-select: none;
@@ -98,28 +82,24 @@ button, a, .portfolio-card, .gallery-item {
    تحسينات إضافية للجوال
    ============================================ */
 
-/* منع الـ zoom عند النقر المزدوج */
 @media (max-width: 768px) {
   body {
     touch-action: manipulation;
   }
 }
 
-/* تحسين حجم الخطوط على الجوال */
 @media (max-width: 576px) {
   body {
     font-size: 14px;
   }
 }
 
-/* إزالة الخلفية الرمادية عند النقر على العناصر في iOS */
 input, button, select, textarea {
   -webkit-appearance: none;
   appearance: none;
   border-radius: 0;
 }
 
-/* تحسين شكل الأزرار على الجوال */
 button, .btn-primary, .btn-secondary, .btn-submit {
   touch-action: manipulation;
 }
