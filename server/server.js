@@ -17,18 +17,18 @@ app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
-// مجلد الصور
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-  console.log('✅ Uploads folder created:', uploadsDir);
-}
+// استخدام المسار المؤقت (بيشتغل على Render)
+const dataDir = '/tmp/spectra-frames-data';
+const uploadsDir = '/tmp/spectra-frames-uploads';
 
-// مجلد البيانات
-const dataDir = path.join(__dirname, 'data');
+// إنشاء المجلدات
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
   console.log('✅ Data folder created:', dataDir);
+}
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('✅ Uploads folder created:', uploadsDir);
 }
 
 // خدمة الصور
@@ -64,8 +64,8 @@ const SERVER_URL = process.env.NODE_ENV === 'production'
 const PORTFOLIO_FILE = path.join(dataDir, 'portfolios.json');
 const PARTNERS_FILE = path.join(dataDir, 'partners.json');
 const CLIENTS_FILE = path.join(dataDir, 'clients.json');
-const INQUIRIES_FILE = path.join(dataDir, 'inquiries.json');
 const SERVICES_FILE = path.join(dataDir, 'services.json');
+const INQUIRIES_FILE = path.join(dataDir, 'inquiries.json');
 
 // دوال مساعدة
 function readJSON(filePath, defaultValue = []) {
@@ -85,7 +85,7 @@ function writeJSON(filePath, data) {
     console.log(`✅ File written: ${filePath}`);
     return true;
   } catch (err) {
-    console.error(`❌ Error writing JSON to ${filePath}:`, err);
+    console.error(`❌ Error writing JSON:`, err);
     return false;
   }
 }
@@ -138,91 +138,51 @@ const defaultServices = [
 ];
 
 // إنشاء الملفات لو مش موجودة
-if (readJSON(PORTFOLIO_FILE).length === 0) {
-  writeJSON(PORTFOLIO_FILE, defaultPortfolios);
-  console.log('✅ Created default portfolios.json');
-}
-if (readJSON(PARTNERS_FILE).length === 0) {
-  writeJSON(PARTNERS_FILE, defaultPartners);
-  console.log('✅ Created default partners.json');
-}
-if (readJSON(CLIENTS_FILE).length === 0) {
-  writeJSON(CLIENTS_FILE, defaultClients);
-  console.log('✅ Created default clients.json');
-}
-if (readJSON(SERVICES_FILE).length === 0) {
-  writeJSON(SERVICES_FILE, defaultServices);
-  console.log('✅ Created default services.json');
-}
+if (readJSON(PORTFOLIO_FILE).length === 0) writeJSON(PORTFOLIO_FILE, defaultPortfolios);
+if (readJSON(PARTNERS_FILE).length === 0) writeJSON(PARTNERS_FILE, defaultPartners);
+if (readJSON(CLIENTS_FILE).length === 0) writeJSON(CLIENTS_FILE, defaultClients);
+if (readJSON(SERVICES_FILE).length === 0) writeJSON(SERVICES_FILE, defaultServices);
 
 // ========== API - Portfolio ==========
 app.get('/api/portfolio', (req, res) => {
   const portfolios = readJSON(PORTFOLIO_FILE);
+  console.log('📋 GET portfolios - Count:', portfolios.length);
   res.json(portfolios);
 });
 
 app.post('/api/portfolio', (req, res) => {
   try {
+    console.log('📝 POST portfolio - Received:', req.body.title);
     const portfolios = readJSON(PORTFOLIO_FILE);
     const newItem = { id: uuidv4(), ...req.body, createdAt: new Date().toISOString() };
     portfolios.push(newItem);
-    
-    const saved = writeJSON(PORTFOLIO_FILE, portfolios);
-    if (!saved) {
-      return res.status(500).json({ error: 'Failed to save portfolio' });
-    }
-    
+    writeJSON(PORTFOLIO_FILE, portfolios);
     console.log('✅ Portfolio saved with ID:', newItem.id);
     res.json({ success: true, portfolio: newItem });
   } catch (error) {
-    console.error('Error saving portfolio:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.put('/api/portfolio/:id', (req, res) => {
-  try {
-    let portfolios = readJSON(PORTFOLIO_FILE);
-    const index = portfolios.findIndex(p => p.id === req.params.id);
-    if (index === -1) return res.status(404).json({ error: 'Not found' });
-    portfolios[index] = { ...portfolios[index], ...req.body };
-    writeJSON(PORTFOLIO_FILE, portfolios);
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error updating portfolio:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('❌ Error:', error);
+    res.status(500).json({ error: 'Failed to save portfolio' });
   }
 });
 
 app.delete('/api/portfolio/:id', (req, res) => {
-  try {
-    let portfolios = readJSON(PORTFOLIO_FILE);
-    portfolios = portfolios.filter(p => p.id !== req.params.id);
-    writeJSON(PORTFOLIO_FILE, portfolios);
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error deleting portfolio:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+  let portfolios = readJSON(PORTFOLIO_FILE);
+  portfolios = portfolios.filter(p => p.id !== req.params.id);
+  writeJSON(PORTFOLIO_FILE, portfolios);
+  res.json({ success: true });
 });
 
 // ========== API - Partners ==========
 app.get('/api/partners', (req, res) => {
-  const partners = readJSON(PARTNERS_FILE);
-  res.json(partners);
+  res.json(readJSON(PARTNERS_FILE));
 });
 
 app.post('/api/partners', (req, res) => {
-  try {
-    const partners = readJSON(PARTNERS_FILE);
-    const newPartner = { id: uuidv4(), ...req.body };
-    partners.push(newPartner);
-    writeJSON(PARTNERS_FILE, partners);
-    res.json({ success: true, partner: newPartner });
-  } catch (error) {
-    console.error('Error saving partner:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+  const partners = readJSON(PARTNERS_FILE);
+  const newPartner = { id: uuidv4(), ...req.body };
+  partners.push(newPartner);
+  writeJSON(PARTNERS_FILE, partners);
+  res.json({ success: true, partner: newPartner });
 });
 
 app.delete('/api/partners/:id', (req, res) => {
@@ -234,21 +194,15 @@ app.delete('/api/partners/:id', (req, res) => {
 
 // ========== API - Clients ==========
 app.get('/api/clients', (req, res) => {
-  const clients = readJSON(CLIENTS_FILE);
-  res.json(clients);
+  res.json(readJSON(CLIENTS_FILE));
 });
 
 app.post('/api/clients', (req, res) => {
-  try {
-    const clients = readJSON(CLIENTS_FILE);
-    const newClient = { id: uuidv4(), ...req.body };
-    clients.push(newClient);
-    writeJSON(CLIENTS_FILE, clients);
-    res.json({ success: true, client: newClient });
-  } catch (error) {
-    console.error('Error saving client:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+  const clients = readJSON(CLIENTS_FILE);
+  const newClient = { id: uuidv4(), ...req.body };
+  clients.push(newClient);
+  writeJSON(CLIENTS_FILE, clients);
+  res.json({ success: true, client: newClient });
 });
 
 app.delete('/api/clients/:id', (req, res) => {
@@ -260,35 +214,15 @@ app.delete('/api/clients/:id', (req, res) => {
 
 // ========== API - Services ==========
 app.get('/api/services', (req, res) => {
-  const services = readJSON(SERVICES_FILE, defaultServices);
-  res.json(services);
+  res.json(readJSON(SERVICES_FILE, defaultServices));
 });
 
 app.post('/api/services', (req, res) => {
-  try {
-    const services = readJSON(SERVICES_FILE, defaultServices);
-    const newService = { id: uuidv4(), ...req.body, order: services.length + 1 };
-    services.push(newService);
-    writeJSON(SERVICES_FILE, services);
-    res.json({ success: true, service: newService });
-  } catch (error) {
-    console.error('Error saving service:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.put('/api/services/:id', (req, res) => {
-  try {
-    let services = readJSON(SERVICES_FILE, defaultServices);
-    const index = services.findIndex(s => s.id === req.params.id);
-    if (index === -1) return res.status(404).json({ error: 'Not found' });
-    services[index] = { ...services[index], ...req.body };
-    writeJSON(SERVICES_FILE, services);
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error updating service:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+  const services = readJSON(SERVICES_FILE, defaultServices);
+  const newService = { id: uuidv4(), ...req.body, order: services.length + 1 };
+  services.push(newService);
+  writeJSON(SERVICES_FILE, services);
+  res.json({ success: true, service: newService });
 });
 
 app.delete('/api/services/:id', (req, res) => {
@@ -300,21 +234,15 @@ app.delete('/api/services/:id', (req, res) => {
 
 // ========== API - Inquiries ==========
 app.get('/api/inquiries', (req, res) => {
-  const inquiries = readJSON(INQUIRIES_FILE);
-  res.json(inquiries);
+  res.json(readJSON(INQUIRIES_FILE));
 });
 
 app.post('/api/inquiries', (req, res) => {
-  try {
-    const inquiries = readJSON(INQUIRIES_FILE);
-    const newInquiry = { id: uuidv4(), ...req.body, createdAt: new Date().toISOString() };
-    inquiries.push(newInquiry);
-    writeJSON(INQUIRIES_FILE, inquiries);
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error saving inquiry:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+  const inquiries = readJSON(INQUIRIES_FILE);
+  const newInquiry = { id: uuidv4(), ...req.body, createdAt: new Date().toISOString() };
+  inquiries.push(newInquiry);
+  writeJSON(INQUIRIES_FILE, inquiries);
+  res.json({ success: true });
 });
 
 // ========== رفع الصور ==========
@@ -333,17 +261,6 @@ app.post('/api/upload-multiple', upload.array('images', 50), (req, res) => {
   res.json({ success: true, urls: urls });
 });
 
-app.delete('/api/delete-image', (req, res) => {
-  const { filename } = req.body;
-  const filePath = path.join(uploadsDir, filename);
-  if (fs.existsSync(filePath)) {
-    fs.unlinkSync(filePath);
-    res.json({ success: true });
-  } else {
-    res.status(404).json({ error: 'Image not found' });
-  }
-});
-
 // ========== Health Check ==========
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running', timestamp: new Date().toISOString() });
@@ -352,6 +269,6 @@ app.get('/api/health', (req, res) => {
 // ========== بدء السيرفر ==========
 app.listen(PORT, () => {
   console.log(`🚀 Server running on ${SERVER_URL}`);
-  console.log(`📁 Uploads folder: ${uploadsDir}`);
   console.log(`📁 Data folder: ${dataDir}`);
+  console.log(`📁 Uploads folder: ${uploadsDir}`);
 });
