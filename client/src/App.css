@@ -1,5 +1,4 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&display=swap');
-@import '@fortawesome/fontawesome-free/css/all.min.css';
 
 * {
   margin: 0;
@@ -27,51 +26,6 @@ html {
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 24px;
-}
-
-/* ============================================
-   NAVBAR - COMPACT ON MOBILE
-   ============================================ */
-.navbar {
-  background: rgba(26, 26, 26, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
-  padding: 15px 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.nav-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.nav-links {
-  display: flex;
-  gap: 45px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.nav-link {
-  background: none;
-  border: none;
-  color: #F2F2F2;
-  font-size: 15px;
-  cursor: pointer;
-  transition: all 0.3s;
-  font-family: 'Cinzel', serif;
-  font-weight: 500;
-  letter-spacing: 1px;
-  text-decoration: none;
-  padding: 5px 0;
-}
-
-.nav-link:hover {
-  color: #D4AF37;
-  transform: translateY(-2px);
 }
 
 /* ============================================
@@ -128,6 +82,50 @@ html {
 }
 
 /* ============================================
+   NAVBAR
+   ============================================ */
+.navbar {
+  background: rgba(26, 26, 26, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+  padding: 12px 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.nav-links {
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.nav-link {
+  background: none;
+  border: none;
+  color: #F2F2F2;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: 'Cinzel', serif;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  color: #D4AF37;
+  transform: translateY(-2px);
+}
+
+/* ============================================
    HERO SECTION
    ============================================ */
 .hero {
@@ -152,8 +150,8 @@ html {
 }
 
 .logo-centered-img {
-  width: 400px;
-  height: 400px;
+  width: 350px;
+  height: 350px;
   object-fit: contain;
   border-radius: 30px;
   transition: transform 0.3s;
@@ -164,14 +162,14 @@ html {
 }
 
 .logo-centered-fallback {
-  width: 400px;
-  height: 400px;
+  width: 350px;
+  height: 350px;
   background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
   border-radius: 30px;
   display: none;
   align-items: center;
   justify-content: center;
-  font-size: 100px;
+  font-size: 80px;
   font-weight: bold;
   color: #1A1A1A;
   font-family: 'Cinzel', serif;
@@ -284,7 +282,7 @@ html {
   display: none;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: bold;
   color: #1A1A1A;
 }
@@ -838,6 +836,7 @@ html {
   margin-bottom: 30px;
   border-bottom: 1px solid #D4AF37;
   padding-bottom: 15px;
+  flex-wrap: wrap;
 }
 
 .tab-btn {
@@ -896,6 +895,32 @@ html {
 
 .upload-label:hover {
   transform: scale(1.02);
+}
+
+.url-input-group {
+  display: flex;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.url-input-group .form-input {
+  flex: 1;
+}
+
+.url-input-group .btn-secondary {
+  padding: 12px 20px;
+  white-space: nowrap;
+  background: transparent;
+  border: 1px solid #D4AF37;
+  color: #D4AF37;
+  border-radius: 50px;
+  cursor: pointer;
+}
+
+.image-size-hint {
+  color: #B8B0A8;
+  font-size: 12px;
+  margin: 10px 0;
 }
 
 .image-upload-area {
@@ -1047,7 +1072,7 @@ html {
 /* Partners Admin Grid */
 .partners-admin-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 20px;
   margin-top: 20px;
 }
@@ -1199,11 +1224,41 @@ html {
   font-size: 24px;
 }
 
+/* Form Status Messages */
+.form-success {
+  background: rgba(40, 167, 69, 0.2);
+  border: 1px solid #28a745;
+  color: #28a745;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.form-error {
+  background: rgba(220, 53, 69, 0.2);
+  border: 1px solid #dc3545;
+  color: #dc3545;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.form-sending {
+  background: rgba(212, 175, 55, 0.2);
+  border: 1px solid #D4AF37;
+  color: #D4AF37;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
 /* ============================================
-   RESPONSIVE DESIGN - COMPACT NAVBAR ON MOBILE
+   RESPONSIVE DESIGN
    ============================================ */
 
-/* Tablet */
 @media (max-width: 1024px) {
   .logo-centered-img, .logo-centered-fallback {
     width: 320px;
@@ -1214,9 +1269,7 @@ html {
   }
 }
 
-/* Tablet */
 @media (max-width: 768px) {
-  /* Navbar */
   .navbar {
     padding: 8px 0;
   }
@@ -1225,10 +1278,8 @@ html {
   }
   .nav-link {
     font-size: 12px;
-    letter-spacing: 0.5px;
   }
   
-  /* Logo */
   .logo-centered-img, .logo-centered-fallback {
     width: 280px;
     height: 280px;
@@ -1237,7 +1288,6 @@ html {
     font-size: 65px;
   }
   
-  /* Section Titles */
   .section-title {
     font-size: 36px;
   }
@@ -1245,7 +1295,6 @@ html {
     font-size: 16px;
   }
   
-  /* Buttons */
   .hero-buttons-centered {
     gap: 15px;
   }
@@ -1255,55 +1304,27 @@ html {
     min-width: 140px;
   }
   
-  /* Portfolio */
   .portfolio-grid {
     grid-template-columns: 1fr;
-    gap: 20px;
   }
-  .portfolio-img {
-    height: 250px;
-  }
-  
-  /* Services */
   .services-grid {
     grid-template-columns: 1fr;
-    gap: 20px;
   }
-  .service-card {
-    padding: 30px 25px;
-  }
-  .service-title {
-    font-size: 22px;
-  }
-  
-  /* Gallery */
   .gallery-grid {
     grid-template-columns: 1fr;
-    gap: 15px;
   }
-  .gallery-prev, .gallery-next {
-    width: 40px;
-    height: 40px;
-    font-size: 24px;
-  }
-  .gallery-prev { left: 10px; }
-  .gallery-next { right: 10px; }
   
-  /* Admin */
   .admin-tabs {
     flex-direction: column;
-    gap: 10px;
   }
   .tab-btn {
     width: 100%;
     text-align: center;
-    padding: 8px 15px;
   }
   .portfolio-admin-grid {
     grid-template-columns: 1fr;
   }
   
-  /* Hero */
   .hero {
     padding: 40px 0 60px;
     min-height: 75vh;
@@ -1312,32 +1333,22 @@ html {
     padding: 0 20px;
   }
   
-  /* Detail */
   .detail-header h1 {
     font-size: 36px;
   }
-  .detail-description {
-    font-size: 15px;
-  }
   
-  /* Clients */
   .client-card {
     min-width: 140px;
-    padding: 12px;
   }
   .client-logo-img, .client-logo-fallback {
     width: 110px;
     height: 60px;
-  }
-  .client-name {
-    font-size: 12px;
   }
   .clients-track {
     gap: 20px;
     animation-duration: 18s;
   }
   
-  /* Footer */
   .footer-social {
     gap: 18px;
   }
@@ -1346,44 +1357,16 @@ html {
     height: 45px;
     font-size: 22px;
   }
-  .footer-logo-text {
-    font-size: 24px;
-  }
-  .footer-contact {
-    font-size: 12px;
-  }
   
-  /* Admin Form */
-  .admin-form {
-    padding: 20px;
-  }
-  .admin-header h1 {
-    font-size: 28px;
-  }
-  .admin-header {
+  .url-input-group {
     flex-direction: column;
-    text-align: center;
   }
-  
-  /* Image Upload */
-  .image-previews-grid {
-    gap: 12px;
-  }
-  .image-preview-item {
-    width: 85px;
-    height: 85px;
-  }
-  
-  /* Image Manager */
-  .new-images-grid, .existing-images-grid {
-    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
-    gap: 12px;
+  .url-input-group .btn-secondary {
+    width: 100%;
   }
 }
 
-/* Mobile */
 @media (max-width: 576px) {
-  /* Navbar - Compact */
   .navbar {
     padding: 6px 0;
   }
@@ -1392,10 +1375,8 @@ html {
   }
   .nav-link {
     font-size: 10px;
-    letter-spacing: 0.3px;
   }
   
-  /* Logo */
   .logo-centered-img, .logo-centered-fallback {
     width: 240px;
     height: 240px;
@@ -1404,7 +1385,6 @@ html {
     font-size: 55px;
   }
   
-  /* Section Titles */
   .section-title {
     font-size: 30px;
   }
@@ -1412,7 +1392,6 @@ html {
     font-size: 14px;
   }
   
-  /* Buttons */
   .hero-buttons-centered {
     gap: 12px;
   }
@@ -1422,99 +1401,52 @@ html {
     min-width: 130px;
   }
   
-  /* Portfolio */
   .portfolio-img {
     height: 220px;
   }
   .portfolio-title {
     font-size: 20px;
   }
-  .portfolio-category {
-    font-size: 12px;
-  }
   
-  /* Services */
   .service-title {
     font-size: 20px;
-  }
-  .service-desc {
-    font-size: 13px;
   }
   .service-card {
     padding: 25px 20px;
   }
   
-  /* Detail */
   .detail-header h1 {
     font-size: 30px;
   }
-  .detail-description {
-    font-size: 14px;
-  }
-  .back-btn {
-    padding: 8px 20px;
-    font-size: 13px;
-  }
   
-  /* Footer */
   .footer-logo-text {
     font-size: 22px;
-  }
-  .footer-contact {
-    font-size: 11px;
   }
   .social-link {
     width: 42px;
     height: 42px;
     font-size: 20px;
   }
-  .footer-social {
-    gap: 15px;
-  }
   
-  /* Clients */
   .client-card {
     min-width: 120px;
-    padding: 10px;
   }
   .client-logo-img, .client-logo-fallback {
     width: 95px;
     height: 55px;
-    font-size: 18px;
-  }
-  .client-name {
-    font-size: 11px;
   }
   .clients-track {
     gap: 15px;
     animation-duration: 16s;
   }
   
-  /* Login Box */
   .login-box {
     padding: 30px 20px;
     margin: 0 15px;
   }
-  .login-box h2 {
-    font-size: 24px;
-  }
-  
-  /* Admin */
-  .admin-form h2 {
-    font-size: 22px;
-  }
-  .upload-label {
-    font-size: 13px;
-    padding: 10px 18px;
-  }
-  .admin-header h1 {
-    font-size: 24px;
-  }
 }
 
-/* Small Mobile */
 @media (max-width: 480px) {
-  /* Navbar - Minimal */
   .navbar {
     padding: 5px 0;
   }
@@ -1523,10 +1455,8 @@ html {
   }
   .nav-link {
     font-size: 9px;
-    letter-spacing: 0px;
   }
   
-  /* Logo */
   .logo-centered-img, .logo-centered-fallback {
     width: 200px;
     height: 200px;
@@ -1535,7 +1465,6 @@ html {
     font-size: 50px;
   }
   
-  /* Buttons */
   .hero-buttons-centered {
     gap: 10px;
   }
@@ -1545,26 +1474,22 @@ html {
     min-width: 120px;
   }
   
-  /* Portfolio */
   .portfolio-img {
     height: 200px;
   }
   
-  /* Gallery */
   .gallery-prev, .gallery-next {
     width: 35px;
     height: 35px;
     font-size: 20px;
   }
   
-  /* Clients */
   .client-card {
     min-width: 110px;
   }
   .client-logo-img, .client-logo-fallback {
     width: 85px;
     height: 50px;
-    font-size: 16px;
   }
   .clients-track {
     gap: 12px;
@@ -1572,9 +1497,7 @@ html {
   }
 }
 
-/* Very Small Mobile */
 @media (max-width: 400px) {
-  /* Navbar - Extra small */
   .navbar {
     padding: 4px 0;
   }
@@ -1585,7 +1508,6 @@ html {
     font-size: 8px;
   }
   
-  /* Logo */
   .logo-centered-img, .logo-centered-fallback {
     width: 180px;
     height: 180px;
@@ -1594,7 +1516,6 @@ html {
     font-size: 45px;
   }
   
-  /* Buttons - Stack vertically */
   .hero-buttons-centered {
     flex-direction: column;
     gap: 12px;
@@ -1604,26 +1525,16 @@ html {
     width: 80%;
     max-width: 200px;
     text-align: center;
-    padding: 10px 16px;
-    font-size: 13px;
   }
   
-  /* Section Titles */
   .section-title {
     font-size: 28px;
   }
   
-  /* Portfolio */
-  .portfolio-title {
-    font-size: 18px;
-  }
-  
-  /* Detail */
   .detail-header h1 {
     font-size: 26px;
   }
   
-  /* Footer */
   .footer-social {
     gap: 12px;
   }
@@ -1633,178 +1544,15 @@ html {
     font-size: 18px;
   }
   
-  /* Clients */
   .client-card {
     min-width: 100px;
-    padding: 8px;
   }
   .client-logo-img, .client-logo-fallback {
     width: 80px;
     height: 45px;
   }
-  .client-name {
-    font-size: 10px;
-  }
   .clients-track {
     gap: 10px;
     animation-duration: 12s;
   }
-}
-
-/* Extra Small */
-@media (max-width: 360px) {
-  /* Navbar - Tiny */
-  .navbar {
-    padding: 3px 0;
-  }
-  .nav-links {
-    gap: 6px;
-  }
-  .nav-link {
-    font-size: 7px;
-  }
-  
-  /* Logo */
-  .logo-centered-img, .logo-centered-fallback {
-    width: 160px;
-    height: 160px;
-  }
-  .logo-centered-fallback {
-    font-size: 40px;
-  }
-  
-  /* Section Titles */
-  .section-title {
-    font-size: 24px;
-  }
-  
-  /* Buttons */
-  .btn-primary, .btn-secondary {
-    font-size: 11px;
-    padding: 8px 12px;
-  }
-}
-/* ============================================
-   ULTRA COMPACT NAVBAR FOR MOBILE
-   ============================================ */
-
-/* Mobile - Ultra compact */
-@media (max-width: 768px) {
-  .navbar {
-    padding: 5px 0;
-  }
-  .nav-links {
-    gap: 12px;
-  }
-  .nav-link {
-    font-size: 10px;
-    letter-spacing: 0px;
-  }
-}
-
-@media (max-width: 576px) {
-  .navbar {
-    padding: 4px 0;
-  }
-  .nav-links {
-    gap: 10px;
-  }
-  .nav-link {
-    font-size: 9px;
-  }
-}
-
-@media (max-width: 480px) {
-  .navbar {
-    padding: 3px 0;
-  }
-  .nav-links {
-    gap: 8px;
-  }
-  .nav-link {
-    font-size: 8px;
-  }
-}
-
-@media (max-width: 400px) {
-  .navbar {
-    padding: 2px 0;
-  }
-  .nav-links {
-    gap: 6px;
-  }
-  .nav-link {
-    font-size: 7px;
-  }
-}
-/* ============================================
-   FORM STATUS MESSAGES FOR EMAILJS
-   ============================================ */
-
-.form-success {
-  background: rgba(40, 167, 69, 0.2);
-  border: 1px solid #28a745;
-  color: #28a745;
-  padding: 12px;
-  border-radius: 8px;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.form-error {
-  background: rgba(220, 53, 69, 0.2);
-  border: 1px solid #dc3545;
-  color: #dc3545;
-  padding: 12px;
-  border-radius: 8px;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.form-sending {
-  background: rgba(212, 175, 55, 0.2);
-  border: 1px solid #D4AF37;
-  color: #D4AF37;
-  padding: 12px;
-  border-radius: 8px;
-  text-align: center;
-  margin-bottom: 20px;
-}
-/* Image size hint */
-.image-size-hint {
-  color: #B8B0A8;
-  font-size: 11px;
-  margin-top: 5px;
-  margin-bottom: 10px;
-}
-
-/* Form status messages */
-.form-success {
-  background: rgba(40, 167, 69, 0.2);
-  border: 1px solid #28a745;
-  color: #28a745;
-  padding: 12px;
-  border-radius: 8px;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.form-error {
-  background: rgba(220, 53, 69, 0.2);
-  border: 1px solid #dc3545;
-  color: #dc3545;
-  padding: 12px;
-  border-radius: 8px;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.form-sending {
-  background: rgba(212, 175, 55, 0.2);
-  border: 1px solid #D4AF37;
-  color: #D4AF37;
-  padding: 12px;
-  border-radius: 8px;
-  text-align: center;
-  margin-bottom: 20px;
 }

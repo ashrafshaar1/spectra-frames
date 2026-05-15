@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import './App.css';
 
 // Gallery Modal Component
@@ -29,7 +30,6 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
     refreshPortfolios();
   }, []);
 
-  // Form state for contact form
   const [formStatus, setFormStatus] = useState('');
   const [formData, setFormData] = useState({
     name: '',
@@ -144,7 +144,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
             {portfolios.map((item) => (
               <Link to={`/portfolio/${item.id}`} key={item.id} className="portfolio-card-link">
                 <div className="portfolio-card">
-                  <img src={item.coverImage || item.images?.[0]} alt={item.title} className="portfolio-img" />
+                  <img src={item.coverImage || item.imageUrl || item.images?.[0]} alt={item.title} className="portfolio-img" />
                   <div className="portfolio-overlay">
                     <div className="portfolio-info">
                       <span className="portfolio-category">{item.category}</span>
@@ -281,7 +281,7 @@ function PortfolioDetail() {
   if (loading) return <div className="loading">Loading...</div>;
   if (!item) return <div className="loading">Project not found</div>;
 
-  const images = item.images || [item.coverImage];
+  const images = item.images || [item.coverImage || item.imageUrl];
 
   return (
     <div className="portfolio-detail">
@@ -333,8 +333,39 @@ function AdminPanel() {
   const [partnerFormData, setPartnerFormData] = useState({ name: '', logo: '' });
   const [partnerImagePreview, setPartnerImagePreview] = useState('');
   const [imageUrlInput, setImageUrlInput] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   const navigate = useNavigate();
+
+  // Upload image to server
+  const uploadToServer = async (base64Image) => {
+    try {
+      console.log('📤 Starting upload...');
+      
+      // Convert base64 to blob
+      const blob = await fetch(base64Image).then(r => r.blob());
+      console.log('📦 Blob size:', blob.size, 'bytes');
+      
+      const formData = new FormData();
+      formData.append('image', blob, 'image.jpg');
+      
+      const response = await axios.post('http://localhost:3001/api/upload-image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        }
+      });
+      
+      console.log('✅ Server response:', response.data);
+      
+      if (response.data && response.data.url) {
+        return response.data.url;
+      }
+      return null;
+    } catch (error) {
+      console.error('❌ Upload error:', error.response?.data || error.message);
+      return null;
+    }
+  };
 
   useEffect(() => {
     const loggedIn = localStorage.getItem('adminLoggedIn');
@@ -347,7 +378,17 @@ function AdminPanel() {
 
   const loadPortfolios = () => {
     const saved = JSON.parse(localStorage.getItem('spectra_portfolios') || '[]');
-    setPortfolios(saved);
+    if (saved.length === 0) {
+      const defaultPortfolios = [
+        { id: '1', title: 'Wedding Elegance', category: 'Wedding', description: 'Beautiful wedding moments captured with elegance', coverImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600', images: ['https://images.unsplash.com/photo-1519741497674-611481863552?w=600', 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600', 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600'] },
+        { id: '2', title: 'Urban Stories', category: 'Street', description: 'Street photography from around the world', coverImage: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600', images: ['https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600', 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600'] },
+        { id: '3', title: 'Natural Beauty', category: 'Landscape', description: 'Breathtaking landscapes and nature scenes', coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600', images: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600', 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600'] }
+      ];
+      localStorage.setItem('spectra_portfolios', JSON.stringify(defaultPortfolios));
+      setPortfolios(defaultPortfolios);
+    } else {
+      setPortfolios(saved);
+    }
   };
 
   const loadPartners = () => {
@@ -440,13 +481,32 @@ function AdminPanel() {
       return;
     }
     
+    setUploading(true);
+    
+    // Upload images to server
+    const uploadedUrls = [];
+    for (const img of tempImages) {
+      if (img.startsWith('http://') || img.startsWith('https://')) {
+        uploadedUrls.push(img);
+      } else {
+        const url = await uploadToServer(img);
+        if (url) {
+          uploadedUrls.push(url);
+        } else {
+          alert('Failed to upload one or more images. Please try again!');
+          setUploading(false);
+          return;
+        }
+      }
+    }
+    
     const newPortfolio = {
       id: Date.now().toString(),
       title: formData.title,
       category: formData.category,
       description: formData.description,
-      coverImage: tempImages[0],
-      images: [...tempImages],
+      coverImage: uploadedUrls[0],
+      images: uploadedUrls,
       createdAt: new Date().toISOString()
     };
     const updated = [...portfolios, newPortfolio];
@@ -455,7 +515,8 @@ function AdminPanel() {
     setFormData({ title: '', category: 'Wedding', description: '', images: [] });
     setTempImages([]);
     setImagePreviews([]);
-    alert(`Portfolio added successfully!`);
+    setUploading(false);
+    alert(`Portfolio added successfully! ${uploadedUrls.length} images uploaded.`);
   };
 
   const handleDeletePortfolio = (id) => {
@@ -508,18 +569,36 @@ function AdminPanel() {
     }
   };
 
-  const saveNewImagesToPortfolio = () => {
+  const saveNewImagesToPortfolio = async () => {
     if (newImagesForPortfolio.length === 0) {
       alert('Please add images first!');
       return;
+    }
+    
+    setUploading(true);
+    
+    const uploadedUrls = [];
+    for (const img of newImagesForPortfolio) {
+      if (img.startsWith('http://') || img.startsWith('https://')) {
+        uploadedUrls.push(img);
+      } else {
+        const url = await uploadToServer(img);
+        if (url) {
+          uploadedUrls.push(url);
+        } else {
+          alert('Failed to upload one or more images. Please try again!');
+          setUploading(false);
+          return;
+        }
+      }
     }
     
     const updatedPortfolios = portfolios.map(p => {
       if (p.id === currentPortfolio.id) {
         return {
           ...p,
-          images: [...p.images, ...newImagesForPortfolio],
-          coverImage: p.coverImage || p.images[0] || newImagesForPortfolio[0]
+          images: [...p.images, ...uploadedUrls],
+          coverImage: p.coverImage || p.images[0] || uploadedUrls[0]
         };
       }
       return p;
@@ -529,7 +608,8 @@ function AdminPanel() {
     localStorage.setItem('spectra_portfolios', JSON.stringify(updatedPortfolios));
     setNewImagesForPortfolio([]);
     setNewImagePreviews([]);
-    alert(`Images added successfully!`);
+    setUploading(false);
+    alert(`${uploadedUrls.length} images added successfully!`);
     loadPortfolios();
   };
 
@@ -645,16 +725,14 @@ function AdminPanel() {
                 <div className="image-upload-area">
                   <h3>Add Images</h3>
                   
-                  {/* Option 1: Upload from device */}
                   <label className="upload-label">📸 Upload from Device (Max 20MB each)
                     <input type="file" accept="image/*" multiple onChange={handleMultipleImageUpload} style={{ display: 'none' }} />
                   </label>
                   
-                  {/* Option 2: Enter image URL */}
                   <div className="url-input-group">
                     <input 
                       type="text" 
-                      placeholder="Or enter image URL (from Unsplash, ImgBB, etc.)" 
+                      placeholder="Or enter image URL (from Unsplash, etc.)" 
                       value={imageUrlInput}
                       onChange={(e) => setImageUrlInput(e.target.value)}
                       className="form-input"
@@ -662,7 +740,9 @@ function AdminPanel() {
                     <button type="button" onClick={addImageFromUrl} className="btn-secondary">Add URL</button>
                   </div>
                   
-                  <p className="image-size-hint">💡 Tip: Use Unsplash URLs for images that work on all devices</p>
+                  <p className="image-size-hint">💡 Tip: Images uploaded to server will be visible on all devices</p>
+                  
+                  {uploading && <div className="form-sending">⏳ Uploading images to server...</div>}
                   
                   {imagePreviews.length > 0 && (
                     <div className="image-previews-grid">
@@ -675,7 +755,7 @@ function AdminPanel() {
                     </div>
                   )}
                 </div>
-                <button type="submit" className="btn-primary">➕ Create Portfolio</button>
+                <button type="submit" className="btn-primary" disabled={uploading}>➕ Create Portfolio</button>
               </form>
             </div>
             <div className="admin-list">
@@ -737,22 +817,22 @@ function AdminPanel() {
               <div className="add-images-section">
                 <h3>Add New Images</h3>
                 
-                {/* Option 1: Upload from device */}
                 <label className="upload-label">📸 Upload from Device (Max 20MB each)
                   <input type="file" accept="image/*" multiple onChange={handleAddImagesToPortfolio} style={{ display: 'none' }} />
                 </label>
                 
-                {/* Option 2: Enter image URL */}
                 <div className="url-input-group">
                   <input 
                     type="text" 
-                    placeholder="Or enter image URL (from Unsplash, ImgBB, etc.)" 
+                    placeholder="Or enter image URL (from Unsplash, etc.)" 
                     value={imageUrlInput}
                     onChange={(e) => setImageUrlInput(e.target.value)}
                     className="form-input"
                   />
                   <button type="button" onClick={addImageUrlToManager} className="btn-secondary">Add URL</button>
                 </div>
+                
+                {uploading && <div className="form-sending">⏳ Uploading images to server...</div>}
                 
                 {newImagePreviews.length > 0 && (
                   <div className="new-images-preview">
@@ -762,7 +842,7 @@ function AdminPanel() {
                         <div key={idx} className="new-image-item"><img src={preview} alt={`New ${idx}`} /></div>
                       ))}
                     </div>
-                    <button onClick={saveNewImagesToPortfolio} className="btn-primary">💾 Save {newImagePreviews.length} Images</button>
+                    <button onClick={saveNewImagesToPortfolio} className="btn-primary" disabled={uploading}>💾 Save {newImagePreviews.length} Images</button>
                   </div>
                 )}
               </div>
