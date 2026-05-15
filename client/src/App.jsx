@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
 import './App.css';
 
-// API URL - ثابت لـ Render.com
+// API URL
 const API_URL = 'https://spectra-frames-api.onrender.com/api';
 
 // Gallery Modal Component
@@ -71,6 +71,11 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios, clients, ref
     }
   };
 
+  // Remove duplicates from clients array
+  const uniqueClients = clients.filter((client, index, self) => 
+    index === self.findIndex(c => c.id === client.id)
+  );
+
   return (
     <>
       <section id="home" className="hero">
@@ -95,26 +100,31 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios, clients, ref
             <h2 className="section-title">Our Partners</h2>
             <p className="section-subtitle">Trusted by leading brands worldwide</p>
           </div>
-          <div className="clients-slider">
-            <div className="clients-track">
-              {clients.map((client) => (
-                <div key={client.id} className="client-card">
-                  <img src={client.logo} alt={client.name} className="client-logo-img"
-                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-                  <div className="client-logo-fallback">{client.name.substring(0, 2)}</div>
-                  <p className="client-name">{client.name}</p>
-                </div>
-              ))}
-              {clients.map((client) => (
-                <div key={`dup-${client.id}`} className="client-card">
-                  <img src={client.logo} alt={client.name} className="client-logo-img"
-                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-                  <div className="client-logo-fallback">{client.name.substring(0, 2)}</div>
-                  <p className="client-name">{client.name}</p>
-                </div>
-              ))}
+          {uniqueClients && uniqueClients.length > 0 ? (
+            <div className="clients-slider">
+              <div className="clients-track">
+                {uniqueClients.map((client) => (
+                  <div key={client.id} className="client-card">
+                    <img 
+                      src={client.logo} 
+                      alt={client.name} 
+                      className="client-logo-img"
+                      onError={(e) => { 
+                        e.target.style.display = 'none'; 
+                        if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; 
+                      }} 
+                    />
+                    <div className="client-logo-fallback">{client.name.substring(0, 2)}</div>
+                    <p className="client-name">{client.name}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="no-clients-message">
+              <p>Loading partners...</p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -211,12 +221,11 @@ function PortfolioDetail() {
     fetch(`${API_URL}/portfolio/${id}`)
       .then(res => res.json())
       .then(data => {
-        console.log('Portfolio detail loaded:', data);
         setItem(data);
         setLoading(false);
       })
       .catch(err => {
-        console.error('Error loading portfolio detail:', err);
+        console.error(err);
         setLoading(false);
       });
   }, [id]);
@@ -284,12 +293,11 @@ function AdminPanel() {
 
   const navigate = useNavigate();
 
-  // Upload image to server
+  // Upload image to server - Same function used for Portfolio, Clients, and Partners
   const uploadToServer = async (base64Image) => {
     try {
-      console.log('📤 Starting upload to Render.com...');
+      console.log('📤 Uploading image to server...');
       const blob = await fetch(base64Image).then(r => r.blob());
-      console.log('📦 Blob size:', blob.size, 'bytes');
       const formData = new FormData();
       formData.append('image', blob, 'image.jpg');
       const response = await fetch(`${API_URL}/upload-image`, { method: 'POST', body: formData });
@@ -297,7 +305,7 @@ function AdminPanel() {
       console.log('✅ Server response:', data);
       if (data.url) {
         const finalUrl = data.url + '?raw=1';
-        console.log('📸 Final image URL:', finalUrl);
+        console.log('📸 Image URL:', finalUrl);
         return finalUrl;
       }
       return null;
@@ -311,10 +319,8 @@ function AdminPanel() {
     try {
       const res = await fetch(`${API_URL}/portfolio`);
       const data = await res.json();
-      console.log('📋 Loaded portfolios from server:', data);
       setPortfolios(data);
     } catch (err) {
-      console.error('Failed to load portfolios:', err);
       setPortfolios([]);
     }
   };
@@ -323,9 +329,10 @@ function AdminPanel() {
     try {
       const res = await fetch(`${API_URL}/partners`);
       const data = await res.json();
-      setPartners(data);
+      // Remove duplicates
+      const unique = data.filter((item, index, self) => index === self.findIndex(i => i.id === item.id));
+      setPartners(unique);
     } catch (err) {
-      console.error('Failed to load partners:', err);
       setPartners([]);
     }
   };
@@ -334,9 +341,10 @@ function AdminPanel() {
     try {
       const res = await fetch(`${API_URL}/clients`);
       const data = await res.json();
-      setClients(data);
+      // Remove duplicates
+      const unique = data.filter((item, index, self) => index === self.findIndex(i => i.id === item.id));
+      setClients(unique);
     } catch (err) {
-      console.error('Failed to load clients:', err);
       setClients([]);
     }
   };
@@ -347,19 +355,22 @@ function AdminPanel() {
       const data = await res.json();
       setInquiries(data);
     } catch (err) {
-      console.error('Failed to load inquiries:', err);
       setInquiries([]);
     }
+  };
+
+  const refreshAllData = () => {
+    loadPortfolios();
+    loadPartners();
+    loadClients();
+    loadInquiries();
   };
 
   useEffect(() => {
     const loggedIn = localStorage.getItem('adminLoggedIn');
     if (loggedIn === 'true') {
       setIsLoggedIn(true);
-      loadPortfolios();
-      loadPartners();
-      loadClients();
-      loadInquiries();
+      refreshAllData();
     }
   }, []);
 
@@ -368,10 +379,7 @@ function AdminPanel() {
     if (password === 'admin123') {
       setIsLoggedIn(true);
       localStorage.setItem('adminLoggedIn', 'true');
-      loadPortfolios();
-      loadPartners();
-      loadClients();
-      loadInquiries();
+      refreshAllData();
     } else {
       alert('Wrong password! Use: admin123');
     }
@@ -475,8 +483,6 @@ function AdminPanel() {
       setTempImages([]);
       setImagePreviews([]);
       loadPortfolios();
-    } else {
-      alert('Failed to save portfolio');
     }
     setUploading(false);
   };
@@ -618,8 +624,13 @@ function AdminPanel() {
     
     let logoUrl = partnerFormData.logo;
     if (!logoUrl.startsWith('http')) {
-      const url = await uploadToServer(logoUrl);
-      if (url) logoUrl = url;
+      const uploadedUrl = await uploadToServer(logoUrl);
+      if (uploadedUrl) {
+        logoUrl = uploadedUrl;
+      } else {
+        alert('Failed to upload logo');
+        return;
+      }
     }
     
     const res = await fetch(`${API_URL}/partners`, {
@@ -633,13 +644,18 @@ function AdminPanel() {
       setPartnerFormData({ name: '', logo: '' });
       setPartnerImagePreview('');
       loadPartners();
+      loadClients();
     }
   };
 
   const handleDeletePartner = async (id) => {
     if (window.confirm('Delete this partner?')) {
       const res = await fetch(`${API_URL}/partners/${id}`, { method: 'DELETE' });
-      if (res.ok) { alert('Deleted!'); loadPartners(); }
+      if (res.ok) { 
+        alert('Deleted!');
+        loadPartners();
+        loadClients();
+      }
     }
   };
 
@@ -668,8 +684,13 @@ function AdminPanel() {
     
     let logoUrl = clientFormData.logo;
     if (!logoUrl.startsWith('http')) {
-      const url = await uploadToServer(logoUrl);
-      if (url) logoUrl = url;
+      const uploadedUrl = await uploadToServer(logoUrl);
+      if (uploadedUrl) {
+        logoUrl = uploadedUrl;
+      } else {
+        alert('Failed to upload logo');
+        return;
+      }
     }
     
     const res = await fetch(`${API_URL}/clients`, {
@@ -683,13 +704,18 @@ function AdminPanel() {
       setClientFormData({ name: '', logo: '' });
       setClientImagePreview('');
       loadClients();
+      loadPartners();
     }
   };
 
   const handleDeleteClient = async (id) => {
     if (window.confirm('Delete this client?')) {
       const res = await fetch(`${API_URL}/clients/${id}`, { method: 'DELETE' });
-      if (res.ok) { alert('Deleted!'); loadClients(); }
+      if (res.ok) { 
+        alert('Deleted!');
+        loadClients();
+        loadPartners();
+      }
     }
   };
 
@@ -716,7 +742,10 @@ function AdminPanel() {
       <div className="container">
         <div className="admin-header">
           <h1>Admin Panel - Spectra Frames</h1>
-          <button onClick={handleLogout} className="btn-secondary">Logout</button>
+          <div>
+            <button onClick={refreshAllData} className="btn-secondary" style={{ marginRight: '10px' }}>Refresh</button>
+            <button onClick={handleLogout} className="btn-secondary">Logout</button>
+          </div>
         </div>
         <div className="admin-tabs">
           <button className={`tab-btn ${activeTab === 'portfolio' ? 'active' : ''}`} onClick={() => setActiveTab('portfolio')}>Portfolio ({portfolios.length})</button>
@@ -738,15 +767,14 @@ function AdminPanel() {
                 <textarea name="description" placeholder="Description" value={formData.description} onChange={handleInputChange} rows="3" className="form-textarea"></textarea>
                 <div className="image-upload-area">
                   <h3>Add Images</h3>
-                  <label className="upload-label">📸 Upload from Device (Max 50MB)
+                  <label className="upload-label">Upload from Device (Max 50MB)
                     <input type="file" accept="image/*" multiple onChange={handleMultipleImageUpload} style={{ display: 'none' }} />
                   </label>
                   <div className="url-input-group">
-                    <input type="text" placeholder="Or enter image URL (Unsplash, ImgBB, etc.)" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} className="form-input" />
+                    <input type="text" placeholder="Or enter image URL" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} className="form-input" />
                     <button type="button" onClick={addImageFromUrl} className="btn-secondary">Add URL</button>
                   </div>
-                  <p className="image-size-hint">💡 Images will be stored on server and visible on all devices</p>
-                  {uploading && <div className="form-sending">⏳ Uploading to server...</div>}
+                  {uploading && <div className="form-sending">Uploading...</div>}
                   {imagePreviews.length > 0 && (
                     <div className="image-previews-grid">
                       {imagePreviews.map((preview, idx) => (
@@ -758,7 +786,7 @@ function AdminPanel() {
                     </div>
                   )}
                 </div>
-                <button type="submit" className="btn-primary" disabled={uploading}>➕ Create Portfolio</button>
+                <button type="submit" className="btn-primary" disabled={uploading}>Create Portfolio</button>
               </form>
             </div>
             <div className="admin-list">
@@ -770,9 +798,9 @@ function AdminPanel() {
                     <div className="info">
                       <h3>{item.title}</h3>
                       <p>{item.category}</p>
-                      <p className="photos-count">📷 {item.images?.length || 0} photos</p>
-                      <button onClick={() => openImageManager(item)} className="edit-btn">🖼️ Manage Images</button>
-                      <button onClick={() => handleDeletePortfolio(item.id)} className="delete-btn">🗑 Delete</button>
+                      <p className="photos-count">{item.images?.length || 0} photos</p>
+                      <button onClick={() => openImageManager(item)} className="edit-btn">Manage Images</button>
+                      <button onClick={() => handleDeletePortfolio(item.id)} className="delete-btn">Delete</button>
                     </div>
                   </div>
                 ))}
@@ -788,7 +816,7 @@ function AdminPanel() {
               <form onSubmit={handleAddPartner}>
                 <input type="text" name="name" placeholder="Partner Name" value={partnerFormData.name} onChange={(e) => setPartnerFormData({ ...partnerFormData, name: e.target.value })} required className="form-input" />
                 <div className="image-upload-area">
-                  <label className="upload-label">🤝 Upload Logo (Max 5MB)
+                  <label className="upload-label">Upload Logo (Max 5MB)
                     <input type="file" accept="image/*" onChange={handlePartnerImageUpload} style={{ display: 'none' }} />
                   </label>
                   {partnerImagePreview && <div className="image-preview"><img src={partnerImagePreview} alt="Preview" /><button type="button" onClick={() => { setPartnerImagePreview(''); setPartnerFormData({ ...partnerFormData, logo: '' }); }}>Remove</button></div>}
@@ -797,12 +825,15 @@ function AdminPanel() {
               </form>
             </div>
             <div className="admin-list">
-              <h2>Partners</h2>
+              <h2>Partners ({partners.length})</h2>
               <div className="partners-admin-grid">
                 {partners.map(partner => (
                   <div key={partner.id} className="partner-admin-card">
                     <img src={partner.logo} alt={partner.name} />
-                    <div className="info"><h3>{partner.name}</h3><button onClick={() => handleDeletePartner(partner.id)} className="delete-btn">Delete</button></div>
+                    <div className="info">
+                      <h3>{partner.name}</h3>
+                      <button onClick={() => handleDeletePartner(partner.id)} className="delete-btn">Delete</button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -817,7 +848,7 @@ function AdminPanel() {
               <form onSubmit={handleAddClient}>
                 <input type="text" name="name" placeholder="Client Name" value={clientFormData.name} onChange={(e) => setClientFormData({ ...clientFormData, name: e.target.value })} required className="form-input" />
                 <div className="image-upload-area">
-                  <label className="upload-label">🎨 Upload Logo (Max 5MB)
+                  <label className="upload-label">Upload Logo (Max 5MB)
                     <input type="file" accept="image/*" onChange={handleClientImageUpload} style={{ display: 'none' }} />
                   </label>
                   {clientImagePreview && <div className="image-preview"><img src={clientImagePreview} alt="Preview" /><button type="button" onClick={() => { setClientImagePreview(''); setClientFormData({ ...clientFormData, logo: '' }); }}>Remove</button></div>}
@@ -826,12 +857,15 @@ function AdminPanel() {
               </form>
             </div>
             <div className="admin-list">
-              <h2>Clients Logos</h2>
+              <h2>Clients Logos ({clients.length})</h2>
               <div className="partners-admin-grid">
                 {clients.map(client => (
                   <div key={client.id} className="partner-admin-card">
                     <img src={client.logo} alt={client.name} />
-                    <div className="info"><h3>{client.name}</h3><button onClick={() => handleDeleteClient(client.id)} className="delete-btn">Delete</button></div>
+                    <div className="info">
+                      <h3>{client.name}</h3>
+                      <button onClick={() => handleDeleteClient(client.id)} className="delete-btn">Delete</button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -841,7 +875,7 @@ function AdminPanel() {
         
         {activeTab === 'inquiries' && (
           <div className="admin-list">
-            <h2>Contact Inquiries</h2>
+            <h2>Contact Inquiries ({inquiries.length})</h2>
             <div className="inquiries-list">
               {inquiries.map(inquiry => (
                 <div key={inquiry.id} className="inquiry-card">
@@ -853,7 +887,6 @@ function AdminPanel() {
                   <p><strong>Date:</strong> {new Date(inquiry.createdAt).toLocaleString()}</p>
                 </div>
               ))}
-              {inquiries.length === 0 && <p>No inquiries yet.</p>}
             </div>
           </div>
         )}
@@ -869,21 +902,21 @@ function AdminPanel() {
             <div className="image-manager-body">
               <div className="add-images-section">
                 <h3>Add New Images</h3>
-                <label className="upload-label">📸 Upload from Device (Max 50MB)
+                <label className="upload-label">Upload from Device (Max 50MB)
                   <input type="file" accept="image/*" multiple onChange={handleAddImagesToPortfolio} style={{ display: 'none' }} />
                 </label>
                 <div className="url-input-group">
                   <input type="text" placeholder="Or enter image URL" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} className="form-input" />
                   <button type="button" onClick={addImageUrlToManager} className="btn-secondary">Add URL</button>
                 </div>
-                {uploading && <div className="form-sending">⏳ Uploading...</div>}
+                {uploading && <div className="form-sending">Uploading...</div>}
                 {newImagePreviews.length > 0 && (
                   <div className="new-images-preview">
                     <h4>New images to add:</h4>
                     <div className="new-images-grid">
                       {newImagePreviews.map((preview, idx) => <div key={idx} className="new-image-item"><img src={preview} alt="New" /></div>)}
                     </div>
-                    <button onClick={saveNewImagesToPortfolio} className="btn-primary" disabled={uploading}>💾 Save Images</button>
+                    <button onClick={saveNewImagesToPortfolio} className="btn-primary" disabled={uploading}>Save Images</button>
                   </div>
                 )}
               </div>
@@ -916,10 +949,8 @@ function App() {
     try {
       const res = await fetch(`${API_URL}/portfolio`);
       const data = await res.json();
-      console.log('📋 Main App - Loaded portfolios:', data);
       setPortfolios(data);
     } catch (err) {
-      console.error('Failed to load portfolios:', err);
       setPortfolios([]);
     }
   };
@@ -928,10 +959,10 @@ function App() {
     try {
       const res = await fetch(`${API_URL}/clients`);
       const data = await res.json();
-      console.log('🎨 Main App - Loaded clients:', data);
-      setClients(data);
+      // Remove duplicates
+      const unique = data.filter((item, index, self) => index === self.findIndex(i => i.id === item.id));
+      setClients(unique);
     } catch (err) {
-      console.error('Failed to load clients:', err);
       setClients([]);
     }
   };
