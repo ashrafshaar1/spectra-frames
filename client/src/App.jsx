@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import './App.css';
 
 // Gallery Modal Component
@@ -333,45 +332,9 @@ function AdminPanel() {
   const [newImagePreviews, setNewImagePreviews] = useState([]);
   const [partnerFormData, setPartnerFormData] = useState({ name: '', logo: '' });
   const [partnerImagePreview, setPartnerImagePreview] = useState('');
+  const [imageUrlInput, setImageUrlInput] = useState('');
 
   const navigate = useNavigate();
-
-  // ImgBB API Key - REGISTER at https://imgbb.com and get your API key
-  // After registration, go to https://api.imgbb.com to get your key
-  const IMGBB_API_KEY = '304d97251f2805f474c8c8e1f3409043'; // 🔴 استبدل هذا بمفتاح API حقك من ImgBB
-
-  // Upload image to ImgBB
-  const uploadToImgBB = async (base64Image) => {
-    try {
-      console.log('Starting upload to ImgBB...');
-      
-      // Remove the "data:image/...;base64," prefix
-      const base64Data = base64Image.split(',')[1];
-      
-      const formData = new FormData();
-      formData.append('image', base64Data);
-      formData.append('key', IMGBB_API_KEY);
-      
-      const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        }
-      });
-      
-      console.log('ImgBB response:', response.data);
-      
-      if (response.data && response.data.data && response.data.data.url) {
-        console.log('Upload successful! URL:', response.data.data.url);
-        return response.data.data.url;
-      } else {
-        console.error('Upload failed - no URL in response');
-        return null;
-      }
-    } catch (error) {
-      console.error('ImgBB upload error:', error.response?.data || error.message);
-      return null;
-    }
-  };
 
   useEffect(() => {
     const loggedIn = localStorage.getItem('adminLoggedIn');
@@ -446,6 +409,17 @@ function AdminPanel() {
     });
   };
 
+  const addImageFromUrl = () => {
+    if (imageUrlInput && imageUrlInput.trim() !== '') {
+      setTempImages([...tempImages, imageUrlInput]);
+      setImagePreviews([...imagePreviews, imageUrlInput]);
+      setImageUrlInput('');
+      alert('Image URL added!');
+    } else {
+      alert('Please enter a valid image URL');
+    }
+  };
+
   const removeTempImage = (index) => {
     const newTemp = [...tempImages];
     const newPreviews = [...imagePreviews];
@@ -462,20 +436,8 @@ function AdminPanel() {
       return;
     }
     if (tempImages.length === 0) {
-      alert('Please upload at least one image!');
+      alert('Please add at least one image (upload or enter URL)!');
       return;
-    }
-    
-    // Upload all images to ImgBB
-    const uploadedUrls = [];
-    for (const img of tempImages) {
-      const url = await uploadToImgBB(img);
-      if (url) {
-        uploadedUrls.push(url);
-      } else {
-        alert('Failed to upload one or more images to ImgBB. Please try again!');
-        return;
-      }
     }
     
     const newPortfolio = {
@@ -483,8 +445,8 @@ function AdminPanel() {
       title: formData.title,
       category: formData.category,
       description: formData.description,
-      coverImage: uploadedUrls[0],
-      images: uploadedUrls,
+      coverImage: tempImages[0],
+      images: [...tempImages],
       createdAt: new Date().toISOString()
     };
     const updated = [...portfolios, newPortfolio];
@@ -493,7 +455,7 @@ function AdminPanel() {
     setFormData({ title: '', category: 'Wedding', description: '', images: [] });
     setTempImages([]);
     setImagePreviews([]);
-    alert(`Portfolio added successfully! ${uploadedUrls.length} images uploaded to ImgBB.`);
+    alert(`Portfolio added successfully!`);
   };
 
   const handleDeletePortfolio = (id) => {
@@ -509,6 +471,7 @@ function AdminPanel() {
     setCurrentPortfolio(portfolio);
     setNewImagesForPortfolio([]);
     setNewImagePreviews([]);
+    setImageUrlInput('');
     setShowImageManager(true);
   };
 
@@ -534,30 +497,29 @@ function AdminPanel() {
     });
   };
 
-  const saveNewImagesToPortfolio = async () => {
-    if (newImagesForPortfolio.length === 0) {
-      alert('Please select images to add!');
-      return;
+  const addImageUrlToManager = () => {
+    if (imageUrlInput && imageUrlInput.trim() !== '') {
+      setNewImagesForPortfolio([...newImagesForPortfolio, imageUrlInput]);
+      setNewImagePreviews([...newImagePreviews, imageUrlInput]);
+      setImageUrlInput('');
+      alert('Image URL added!');
+    } else {
+      alert('Please enter a valid image URL');
     }
-    
-    // Upload new images to ImgBB
-    const uploadedUrls = [];
-    for (const img of newImagesForPortfolio) {
-      const url = await uploadToImgBB(img);
-      if (url) {
-        uploadedUrls.push(url);
-      } else {
-        alert('Failed to upload one or more images to ImgBB. Please try again!');
-        return;
-      }
+  };
+
+  const saveNewImagesToPortfolio = () => {
+    if (newImagesForPortfolio.length === 0) {
+      alert('Please add images first!');
+      return;
     }
     
     const updatedPortfolios = portfolios.map(p => {
       if (p.id === currentPortfolio.id) {
         return {
           ...p,
-          images: [...p.images, ...uploadedUrls],
-          coverImage: p.coverImage || p.images[0] || uploadedUrls[0]
+          images: [...p.images, ...newImagesForPortfolio],
+          coverImage: p.coverImage || p.images[0] || newImagesForPortfolio[0]
         };
       }
       return p;
@@ -567,7 +529,7 @@ function AdminPanel() {
     localStorage.setItem('spectra_portfolios', JSON.stringify(updatedPortfolios));
     setNewImagesForPortfolio([]);
     setNewImagePreviews([]);
-    alert(`${uploadedUrls.length} images added successfully!`);
+    alert(`Images added successfully!`);
     loadPortfolios();
   };
 
@@ -597,6 +559,7 @@ function AdminPanel() {
     setCurrentPortfolio(null);
     setNewImagesForPortfolio([]);
     setNewImagePreviews([]);
+    setImageUrlInput('');
   };
 
   const handlePartnerImageUpload = (e) => {
@@ -680,10 +643,27 @@ function AdminPanel() {
                 </select>
                 <textarea name="description" placeholder="Project Description" value={formData.description} onChange={handleInputChange} rows="3" className="form-textarea"></textarea>
                 <div className="image-upload-area">
-                  <label className="upload-label">📸 Upload Multiple Images (Max 20MB each)
+                  <h3>Add Images</h3>
+                  
+                  {/* Option 1: Upload from device */}
+                  <label className="upload-label">📸 Upload from Device (Max 20MB each)
                     <input type="file" accept="image/*" multiple onChange={handleMultipleImageUpload} style={{ display: 'none' }} />
                   </label>
-                  <p className="image-size-hint">Images will be uploaded to ImgBB and visible on all devices</p>
+                  
+                  {/* Option 2: Enter image URL */}
+                  <div className="url-input-group">
+                    <input 
+                      type="text" 
+                      placeholder="Or enter image URL (from Unsplash, ImgBB, etc.)" 
+                      value={imageUrlInput}
+                      onChange={(e) => setImageUrlInput(e.target.value)}
+                      className="form-input"
+                    />
+                    <button type="button" onClick={addImageFromUrl} className="btn-secondary">Add URL</button>
+                  </div>
+                  
+                  <p className="image-size-hint">💡 Tip: Use Unsplash URLs for images that work on all devices</p>
+                  
                   {imagePreviews.length > 0 && (
                     <div className="image-previews-grid">
                       {imagePreviews.map((preview, idx) => (
@@ -756,10 +736,24 @@ function AdminPanel() {
             <div className="image-manager-body">
               <div className="add-images-section">
                 <h3>Add New Images</h3>
-                <label className="upload-label">➕ Select Images to Add (Max 20MB each)
+                
+                {/* Option 1: Upload from device */}
+                <label className="upload-label">📸 Upload from Device (Max 20MB each)
                   <input type="file" accept="image/*" multiple onChange={handleAddImagesToPortfolio} style={{ display: 'none' }} />
                 </label>
-                <p className="image-size-hint">Images will be uploaded to ImgBB and visible on all devices</p>
+                
+                {/* Option 2: Enter image URL */}
+                <div className="url-input-group">
+                  <input 
+                    type="text" 
+                    placeholder="Or enter image URL (from Unsplash, ImgBB, etc.)" 
+                    value={imageUrlInput}
+                    onChange={(e) => setImageUrlInput(e.target.value)}
+                    className="form-input"
+                  />
+                  <button type="button" onClick={addImageUrlToManager} className="btn-secondary">Add URL</button>
+                </div>
+                
                 {newImagePreviews.length > 0 && (
                   <div className="new-images-preview">
                     <h4>New images to add:</h4>
