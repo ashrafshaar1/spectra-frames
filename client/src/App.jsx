@@ -338,11 +338,13 @@ function AdminPanel() {
 
   // ImgBB API Key - REGISTER at https://imgbb.com and get your API key
   // After registration, go to https://api.imgbb.com to get your key
-  const IMGBB_API_KEY = 'ab1c289a36c63f653e6ab3047f5b6bc4'; // 🔴 استبدل هذا بمفتاح API حقك من ImgBB
+  const IMGBB_API_KEY = '304d97251f2805f474c8c8e1f3409043'; // 🔴 استبدل هذا بمفتاح API حقك من ImgBB
 
   // Upload image to ImgBB
   const uploadToImgBB = async (base64Image) => {
     try {
+      console.log('Starting upload to ImgBB...');
+      
       // Remove the "data:image/...;base64," prefix
       const base64Data = base64Image.split(',')[1];
       
@@ -350,15 +352,23 @@ function AdminPanel() {
       formData.append('image', base64Data);
       formData.append('key', IMGBB_API_KEY);
       
-      const response = await axios.post('https://api.imgbb.com/1/upload', formData);
+      const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        }
+      });
       
-      if (response.data && response.data.data) {
+      console.log('ImgBB response:', response.data);
+      
+      if (response.data && response.data.data && response.data.data.url) {
+        console.log('Upload successful! URL:', response.data.data.url);
         return response.data.data.url;
       } else {
-        throw new Error('Upload failed');
+        console.error('Upload failed - no URL in response');
+        return null;
       }
     } catch (error) {
-      console.error('ImgBB upload error:', error);
+      console.error('ImgBB upload error:', error.response?.data || error.message);
       return null;
     }
   };
