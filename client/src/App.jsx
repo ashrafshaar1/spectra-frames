@@ -3,9 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } 
 import './App.css';
 import { FaFacebookF, FaInstagram, FaTiktok, FaWhatsapp } from 'react-icons/fa';
 
-// API URL
-const API_URL = 'https://spectra-frames-api.onrender.com/api';
-
 // Gallery Modal Component
 function GalleryModal({ images, currentIndex, onClose, onNext, onPrev }) {
   useEffect(() => {
@@ -29,15 +26,18 @@ function GalleryModal({ images, currentIndex, onClose, onNext, onPrev }) {
 
 // Home Page Component
 function HomePage({ scrollToSection, portfolios, refreshPortfolios, clients, refreshClients }) {
-  const [services, setServices] = useState([]);
+  const [services, setServices] = useState([
+    { id: '1', title: 'Wedding Photography', description: 'Capturing your special day with elegance and emotion' },
+    { id: '2', title: 'Portrait Sessions', description: 'Professional portraits and personal branding' },
+    { id: '3', title: 'Commercial', description: 'High-end product and corporate photography' },
+    { id: '4', title: 'Fine Art', description: 'Artistic and conceptual visual stories' },
+    { id: '5', title: 'Event Coverage', description: 'Corporate events and special occasions' },
+    { id: '6', title: 'Content Creation', description: 'Social media and marketing content' }
+  ]);
 
   useEffect(() => {
     refreshPortfolios();
     refreshClients();
-    fetch(`${API_URL}/services`)
-      .then(res => res.json())
-      .then(data => setServices(data))
-      .catch(err => console.error('Failed to load services:', err));
   }, []);
 
   const [formStatus, setFormStatus] = useState('');
@@ -57,25 +57,12 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios, clients, ref
     e.preventDefault();
     setFormStatus('sending');
     
-    try {
-      const response = await fetch(`${API_URL}/inquiries`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-      
-      if (response.ok) {
-        setFormStatus('success');
-        setFormData({ name: '', email: '', phone: '', service: 'Wedding Photography', message: '' });
-        setTimeout(() => setFormStatus(''), 5000);
-      } else {
-        setFormStatus('error');
-        setTimeout(() => setFormStatus(''), 5000);
-      }
-    } catch (error) {
-      setFormStatus('error');
+    // Simulate sending - just show success for now
+    setTimeout(() => {
+      setFormStatus('success');
+      setFormData({ name: '', email: '', phone: '', service: 'Wedding Photography', message: '' });
       setTimeout(() => setFormStatus(''), 5000);
-    }
+    }, 1000);
   };
 
   const uniqueClients = clients.filter((client, index, self) => 
@@ -205,55 +192,20 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios, clients, ref
   );
 }
 
-// Portfolio Detail Page - مع تحسين عرض الأخطاء وفحص ID
+// Portfolio Detail Page
 function PortfolioDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
-    const fetchPortfolio = async () => {
-      try {
-        console.log('🔍 Fetching portfolio with ID:', id);
-        console.log('📡 API URL:', `${API_URL}/portfolio/${id}`);
-        
-        const response = await fetch(`${API_URL}/portfolio/${id}`);
-        console.log('📡 Response status:', response.status);
-        
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error(`Portfolio with ID "${id}" not found on server`);
-          }
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        console.log('✅ Portfolio data loaded:', data);
-        
-        if (!data || !data.id) {
-          throw new Error('Invalid portfolio data received');
-        }
-        
-        setItem(data);
-        setError(null);
-      } catch (err) {
-        console.error('❌ Error loading portfolio detail:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    if (id) {
-      fetchPortfolio();
-    } else {
-      setError('No portfolio ID provided');
-      setLoading(false);
-    }
+    const portfolios = JSON.parse(localStorage.getItem('spectra_portfolios') || '[]');
+    const found = portfolios.find(p => p.id === id);
+    setItem(found);
+    setLoading(false);
   }, [id]);
 
   const openGallery = (index) => {
@@ -265,35 +217,9 @@ function PortfolioDetail() {
   const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + (item?.images?.length || 1)) % (item?.images?.length || 1));
 
   if (loading) return <div className="loading">Loading...</div>;
-  
-  if (error) {
-    return (
-      <div className="portfolio-detail">
-        <div className="container">
-          <div className="loading" style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <p style={{ color: '#dc3545', marginBottom: '20px' }}>⚠️ Error: {error}</p>
-            <p style={{ color: '#B8B0A8', marginBottom: '30px' }}>The portfolio item you're looking for might have been deleted or the ID is incorrect.</p>
-            <button className="back-btn" onClick={() => navigate('/')}>← Back to Home</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
-  if (!item) {
-    return (
-      <div className="portfolio-detail">
-        <div className="container">
-          <div className="loading" style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <p style={{ color: '#D4AF37', marginBottom: '30px' }}>Project not found</p>
-            <button className="back-btn" onClick={() => navigate('/')}>← Back to Home</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (!item) return <div className="loading">Project not found</div>;
 
-  const images = item.images || (item.coverImage ? [item.coverImage] : []);
+  const images = item.images || [item.coverImage];
 
   return (
     <div className="portfolio-detail">
@@ -313,15 +239,7 @@ function PortfolioDetail() {
             </div>
           ))}
         </div>
-        {modalOpen && (
-          <GalleryModal 
-            images={images} 
-            currentIndex={currentImageIndex} 
-            onClose={() => setModalOpen(false)} 
-            onNext={nextImage} 
-            onPrev={prevImage} 
-          />
-        )}
+        {modalOpen && <GalleryModal images={images} currentIndex={currentImageIndex} onClose={() => setModalOpen(false)} onNext={nextImage} onPrev={prevImage} />}
       </div>
     </div>
   );
@@ -333,12 +251,18 @@ function AdminPanel() {
   const [partners, setPartners] = useState([]);
   const [clients, setClients] = useState([]);
   const [inquiries, setInquiries] = useState([]);
-  const [services, setServices] = useState([]);
+  const [services, setServices] = useState([
+    { id: '1', title: 'Wedding Photography', description: 'Capturing your special day with elegance and emotion' },
+    { id: '2', title: 'Portrait Sessions', description: 'Professional portraits and personal branding' },
+    { id: '3', title: 'Commercial', description: 'High-end product and corporate photography' },
+    { id: '4', title: 'Fine Art', description: 'Artistic and conceptual visual stories' },
+    { id: '5', title: 'Event Coverage', description: 'Corporate events and special occasions' },
+    { id: '6', title: 'Content Creation', description: 'Social media and marketing content' }
+  ]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState('portfolio');
   const [showImageManager, setShowImageManager] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState('');
   
   const [formData, setFormData] = useState({ title: '', category: 'Wedding', description: '', images: [] });
@@ -358,77 +282,42 @@ function AdminPanel() {
 
   const navigate = useNavigate();
 
-  const uploadToServer = async (base64Image) => {
-    try {
-      console.log('📤 Uploading image to server...');
-      const blob = await fetch(base64Image).then(r => r.blob());
-      const formData = new FormData();
-      formData.append('image', blob, 'image.jpg');
-      const response = await fetch(`${API_URL}/upload-image`, { method: 'POST', body: formData });
-      const data = await response.json();
-      console.log('✅ Server response:', data);
-      if (data.url) {
-        return data.url;
-      }
-      return null;
-    } catch (error) {
-      console.error('Upload error:', error);
-      return null;
+  const loadPortfolios = () => {
+    const saved = JSON.parse(localStorage.getItem('spectra_portfolios') || '[]');
+    setPortfolios(saved);
+  };
+
+  const loadPartners = () => {
+    const saved = JSON.parse(localStorage.getItem('spectra_partners') || '[]');
+    if (saved.length === 0) {
+      const defaultPartners = [
+        { id: '1', name: 'Luxury Hotel', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Luxury+Hotel' },
+        { id: '2', name: 'Fashion Brand', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Fashion+Brand' }
+      ];
+      localStorage.setItem('spectra_partners', JSON.stringify(defaultPartners));
+      setPartners(defaultPartners);
+    } else {
+      setPartners(saved);
     }
   };
 
-  const loadPortfolios = async () => {
-    try {
-      const res = await fetch(`${API_URL}/portfolio`);
-      const data = await res.json();
-      console.log('📋 Loaded portfolios:', data);
-      setPortfolios(data);
-    } catch (err) {
-      console.error('Failed to load portfolios:', err);
-      setPortfolios([]);
+  const loadClients = () => {
+    const saved = JSON.parse(localStorage.getItem('spectra_clients') || '[]');
+    if (saved.length === 0) {
+      const defaultClients = [
+        { id: '1', name: 'Luxury Hotel', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Luxury+Hotel' },
+        { id: '2', name: 'Fashion Brand', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Fashion+Brand' }
+      ];
+      localStorage.setItem('spectra_clients', JSON.stringify(defaultClients));
+      setClients(defaultClients);
+    } else {
+      setClients(saved);
     }
   };
 
-  const loadPartners = async () => {
-    try {
-      const res = await fetch(`${API_URL}/partners`);
-      const data = await res.json();
-      const unique = data.filter((item, index, self) => index === self.findIndex(i => i.id === item.id));
-      setPartners(unique);
-    } catch (err) {
-      setPartners([]);
-    }
-  };
-
-  const loadClients = async () => {
-    try {
-      const res = await fetch(`${API_URL}/clients`);
-      const data = await res.json();
-      const unique = data.filter((item, index, self) => index === self.findIndex(i => i.id === item.id));
-      setClients(unique);
-    } catch (err) {
-      setClients([]);
-    }
-  };
-
-  const loadInquiries = async () => {
-    try {
-      const res = await fetch(`${API_URL}/inquiries`);
-      const data = await res.json();
-      setInquiries(data);
-    } catch (err) {
-      setInquiries([]);
-    }
-  };
-
-  const loadServices = async () => {
-    try {
-      const res = await fetch(`${API_URL}/services`);
-      const data = await res.json();
-      setServices(data);
-    } catch (err) {
-      setServices([]);
-    }
+  const loadInquiries = () => {
+    const saved = JSON.parse(localStorage.getItem('spectra_inquiries') || '[]');
+    setInquiries(saved);
   };
 
   const refreshAllData = () => {
@@ -436,7 +325,6 @@ function AdminPanel() {
     loadPartners();
     loadClients();
     loadInquiries();
-    loadServices();
   };
 
   useEffect(() => {
@@ -508,7 +396,7 @@ function AdminPanel() {
     setImagePreviews(newPreviews);
   };
 
-  const handleAddPortfolio = async (e) => {
+  const handleAddPortfolio = (e) => {
     e.preventDefault();
     if (!formData.title) {
       alert('Please enter a title!');
@@ -519,57 +407,34 @@ function AdminPanel() {
       return;
     }
     
-    setUploading(true);
-    const uploadedUrls = [];
-    for (const img of tempImages) {
-      if (img.startsWith('http')) {
-        uploadedUrls.push(img);
-      } else {
-        const url = await uploadToServer(img);
-        if (url) {
-          uploadedUrls.push(url);
-        } else {
-          alert('Failed to upload image');
-          setUploading(false);
-          return;
-        }
-      }
-    }
+    const uploadedUrls = [...tempImages];
     
     const newPortfolio = {
+      id: Date.now().toString(),
       title: formData.title,
       category: formData.category,
       description: formData.description,
       coverImage: uploadedUrls[0],
-      images: uploadedUrls
+      images: uploadedUrls,
+      createdAt: new Date().toISOString()
     };
     
-    const res = await fetch(`${API_URL}/portfolio`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newPortfolio)
-    });
+    const updated = [...portfolios, newPortfolio];
+    setPortfolios(updated);
+    localStorage.setItem('spectra_portfolios', JSON.stringify(updated));
     
-    const data = await res.json();
-    console.log('Server response:', data);
-    
-    if (res.ok) {
-      alert('Portfolio added successfully!');
-      setFormData({ title: '', category: 'Wedding', description: '', images: [] });
-      setTempImages([]);
-      setImagePreviews([]);
-      loadPortfolios();
-    }
-    setUploading(false);
+    setFormData({ title: '', category: 'Wedding', description: '', images: [] });
+    setTempImages([]);
+    setImagePreviews([]);
+    alert('Portfolio added successfully!');
   };
 
-  const handleDeletePortfolio = async (id) => {
+  const handleDeletePortfolio = (id) => {
     if (window.confirm('Delete this portfolio?')) {
-      const res = await fetch(`${API_URL}/portfolio/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        alert('Deleted!');
-        loadPortfolios();
-      }
+      const updated = portfolios.filter(p => p.id !== id);
+      setPortfolios(updated);
+      localStorage.setItem('spectra_portfolios', JSON.stringify(updated));
+      alert('Deleted!');
     }
   };
 
@@ -612,59 +477,48 @@ function AdminPanel() {
     }
   };
 
-  const saveNewImagesToPortfolio = async () => {
+  const saveNewImagesToPortfolio = () => {
     if (newImagesForPortfolio.length === 0) {
       alert('No images to add!');
       return;
     }
     
-    setUploading(true);
-    const uploadedUrls = [];
-    for (const img of newImagesForPortfolio) {
-      if (img.startsWith('http')) {
-        uploadedUrls.push(img);
-      } else {
-        const url = await uploadToServer(img);
-        if (url) uploadedUrls.push(url);
-      }
-    }
-    
     const updatedPortfolio = {
       ...currentPortfolio,
-      images: [...currentPortfolio.images, ...uploadedUrls],
-      coverImage: currentPortfolio.coverImage || uploadedUrls[0]
+      images: [...currentPortfolio.images, ...newImagesForPortfolio],
+      coverImage: currentPortfolio.coverImage || newImagesForPortfolio[0]
     };
     
-    const res = await fetch(`${API_URL}/portfolio/${currentPortfolio.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedPortfolio)
-    });
+    const updatedPortfolios = portfolios.map(p => 
+      p.id === currentPortfolio.id ? updatedPortfolio : p
+    );
     
-    if (res.ok) {
-      alert('Images added!');
-      setNewImagesForPortfolio([]);
-      setNewImagePreviews([]);
-      setShowImageManager(false);
-      loadPortfolios();
-    }
-    setUploading(false);
+    setPortfolios(updatedPortfolios);
+    localStorage.setItem('spectra_portfolios', JSON.stringify(updatedPortfolios));
+    setNewImagesForPortfolio([]);
+    setNewImagePreviews([]);
+    setShowImageManager(false);
+    alert('Images added!');
   };
 
-  const deleteImageFromPortfolio = async (imageIndex) => {
+  const deleteImageFromPortfolio = (imageIndex) => {
     if (window.confirm('Delete this image?')) {
       const updatedImages = [...currentPortfolio.images];
       updatedImages.splice(imageIndex, 1);
-      const res = await fetch(`${API_URL}/portfolio/${currentPortfolio.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...currentPortfolio, images: updatedImages, coverImage: updatedImages[0] || '' })
-      });
-      if (res.ok) {
-        alert('Image deleted');
-        loadPortfolios();
-        setCurrentPortfolio({ ...currentPortfolio, images: updatedImages });
-      }
+      const updatedPortfolio = {
+        ...currentPortfolio,
+        images: updatedImages,
+        coverImage: updatedImages[0] || ''
+      };
+      
+      const updatedPortfolios = portfolios.map(p => 
+        p.id === currentPortfolio.id ? updatedPortfolio : p
+      );
+      
+      setPortfolios(updatedPortfolios);
+      localStorage.setItem('spectra_portfolios', JSON.stringify(updatedPortfolios));
+      setCurrentPortfolio(updatedPortfolio);
+      alert('Image deleted');
     }
   };
 
@@ -691,47 +545,30 @@ function AdminPanel() {
     }
   };
 
-  const handleAddPartner = async (e) => {
+  const handleAddPartner = (e) => {
     e.preventDefault();
     if (!partnerFormData.name || !partnerFormData.logo) {
       alert('Please fill name and logo!');
       return;
     }
     
-    let logoUrl = partnerFormData.logo;
-    if (!logoUrl.startsWith('http')) {
-      const uploadedUrl = await uploadToServer(logoUrl);
-      if (uploadedUrl) {
-        logoUrl = uploadedUrl;
-      } else {
-        alert('Failed to upload logo');
-        return;
-      }
-    }
-    
-    const res = await fetch(`${API_URL}/partners`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: partnerFormData.name, logo: logoUrl })
-    });
-    
-    if (res.ok) {
-      alert('Partner added!');
-      setPartnerFormData({ name: '', logo: '' });
-      setPartnerImagePreview('');
-      loadPartners();
-      loadClients();
-    }
+    const newPartner = { id: Date.now().toString(), name: partnerFormData.name, logo: partnerFormData.logo };
+    const updated = [...partners, newPartner];
+    setPartners(updated);
+    localStorage.setItem('spectra_partners', JSON.stringify(updated));
+    localStorage.setItem('spectra_clients', JSON.stringify(updated));
+    setPartnerFormData({ name: '', logo: '' });
+    setPartnerImagePreview('');
+    alert('Partner added!');
   };
 
-  const handleDeletePartner = async (id) => {
+  const handleDeletePartner = (id) => {
     if (window.confirm('Delete this partner?')) {
-      const res = await fetch(`${API_URL}/partners/${id}`, { method: 'DELETE' });
-      if (res.ok) { 
-        alert('Deleted!');
-        loadPartners();
-        loadClients();
-      }
+      const updated = partners.filter(p => p.id !== id);
+      setPartners(updated);
+      localStorage.setItem('spectra_partners', JSON.stringify(updated));
+      localStorage.setItem('spectra_clients', JSON.stringify(updated));
+      alert('Deleted!');
     }
   };
 
@@ -751,77 +588,52 @@ function AdminPanel() {
     }
   };
 
-  const handleAddClient = async (e) => {
+  const handleAddClient = (e) => {
     e.preventDefault();
     if (!clientFormData.name || !clientFormData.logo) {
       alert('Please fill name and logo!');
       return;
     }
     
-    let logoUrl = clientFormData.logo;
-    if (!logoUrl.startsWith('http')) {
-      const uploadedUrl = await uploadToServer(logoUrl);
-      if (uploadedUrl) {
-        logoUrl = uploadedUrl;
-      } else {
-        alert('Failed to upload logo');
-        return;
-      }
-    }
-    
-    const res = await fetch(`${API_URL}/clients`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: clientFormData.name, logo: logoUrl })
-    });
-    
-    if (res.ok) {
-      alert('Client added!');
-      setClientFormData({ name: '', logo: '' });
-      setClientImagePreview('');
-      loadClients();
-      loadPartners();
-    }
+    const newClient = { id: Date.now().toString(), name: clientFormData.name, logo: clientFormData.logo };
+    const updated = [...clients, newClient];
+    setClients(updated);
+    localStorage.setItem('spectra_clients', JSON.stringify(updated));
+    localStorage.setItem('spectra_partners', JSON.stringify(updated));
+    setClientFormData({ name: '', logo: '' });
+    setClientImagePreview('');
+    alert('Client added!');
   };
 
-  const handleDeleteClient = async (id) => {
+  const handleDeleteClient = (id) => {
     if (window.confirm('Delete this client?')) {
-      const res = await fetch(`${API_URL}/clients/${id}`, { method: 'DELETE' });
-      if (res.ok) { 
-        alert('Deleted!');
-        loadClients();
-        loadPartners();
-      }
+      const updated = clients.filter(c => c.id !== id);
+      setClients(updated);
+      localStorage.setItem('spectra_clients', JSON.stringify(updated));
+      localStorage.setItem('spectra_partners', JSON.stringify(updated));
+      alert('Deleted!');
     }
   };
 
-  const handleAddService = async (e) => {
+  const handleAddService = (e) => {
     e.preventDefault();
     if (!serviceFormData.title || !serviceFormData.description) {
       alert('Please fill title and description!');
       return;
     }
     
-    const res = await fetch(`${API_URL}/services`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(serviceFormData)
-    });
-    
-    if (res.ok) {
-      alert('Service added!');
-      setServiceFormData({ title: '', description: '' });
-      loadServices();
-    }
+    const newService = { id: Date.now().toString(), ...serviceFormData };
+    const updated = [...services, newService];
+    setServices(updated);
+    alert('Service added!');
+    setServiceFormData({ title: '', description: '' });
   };
 
-  const handleDeleteService = async (id) => {
+  const handleDeleteService = (id) => {
     if (window.confirm('Delete this service?')) {
-      const res = await fetch(`${API_URL}/services/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        alert('Deleted!');
-        loadServices();
-      }
+      const updated = services.filter(s => s.id !== id);
+      setServices(updated);
+      alert('Deleted!');
     }
   };
 
@@ -833,20 +645,15 @@ function AdminPanel() {
     });
   };
 
-  const handleUpdateService = async (e) => {
+  const handleUpdateService = (e) => {
     e.preventDefault();
-    const res = await fetch(`${API_URL}/services/${editingService.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editServiceForm)
-    });
-    
-    if (res.ok) {
-      alert('Service updated!');
-      setEditingService(null);
-      setEditServiceForm({ title: '', description: '' });
-      loadServices();
-    }
+    const updated = services.map(s => 
+      s.id === editingService.id ? { ...s, ...editServiceForm } : s
+    );
+    setServices(updated);
+    setEditingService(null);
+    setEditServiceForm({ title: '', description: '' });
+    alert('Service updated!');
   };
 
   const handleCancelEdit = () => {
@@ -907,10 +714,9 @@ function AdminPanel() {
                     <input type="file" accept="image/*" multiple onChange={handleMultipleImageUpload} style={{ display: 'none' }} />
                   </label>
                   <div className="url-input-group">
-                    <input type="text" placeholder="Or enter image URL" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} className="form-input" />
+                    <input type="text" placeholder="Or enter image URL (Unsplash, ImgBB, etc.)" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} className="form-input" />
                     <button type="button" onClick={addImageFromUrl} className="btn-secondary">Add URL</button>
                   </div>
-                  {uploading && <div className="form-sending">Uploading...</div>}
                   {imagePreviews.length > 0 && (
                     <div className="image-previews-grid">
                       {imagePreviews.map((preview, idx) => (
@@ -922,7 +728,7 @@ function AdminPanel() {
                     </div>
                   )}
                 </div>
-                <button type="submit" className="btn-primary" disabled={uploading}>Create Portfolio</button>
+                <button type="submit" className="btn-primary">Create Portfolio</button>
               </form>
             </div>
             <div className="admin-list">
@@ -1106,14 +912,13 @@ function AdminPanel() {
                   <input type="text" placeholder="Or enter image URL" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} className="form-input" />
                   <button type="button" onClick={addImageUrlToManager} className="btn-secondary">Add URL</button>
                 </div>
-                {uploading && <div className="form-sending">Uploading...</div>}
                 {newImagePreviews.length > 0 && (
                   <div className="new-images-preview">
                     <h4>New images to add:</h4>
                     <div className="new-images-grid">
                       {newImagePreviews.map((preview, idx) => <div key={idx} className="new-image-item"><img src={preview} alt="New" /></div>)}
                     </div>
-                    <button onClick={saveNewImagesToPortfolio} className="btn-primary" disabled={uploading}>Save Images</button>
+                    <button onClick={saveNewImagesToPortfolio} className="btn-primary">Save Images</button>
                   </div>
                 )}
               </div>
@@ -1142,26 +947,33 @@ function App() {
   const [portfolios, setPortfolios] = useState([]);
   const [clients, setClients] = useState([]);
 
-  const loadPortfolios = async () => {
-    try {
-      const res = await fetch(`${API_URL}/portfolio`);
-      const data = await res.json();
-      console.log('🏠 Main App - Portfolios:', data);
-      setPortfolios(data);
-    } catch (err) {
-      console.error('Failed to load portfolios:', err);
-      setPortfolios([]);
+  const loadPortfolios = () => {
+    const saved = JSON.parse(localStorage.getItem('spectra_portfolios') || '[]');
+    if (saved.length === 0) {
+      const defaultPortfolios = [
+        { id: '1', title: 'Wedding Elegance', category: 'Wedding', description: 'Beautiful wedding moments captured with elegance', coverImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600', images: ['https://images.unsplash.com/photo-1519741497674-611481863552?w=600'] },
+        { id: '2', title: 'Urban Stories', category: 'Street', description: 'Street photography from around the world', coverImage: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600', images: ['https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600'] },
+        { id: '3', title: 'Natural Beauty', category: 'Landscape', description: 'Breathtaking landscapes and nature scenes', coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600', images: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600'] }
+      ];
+      localStorage.setItem('spectra_portfolios', JSON.stringify(defaultPortfolios));
+      setPortfolios(defaultPortfolios);
+    } else {
+      setPortfolios(saved);
     }
   };
 
-  const loadClients = async () => {
-    try {
-      const res = await fetch(`${API_URL}/clients`);
-      const data = await res.json();
-      const unique = data.filter((item, index, self) => index === self.findIndex(i => i.id === item.id));
-      setClients(unique);
-    } catch (err) {
-      setClients([]);
+  const loadClients = () => {
+    const saved = JSON.parse(localStorage.getItem('spectra_clients') || '[]');
+    if (saved.length === 0) {
+      const defaultClients = [
+        { id: '1', name: 'Luxury Hotel', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Luxury+Hotel' },
+        { id: '2', name: 'Fashion Brand', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Fashion+Brand' },
+        { id: '3', name: 'Wedding Planner', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Wedding+Planner' }
+      ];
+      localStorage.setItem('spectra_clients', JSON.stringify(defaultClients));
+      setClients(defaultClients);
+    } else {
+      setClients(saved);
     }
   };
 
