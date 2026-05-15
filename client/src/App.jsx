@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import './App.css';
 
-// API URL - Render.com backend
+// API URL - ثابت لـ Render.com
 const API_URL = 'https://spectra-frames-api.onrender.com/api';
 
 // Gallery Modal Component
@@ -28,15 +27,17 @@ function GalleryModal({ images, currentIndex, onClose, onNext, onPrev }) {
 }
 
 // Home Page Component
-function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
+function HomePage({ scrollToSection, portfolios, refreshPortfolios, clients, refreshClients }) {
   useEffect(() => {
     refreshPortfolios();
+    refreshClients();
   }, []);
 
   const [formStatus, setFormStatus] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     service: 'Wedding Photography',
     message: ''
   });
@@ -50,45 +51,25 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
     setFormStatus('sending');
     
     try {
-      const response = await fetch('https://formsubmit.co/ajax/spectraframes.00@gmail.com', {
+      const response = await fetch(`${API_URL}/inquiries`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          service: formData.service,
-          message: formData.message,
-          _captcha: false,
-          _template: 'box',
-          _subject: `New message from ${formData.name} - Spectra Frames`
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
       });
       
       if (response.ok) {
         setFormStatus('success');
-        setFormData({ name: '', email: '', service: 'Wedding Photography', message: '' });
+        setFormData({ name: '', email: '', phone: '', service: 'Wedding Photography', message: '' });
         setTimeout(() => setFormStatus(''), 5000);
       } else {
         setFormStatus('error');
         setTimeout(() => setFormStatus(''), 5000);
       }
     } catch (error) {
-      console.error('Error sending message:', error);
       setFormStatus('error');
       setTimeout(() => setFormStatus(''), 5000);
     }
   };
-
-  const [clientLogos] = useState([
-    { id: 1, name: 'Luxury Hotel', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Luxury+Hotel' },
-    { id: 2, name: 'Fashion Brand', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Fashion+Brand' },
-    { id: 3, name: 'Wedding Planner', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Wedding+Planner' },
-    { id: 4, name: 'Real Estate', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Real+Estate' },
-    { id: 5, name: 'Magazine', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Magazine' },
-  ]);
 
   return (
     <>
@@ -116,7 +97,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
           </div>
           <div className="clients-slider">
             <div className="clients-track">
-              {clientLogos.map((client) => (
+              {clients.map((client) => (
                 <div key={client.id} className="client-card">
                   <img src={client.logo} alt={client.name} className="client-logo-img"
                     onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
@@ -124,7 +105,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
                   <p className="client-name">{client.name}</p>
                 </div>
               ))}
-              {clientLogos.map((client) => (
+              {clients.map((client) => (
                 <div key={`dup-${client.id}`} className="client-card">
                   <img src={client.logo} alt={client.name} className="client-logo-img"
                     onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
@@ -147,7 +128,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
             {portfolios.map((item) => (
               <Link to={`/portfolio/${item.id}`} key={item.id} className="portfolio-card-link">
                 <div className="portfolio-card">
-                  <img src={item.coverImage || item.imageUrl || item.images?.[0]} alt={item.title} className="portfolio-img" />
+                  <img src={item.coverImage || item.images?.[0]} alt={item.title} className="portfolio-img" />
                   <div className="portfolio-overlay">
                     <div className="portfolio-info">
                       <span className="portfolio-category">{item.category}</span>
@@ -194,55 +175,20 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
           </div>
           <div className="contact-wrapper">
             <form className="contact-form" onSubmit={handleSubmit}>
-              {formStatus === 'success' && (
-                <div className="form-success">✅ Message sent successfully! We'll contact you soon.</div>
-              )}
-              {formStatus === 'error' && (
-                <div className="form-error">❌ Something went wrong. Please try again.</div>
-              )}
-              {formStatus === 'sending' && (
-                <div className="form-sending">⏳ Sending message...</div>
-              )}
-              
-              <input 
-                type="text" 
-                name="name" 
-                placeholder="Your Name" 
-                value={formData.name} 
-                onChange={handleChange} 
-                required 
-                className="form-input" 
-              />
-              <input 
-                type="email" 
-                name="email" 
-                placeholder="Your Email" 
-                value={formData.email} 
-                onChange={handleChange} 
-                required 
-                className="form-input" 
-              />
-              <select 
-                name="service" 
-                value={formData.service} 
-                onChange={handleChange} 
-                className="form-select"
-              >
+              {formStatus === 'success' && <div className="form-success">✅ Message sent successfully!</div>}
+              {formStatus === 'error' && <div className="form-error">❌ Something went wrong.</div>}
+              {formStatus === 'sending' && <div className="form-sending">⏳ Sending...</div>}
+              <input type="text" name="name" placeholder="Your Name" value={formData.name} onChange={handleChange} required className="form-input" />
+              <input type="email" name="email" placeholder="Your Email" value={formData.email} onChange={handleChange} required className="form-input" />
+              <input type="tel" name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleChange} className="form-input" />
+              <select name="service" value={formData.service} onChange={handleChange} className="form-select">
                 <option>Wedding Photography</option>
                 <option>Portrait Session</option>
                 <option>Commercial Project</option>
                 <option>Event Coverage</option>
                 <option>Fine Art Commission</option>
               </select>
-              <textarea 
-                name="message" 
-                rows="4" 
-                placeholder="Tell us about your vision..." 
-                value={formData.message} 
-                onChange={handleChange} 
-                required 
-                className="form-textarea"
-              ></textarea>
+              <textarea name="message" rows="4" placeholder="Tell us about your vision..." value={formData.message} onChange={handleChange} required className="form-textarea"></textarea>
               <button type="submit" className="btn-submit">Send Message</button>
             </form>
           </div>
@@ -252,7 +198,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
   );
 }
 
-// Portfolio Detail Page with Gallery
+// Portfolio Detail Page
 function PortfolioDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -262,10 +208,17 @@ function PortfolioDetail() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
-    const portfolios = JSON.parse(localStorage.getItem('spectra_portfolios') || '[]');
-    const found = portfolios.find(p => p.id === id);
-    setItem(found);
-    setLoading(false);
+    fetch(`${API_URL}/portfolio/${id}`)
+      .then(res => res.json())
+      .then(data => {
+        console.log('Portfolio detail loaded:', data);
+        setItem(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error loading portfolio detail:', err);
+        setLoading(false);
+      });
   }, [id]);
 
   const openGallery = (index) => {
@@ -273,18 +226,13 @@ function PortfolioDetail() {
     setModalOpen(true);
   };
 
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % (item?.images?.length || 1));
-  };
-
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + (item?.images?.length || 1)) % (item?.images?.length || 1));
-  };
+  const nextImage = () => setCurrentImageIndex((prev) => (prev + 1) % (item?.images?.length || 1));
+  const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + (item?.images?.length || 1)) % (item?.images?.length || 1));
 
   if (loading) return <div className="loading">Loading...</div>;
   if (!item) return <div className="loading">Project not found</div>;
 
-  const images = item.images || [item.coverImage || item.imageUrl];
+  const images = item.images || [item.coverImage];
 
   return (
     <div className="portfolio-detail">
@@ -294,25 +242,17 @@ function PortfolioDetail() {
           <h1>{item.title}</h1>
           <span className="detail-category">{item.category}</span>
           <p className="detail-description">{item.description}</p>
-          <p className="detail-photos-count">{images.length} photos in this gallery</p>
+          <p className="detail-photos-count">{images.length} photos</p>
         </div>
         <div className="gallery-grid">
           {images.map((img, idx) => (
             <div key={idx} className="gallery-item" onClick={() => openGallery(idx)}>
               <img src={img} alt={`${item.title} ${idx + 1}`} />
-              {idx === 0 && images.length > 1 && <div className="gallery-overlay"><span>+{images.length - 1} more</span></div>}
+              {idx === 0 && images.length > 1 && <div className="gallery-overlay"><span>+{images.length - 1}</span></div>}
             </div>
           ))}
         </div>
-        {modalOpen && (
-          <GalleryModal 
-            images={images}
-            currentIndex={currentImageIndex}
-            onClose={() => setModalOpen(false)}
-            onNext={nextImage}
-            onPrev={prevImage}
-          />
-        )}
+        {modalOpen && <GalleryModal images={images} currentIndex={currentImageIndex} onClose={() => setModalOpen(false)} onNext={nextImage} onPrev={prevImage} />}
       </div>
     </div>
   );
@@ -322,10 +262,14 @@ function PortfolioDetail() {
 function AdminPanel() {
   const [portfolios, setPortfolios] = useState([]);
   const [partners, setPartners] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [inquiries, setInquiries] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState('portfolio');
   const [showImageManager, setShowImageManager] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [imageUrlInput, setImageUrlInput] = useState('');
   
   const [formData, setFormData] = useState({ title: '', category: 'Wedding', description: '', images: [] });
   const [tempImages, setTempImages] = useState([]);
@@ -335,39 +279,76 @@ function AdminPanel() {
   const [newImagePreviews, setNewImagePreviews] = useState([]);
   const [partnerFormData, setPartnerFormData] = useState({ name: '', logo: '' });
   const [partnerImagePreview, setPartnerImagePreview] = useState('');
-  const [imageUrlInput, setImageUrlInput] = useState('');
-  const [uploading, setUploading] = useState(false);
+  const [clientFormData, setClientFormData] = useState({ name: '', logo: '' });
+  const [clientImagePreview, setClientImagePreview] = useState('');
 
   const navigate = useNavigate();
 
-  // Upload image to Render.com server
+  // Upload image to server
   const uploadToServer = async (base64Image) => {
     try {
       console.log('📤 Starting upload to Render.com...');
-      
-      // Convert base64 to blob
-      const response = await fetch(base64Image);
-      const blob = await response.blob();
+      const blob = await fetch(base64Image).then(r => r.blob());
       console.log('📦 Blob size:', blob.size, 'bytes');
-      
       const formData = new FormData();
       formData.append('image', blob, 'image.jpg');
-      
-      const uploadResponse = await fetch(`${API_URL}/upload-image`, {
-        method: 'POST',
-        body: formData
-      });
-      
-      const data = await uploadResponse.json();
+      const response = await fetch(`${API_URL}/upload-image`, { method: 'POST', body: formData });
+      const data = await response.json();
       console.log('✅ Server response:', data);
-      
-      if (data && data.url) {
-        return data.url;
+      if (data.url) {
+        const finalUrl = data.url + '?raw=1';
+        console.log('📸 Final image URL:', finalUrl);
+        return finalUrl;
       }
       return null;
     } catch (error) {
-      console.error('❌ Upload error:', error);
+      console.error('Upload error:', error);
       return null;
+    }
+  };
+
+  const loadPortfolios = async () => {
+    try {
+      const res = await fetch(`${API_URL}/portfolio`);
+      const data = await res.json();
+      console.log('📋 Loaded portfolios from server:', data);
+      setPortfolios(data);
+    } catch (err) {
+      console.error('Failed to load portfolios:', err);
+      setPortfolios([]);
+    }
+  };
+
+  const loadPartners = async () => {
+    try {
+      const res = await fetch(`${API_URL}/partners`);
+      const data = await res.json();
+      setPartners(data);
+    } catch (err) {
+      console.error('Failed to load partners:', err);
+      setPartners([]);
+    }
+  };
+
+  const loadClients = async () => {
+    try {
+      const res = await fetch(`${API_URL}/clients`);
+      const data = await res.json();
+      setClients(data);
+    } catch (err) {
+      console.error('Failed to load clients:', err);
+      setClients([]);
+    }
+  };
+
+  const loadInquiries = async () => {
+    try {
+      const res = await fetch(`${API_URL}/inquiries`);
+      const data = await res.json();
+      setInquiries(data);
+    } catch (err) {
+      console.error('Failed to load inquiries:', err);
+      setInquiries([]);
     }
   };
 
@@ -377,38 +358,10 @@ function AdminPanel() {
       setIsLoggedIn(true);
       loadPortfolios();
       loadPartners();
+      loadClients();
+      loadInquiries();
     }
   }, []);
-
-  const loadPortfolios = () => {
-    const saved = JSON.parse(localStorage.getItem('spectra_portfolios') || '[]');
-    if (saved.length === 0) {
-      const defaultPortfolios = [
-        { id: '1', title: 'Wedding Elegance', category: 'Wedding', description: 'Beautiful wedding moments captured with elegance', coverImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600', images: ['https://images.unsplash.com/photo-1519741497674-611481863552?w=600', 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600', 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600'] },
-        { id: '2', title: 'Urban Stories', category: 'Street', description: 'Street photography from around the world', coverImage: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600', images: ['https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600', 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600'] },
-        { id: '3', title: 'Natural Beauty', category: 'Landscape', description: 'Breathtaking landscapes and nature scenes', coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600', images: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600', 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600'] }
-      ];
-      localStorage.setItem('spectra_portfolios', JSON.stringify(defaultPortfolios));
-      setPortfolios(defaultPortfolios);
-    } else {
-      setPortfolios(saved);
-    }
-  };
-
-  const loadPartners = () => {
-    const saved = JSON.parse(localStorage.getItem('spectra_partners') || '[]');
-    if (saved.length === 0) {
-      const defaultPartners = [
-        { id: '1', name: 'Luxury Hotel', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Luxury+Hotel' },
-        { id: '2', name: 'Fashion Brand', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Fashion+Brand' },
-        { id: '3', name: 'Wedding Planner', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Wedding+Planner' },
-      ];
-      localStorage.setItem('spectra_partners', JSON.stringify(defaultPartners));
-      setPartners(defaultPartners);
-    } else {
-      setPartners(saved);
-    }
-  };
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -417,6 +370,8 @@ function AdminPanel() {
       localStorage.setItem('adminLoggedIn', 'true');
       loadPortfolios();
       loadPartners();
+      loadClients();
+      loadInquiries();
     } else {
       alert('Wrong password! Use: admin123');
     }
@@ -437,8 +392,8 @@ function AdminPanel() {
     const newPreviews = [];
 
     files.forEach(file => {
-      if (file.size > 20 * 1024 * 1024) {
-        alert(`Image ${file.name} is too large! Maximum size is 20MB`);
+      if (file.size > 50 * 1024 * 1024) {
+        alert(`Image ${file.name} too large! Max 50MB`);
         return;
       }
       const reader = new FileReader();
@@ -460,8 +415,6 @@ function AdminPanel() {
       setImagePreviews([...imagePreviews, imageUrlInput]);
       setImageUrlInput('');
       alert('Image URL added!');
-    } else {
-      alert('Please enter a valid image URL');
     }
   };
 
@@ -481,23 +434,21 @@ function AdminPanel() {
       return;
     }
     if (tempImages.length === 0) {
-      alert('Please add at least one image (upload or enter URL)!');
+      alert('Please add at least one image!');
       return;
     }
     
     setUploading(true);
-    
-    // Upload images to server
     const uploadedUrls = [];
     for (const img of tempImages) {
-      if (img.startsWith('http://') || img.startsWith('https://')) {
+      if (img.startsWith('http')) {
         uploadedUrls.push(img);
       } else {
         const url = await uploadToServer(img);
         if (url) {
           uploadedUrls.push(url);
         } else {
-          alert('Failed to upload one or more images. Please try again!');
+          alert('Failed to upload image');
           setUploading(false);
           return;
         }
@@ -505,30 +456,38 @@ function AdminPanel() {
     }
     
     const newPortfolio = {
-      id: Date.now().toString(),
       title: formData.title,
       category: formData.category,
       description: formData.description,
       coverImage: uploadedUrls[0],
-      images: uploadedUrls,
-      createdAt: new Date().toISOString()
+      images: uploadedUrls
     };
-    const updated = [...portfolios, newPortfolio];
-    setPortfolios(updated);
-    localStorage.setItem('spectra_portfolios', JSON.stringify(updated));
-    setFormData({ title: '', category: 'Wedding', description: '', images: [] });
-    setTempImages([]);
-    setImagePreviews([]);
+    
+    const res = await fetch(`${API_URL}/portfolio`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newPortfolio)
+    });
+    
+    if (res.ok) {
+      alert('Portfolio added successfully!');
+      setFormData({ title: '', category: 'Wedding', description: '', images: [] });
+      setTempImages([]);
+      setImagePreviews([]);
+      loadPortfolios();
+    } else {
+      alert('Failed to save portfolio');
+    }
     setUploading(false);
-    alert(`Portfolio added successfully! ${uploadedUrls.length} images uploaded.`);
   };
 
-  const handleDeletePortfolio = (id) => {
-    if (window.confirm('Delete this portfolio and all its images?')) {
-      const updated = portfolios.filter(p => p.id !== id);
-      setPortfolios(updated);
-      localStorage.setItem('spectra_portfolios', JSON.stringify(updated));
-      alert('Portfolio deleted!');
+  const handleDeletePortfolio = async (id) => {
+    if (window.confirm('Delete this portfolio?')) {
+      const res = await fetch(`${API_URL}/portfolio/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        alert('Deleted!');
+        loadPortfolios();
+      }
     }
   };
 
@@ -545,8 +504,8 @@ function AdminPanel() {
     const newImages = [];
     const newPreviews = [];
     files.forEach(file => {
-      if (file.size > 20 * 1024 * 1024) {
-        alert(`Image ${file.name} is too large! Maximum size is 20MB`);
+      if (file.size > 50 * 1024 * 1024) {
+        alert(`Image ${file.name} too large!`);
         return;
       }
       const reader = new FileReader();
@@ -567,74 +526,63 @@ function AdminPanel() {
       setNewImagesForPortfolio([...newImagesForPortfolio, imageUrlInput]);
       setNewImagePreviews([...newImagePreviews, imageUrlInput]);
       setImageUrlInput('');
-      alert('Image URL added!');
-    } else {
-      alert('Please enter a valid image URL');
+      alert('URL added!');
     }
   };
 
   const saveNewImagesToPortfolio = async () => {
     if (newImagesForPortfolio.length === 0) {
-      alert('Please add images first!');
+      alert('No images to add!');
       return;
     }
     
     setUploading(true);
-    
     const uploadedUrls = [];
     for (const img of newImagesForPortfolio) {
-      if (img.startsWith('http://') || img.startsWith('https://')) {
+      if (img.startsWith('http')) {
         uploadedUrls.push(img);
       } else {
         const url = await uploadToServer(img);
-        if (url) {
-          uploadedUrls.push(url);
-        } else {
-          alert('Failed to upload one or more images. Please try again!');
-          setUploading(false);
-          return;
-        }
+        if (url) uploadedUrls.push(url);
       }
     }
     
-    const updatedPortfolios = portfolios.map(p => {
-      if (p.id === currentPortfolio.id) {
-        return {
-          ...p,
-          images: [...p.images, ...uploadedUrls],
-          coverImage: p.coverImage || p.images[0] || uploadedUrls[0]
-        };
-      }
-      return p;
+    const updatedPortfolio = {
+      ...currentPortfolio,
+      images: [...currentPortfolio.images, ...uploadedUrls],
+      coverImage: currentPortfolio.coverImage || uploadedUrls[0]
+    };
+    
+    const res = await fetch(`${API_URL}/portfolio/${currentPortfolio.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedPortfolio)
     });
     
-    setPortfolios(updatedPortfolios);
-    localStorage.setItem('spectra_portfolios', JSON.stringify(updatedPortfolios));
-    setNewImagesForPortfolio([]);
-    setNewImagePreviews([]);
+    if (res.ok) {
+      alert('Images added!');
+      setNewImagesForPortfolio([]);
+      setNewImagePreviews([]);
+      setShowImageManager(false);
+      loadPortfolios();
+    }
     setUploading(false);
-    alert(`${uploadedUrls.length} images added successfully!`);
-    loadPortfolios();
   };
 
-  const deleteImageFromPortfolio = (imageIndex) => {
-    if (window.confirm('Delete this image from the gallery?')) {
+  const deleteImageFromPortfolio = async (imageIndex) => {
+    if (window.confirm('Delete this image?')) {
       const updatedImages = [...currentPortfolio.images];
       updatedImages.splice(imageIndex, 1);
-      const updatedPortfolios = portfolios.map(p => {
-        if (p.id === currentPortfolio.id) {
-          return {
-            ...p,
-            images: updatedImages,
-            coverImage: updatedImages[0] || ''
-          };
-        }
-        return p;
+      const res = await fetch(`${API_URL}/portfolio/${currentPortfolio.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...currentPortfolio, images: updatedImages, coverImage: updatedImages[0] || '' })
       });
-      setPortfolios(updatedPortfolios);
-      localStorage.setItem('spectra_portfolios', JSON.stringify(updatedPortfolios));
-      setCurrentPortfolio({ ...currentPortfolio, images: updatedImages });
-      alert('Image deleted!');
+      if (res.ok) {
+        alert('Image deleted');
+        loadPortfolios();
+        setCurrentPortfolio({ ...currentPortfolio, images: updatedImages });
+      }
     }
   };
 
@@ -643,14 +591,13 @@ function AdminPanel() {
     setCurrentPortfolio(null);
     setNewImagesForPortfolio([]);
     setNewImagePreviews([]);
-    setImageUrlInput('');
   };
 
   const handlePartnerImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert('Logo too large! Maximum size is 5MB');
+        alert('Logo too large! Max 5MB');
         return;
       }
       const reader = new FileReader();
@@ -662,27 +609,87 @@ function AdminPanel() {
     }
   };
 
-  const handleAddPartner = (e) => {
+  const handleAddPartner = async (e) => {
     e.preventDefault();
     if (!partnerFormData.name || !partnerFormData.logo) {
-      alert('Please fill name and upload logo!');
+      alert('Please fill name and logo!');
       return;
     }
-    const newPartner = { id: Date.now().toString(), name: partnerFormData.name, logo: partnerFormData.logo };
-    const updated = [...partners, newPartner];
-    setPartners(updated);
-    localStorage.setItem('spectra_partners', JSON.stringify(updated));
-    setPartnerFormData({ name: '', logo: '' });
-    setPartnerImagePreview('');
-    alert('Partner added!');
+    
+    let logoUrl = partnerFormData.logo;
+    if (!logoUrl.startsWith('http')) {
+      const url = await uploadToServer(logoUrl);
+      if (url) logoUrl = url;
+    }
+    
+    const res = await fetch(`${API_URL}/partners`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: partnerFormData.name, logo: logoUrl })
+    });
+    
+    if (res.ok) {
+      alert('Partner added!');
+      setPartnerFormData({ name: '', logo: '' });
+      setPartnerImagePreview('');
+      loadPartners();
+    }
   };
 
-  const handleDeletePartner = (id) => {
+  const handleDeletePartner = async (id) => {
     if (window.confirm('Delete this partner?')) {
-      const updated = partners.filter(p => p.id !== id);
-      setPartners(updated);
-      localStorage.setItem('spectra_partners', JSON.stringify(updated));
-      alert('Partner deleted!');
+      const res = await fetch(`${API_URL}/partners/${id}`, { method: 'DELETE' });
+      if (res.ok) { alert('Deleted!'); loadPartners(); }
+    }
+  };
+
+  const handleClientImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Logo too large! Max 5MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setClientImagePreview(reader.result);
+        setClientFormData({ ...clientFormData, logo: reader.result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAddClient = async (e) => {
+    e.preventDefault();
+    if (!clientFormData.name || !clientFormData.logo) {
+      alert('Please fill name and logo!');
+      return;
+    }
+    
+    let logoUrl = clientFormData.logo;
+    if (!logoUrl.startsWith('http')) {
+      const url = await uploadToServer(logoUrl);
+      if (url) logoUrl = url;
+    }
+    
+    const res = await fetch(`${API_URL}/clients`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: clientFormData.name, logo: logoUrl })
+    });
+    
+    if (res.ok) {
+      alert('Client added!');
+      setClientFormData({ name: '', logo: '' });
+      setClientImagePreview('');
+      loadClients();
+    }
+  };
+
+  const handleDeleteClient = async (id) => {
+    if (window.confirm('Delete this client?')) {
+      const res = await fetch(`${API_URL}/clients/${id}`, { method: 'DELETE' });
+      if (res.ok) { alert('Deleted!'); loadClients(); }
     }
   };
 
@@ -694,7 +701,7 @@ function AdminPanel() {
             <button className="back-to-home" onClick={() => navigate('/')}>Back to Home</button>
             <h2>Admin Login</h2>
             <form onSubmit={handleLogin}>
-              <input type="password" placeholder="Enter Password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-input" />
+              <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-input" />
               <button type="submit" className="btn-primary">Login</button>
             </form>
             <p className="hint">Password: admin123</p>
@@ -714,8 +721,11 @@ function AdminPanel() {
         <div className="admin-tabs">
           <button className={`tab-btn ${activeTab === 'portfolio' ? 'active' : ''}`} onClick={() => setActiveTab('portfolio')}>Portfolio ({portfolios.length})</button>
           <button className={`tab-btn ${activeTab === 'partners' ? 'active' : ''}`} onClick={() => setActiveTab('partners')}>Partners ({partners.length})</button>
+          <button className={`tab-btn ${activeTab === 'clients' ? 'active' : ''}`} onClick={() => setActiveTab('clients')}>Clients ({clients.length})</button>
+          <button className={`tab-btn ${activeTab === 'inquiries' ? 'active' : ''}`} onClick={() => setActiveTab('inquiries')}>Inquiries ({inquiries.length})</button>
         </div>
-        {activeTab === 'portfolio' ? (
+        
+        {activeTab === 'portfolio' && (
           <>
             <div className="admin-form">
               <h2>Add New Portfolio Project</h2>
@@ -725,34 +735,23 @@ function AdminPanel() {
                   <option>Wedding</option><option>Portrait</option><option>Landscape</option><option>Street</option>
                   <option>Wildlife</option><option>Architecture</option><option>Event</option><option>Commercial</option>
                 </select>
-                <textarea name="description" placeholder="Project Description" value={formData.description} onChange={handleInputChange} rows="3" className="form-textarea"></textarea>
+                <textarea name="description" placeholder="Description" value={formData.description} onChange={handleInputChange} rows="3" className="form-textarea"></textarea>
                 <div className="image-upload-area">
                   <h3>Add Images</h3>
-                  
-                  <label className="upload-label">📸 Upload from Device (Max 20MB each)
+                  <label className="upload-label">📸 Upload from Device (Max 50MB)
                     <input type="file" accept="image/*" multiple onChange={handleMultipleImageUpload} style={{ display: 'none' }} />
                   </label>
-                  
                   <div className="url-input-group">
-                    <input 
-                      type="text" 
-                      placeholder="Or enter image URL (from Unsplash, etc.)" 
-                      value={imageUrlInput}
-                      onChange={(e) => setImageUrlInput(e.target.value)}
-                      className="form-input"
-                    />
+                    <input type="text" placeholder="Or enter image URL (Unsplash, ImgBB, etc.)" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} className="form-input" />
                     <button type="button" onClick={addImageFromUrl} className="btn-secondary">Add URL</button>
                   </div>
-                  
-                  <p className="image-size-hint">💡 Images uploaded to Render.com server will be visible on all devices</p>
-                  
-                  {uploading && <div className="form-sending">⏳ Uploading images to server...</div>}
-                  
+                  <p className="image-size-hint">💡 Images will be stored on server and visible on all devices</p>
+                  {uploading && <div className="form-sending">⏳ Uploading to server...</div>}
                   {imagePreviews.length > 0 && (
                     <div className="image-previews-grid">
                       {imagePreviews.map((preview, idx) => (
                         <div key={idx} className="image-preview-item">
-                          <img src={preview} alt={`Preview ${idx}`} />
+                          <img src={preview} alt="Preview" />
                           <button type="button" onClick={() => removeTempImage(idx)}>✖</button>
                         </div>
                       ))}
@@ -780,7 +779,9 @@ function AdminPanel() {
               </div>
             </div>
           </>
-        ) : (
+        )}
+        
+        {activeTab === 'partners' && (
           <>
             <div className="admin-form">
               <h2>Add Partner</h2>
@@ -790,7 +791,6 @@ function AdminPanel() {
                   <label className="upload-label">🤝 Upload Logo (Max 5MB)
                     <input type="file" accept="image/*" onChange={handlePartnerImageUpload} style={{ display: 'none' }} />
                   </label>
-                  <p className="image-size-hint">Maximum logo size: 5MB</p>
                   {partnerImagePreview && <div className="image-preview"><img src={partnerImagePreview} alt="Preview" /><button type="button" onClick={() => { setPartnerImagePreview(''); setPartnerFormData({ ...partnerFormData, logo: '' }); }}>Remove</button></div>}
                 </div>
                 <button type="submit" className="btn-primary">Add Partner</button>
@@ -809,7 +809,56 @@ function AdminPanel() {
             </div>
           </>
         )}
+        
+        {activeTab === 'clients' && (
+          <>
+            <div className="admin-form">
+              <h2>Add Client Logo</h2>
+              <form onSubmit={handleAddClient}>
+                <input type="text" name="name" placeholder="Client Name" value={clientFormData.name} onChange={(e) => setClientFormData({ ...clientFormData, name: e.target.value })} required className="form-input" />
+                <div className="image-upload-area">
+                  <label className="upload-label">🎨 Upload Logo (Max 5MB)
+                    <input type="file" accept="image/*" onChange={handleClientImageUpload} style={{ display: 'none' }} />
+                  </label>
+                  {clientImagePreview && <div className="image-preview"><img src={clientImagePreview} alt="Preview" /><button type="button" onClick={() => { setClientImagePreview(''); setClientFormData({ ...clientFormData, logo: '' }); }}>Remove</button></div>}
+                </div>
+                <button type="submit" className="btn-primary">Add Client</button>
+              </form>
+            </div>
+            <div className="admin-list">
+              <h2>Clients Logos</h2>
+              <div className="partners-admin-grid">
+                {clients.map(client => (
+                  <div key={client.id} className="partner-admin-card">
+                    <img src={client.logo} alt={client.name} />
+                    <div className="info"><h3>{client.name}</h3><button onClick={() => handleDeleteClient(client.id)} className="delete-btn">Delete</button></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+        
+        {activeTab === 'inquiries' && (
+          <div className="admin-list">
+            <h2>Contact Inquiries</h2>
+            <div className="inquiries-list">
+              {inquiries.map(inquiry => (
+                <div key={inquiry.id} className="inquiry-card">
+                  <p><strong>Name:</strong> {inquiry.name}</p>
+                  <p><strong>Email:</strong> {inquiry.email}</p>
+                  <p><strong>Phone:</strong> {inquiry.phone || '-'}</p>
+                  <p><strong>Service:</strong> {inquiry.serviceType}</p>
+                  <p><strong>Message:</strong> {inquiry.message}</p>
+                  <p><strong>Date:</strong> {new Date(inquiry.createdAt).toLocaleString()}</p>
+                </div>
+              ))}
+              {inquiries.length === 0 && <p>No inquiries yet.</p>}
+            </div>
+          </div>
+        )}
       </div>
+      
       {showImageManager && currentPortfolio && (
         <div className="image-manager-modal">
           <div className="image-manager-content">
@@ -820,33 +869,21 @@ function AdminPanel() {
             <div className="image-manager-body">
               <div className="add-images-section">
                 <h3>Add New Images</h3>
-                
-                <label className="upload-label">📸 Upload from Device (Max 20MB each)
+                <label className="upload-label">📸 Upload from Device (Max 50MB)
                   <input type="file" accept="image/*" multiple onChange={handleAddImagesToPortfolio} style={{ display: 'none' }} />
                 </label>
-                
                 <div className="url-input-group">
-                  <input 
-                    type="text" 
-                    placeholder="Or enter image URL (from Unsplash, etc.)" 
-                    value={imageUrlInput}
-                    onChange={(e) => setImageUrlInput(e.target.value)}
-                    className="form-input"
-                  />
+                  <input type="text" placeholder="Or enter image URL" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} className="form-input" />
                   <button type="button" onClick={addImageUrlToManager} className="btn-secondary">Add URL</button>
                 </div>
-                
-                {uploading && <div className="form-sending">⏳ Uploading images to server...</div>}
-                
+                {uploading && <div className="form-sending">⏳ Uploading...</div>}
                 {newImagePreviews.length > 0 && (
                   <div className="new-images-preview">
                     <h4>New images to add:</h4>
                     <div className="new-images-grid">
-                      {newImagePreviews.map((preview, idx) => (
-                        <div key={idx} className="new-image-item"><img src={preview} alt={`New ${idx}`} /></div>
-                      ))}
+                      {newImagePreviews.map((preview, idx) => <div key={idx} className="new-image-item"><img src={preview} alt="New" /></div>)}
                     </div>
-                    <button onClick={saveNewImagesToPortfolio} className="btn-primary" disabled={uploading}>💾 Save {newImagePreviews.length} Images</button>
+                    <button onClick={saveNewImagesToPortfolio} className="btn-primary" disabled={uploading}>💾 Save Images</button>
                   </div>
                 )}
               </div>
@@ -855,12 +892,11 @@ function AdminPanel() {
                 <div className="existing-images-grid">
                   {currentPortfolio.images?.map((img, idx) => (
                     <div key={idx} className="existing-image-item">
-                      <img src={img} alt={`Image ${idx + 1}`} />
+                      <img src={img} alt="Existing" />
                       <button onClick={() => deleteImageFromPortfolio(idx)} className="delete-image-btn">✖</button>
                     </div>
                   ))}
                 </div>
-                {(!currentPortfolio.images || currentPortfolio.images.length === 0) && <p className="no-images">No images yet. Add some above!</p>}
               </div>
             </div>
           </div>
@@ -874,24 +910,35 @@ function AdminPanel() {
 function App() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [portfolios, setPortfolios] = useState([]);
+  const [clients, setClients] = useState([]);
 
-  const loadPortfolios = () => {
-    const saved = JSON.parse(localStorage.getItem('spectra_portfolios') || '[]');
-    if (saved.length === 0) {
-      const defaultPortfolios = [
-        { id: '1', title: 'Wedding Elegance', category: 'Wedding', description: 'Beautiful wedding moments captured with elegance', coverImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600', images: ['https://images.unsplash.com/photo-1519741497674-611481863552?w=600', 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600', 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600'] },
-        { id: '2', title: 'Urban Stories', category: 'Street', description: 'Street photography from around the world', coverImage: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600', images: ['https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600', 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600'] },
-        { id: '3', title: 'Natural Beauty', category: 'Landscape', description: 'Breathtaking landscapes and nature scenes', coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600', images: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600', 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600'] }
-      ];
-      localStorage.setItem('spectra_portfolios', JSON.stringify(defaultPortfolios));
-      setPortfolios(defaultPortfolios);
-    } else {
-      setPortfolios(saved);
+  const loadPortfolios = async () => {
+    try {
+      const res = await fetch(`${API_URL}/portfolio`);
+      const data = await res.json();
+      console.log('📋 Main App - Loaded portfolios:', data);
+      setPortfolios(data);
+    } catch (err) {
+      console.error('Failed to load portfolios:', err);
+      setPortfolios([]);
+    }
+  };
+
+  const loadClients = async () => {
+    try {
+      const res = await fetch(`${API_URL}/clients`);
+      const data = await res.json();
+      console.log('🎨 Main App - Loaded clients:', data);
+      setClients(data);
+    } catch (err) {
+      console.error('Failed to load clients:', err);
+      setClients([]);
     }
   };
 
   useEffect(() => {
     loadPortfolios();
+    loadClients();
     const handleScroll = () => setShowScrollTop(window.scrollY > 300);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -899,7 +946,8 @@ function App() {
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
   const scrollToSection = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-  const refreshPortfolios = () => setPortfolios(JSON.parse(localStorage.getItem('spectra_portfolios') || '[]'));
+  const refreshPortfolios = () => loadPortfolios();
+  const refreshClients = () => loadClients();
 
   return (
     <Router>
@@ -907,7 +955,7 @@ function App() {
         {showScrollTop && <button onClick={scrollToTop} className="floating-scroll">↑</button>}
         <div className="admin-link"><Link to="/admin">Admin</Link></div>
         <Routes>
-          <Route path="/" element={<HomePage scrollToSection={scrollToSection} portfolios={portfolios} refreshPortfolios={refreshPortfolios} />} />
+          <Route path="/" element={<HomePage scrollToSection={scrollToSection} portfolios={portfolios} refreshPortfolios={refreshPortfolios} clients={clients} refreshClients={refreshClients} />} />
           <Route path="/portfolio/:id" element={<PortfolioDetail />} />
           <Route path="/admin" element={<AdminPanel />} />
         </Routes>
