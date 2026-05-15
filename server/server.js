@@ -24,7 +24,7 @@ if (!fs.existsSync(uploadsDir)) {
   console.log('✅ Uploads folder created:', uploadsDir);
 }
 
-// خدمة الصور
+// خدمة الصور - مهم جداً
 app.use('/uploads', express.static(uploadsDir));
 
 // تكوين multer
@@ -106,12 +106,12 @@ const defaultClients = [
 ];
 
 const defaultServices = [
-  { id: '1', title: 'Wedding Photography', description: 'Capturing your special day with elegance and emotion', icon: '💍', order: 1 },
-  { id: '2', title: 'Portrait Sessions', description: 'Professional portraits and personal branding', icon: '👤', order: 2 },
-  { id: '3', title: 'Commercial', description: 'High-end product and corporate photography', icon: '🏢', order: 3 },
-  { id: '4', title: 'Fine Art', description: 'Artistic and conceptual visual stories', icon: '🎨', order: 4 },
-  { id: '5', title: 'Event Coverage', description: 'Corporate events and special occasions', icon: '🎬', order: 5 },
-  { id: '6', title: 'Content Creation', description: 'Social media and marketing content', icon: '📱', order: 6 }
+  { id: '1', title: 'Wedding Photography', description: 'Capturing your special day with elegance and emotion', order: 1 },
+  { id: '2', title: 'Portrait Sessions', description: 'Professional portraits and personal branding', order: 2 },
+  { id: '3', title: 'Commercial', description: 'High-end product and corporate photography', order: 3 },
+  { id: '4', title: 'Fine Art', description: 'Artistic and conceptual visual stories', order: 4 },
+  { id: '5', title: 'Event Coverage', description: 'Corporate events and special occasions', order: 5 },
+  { id: '6', title: 'Content Creation', description: 'Social media and marketing content', order: 6 }
 ];
 
 // إنشاء الملفات لو مش موجودة
@@ -213,7 +213,7 @@ app.post('/api/inquiries', (req, res) => {
 // ========== رفع الصور ==========
 app.post('/api/upload-image', upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  const imageUrl = `${SERVER_URL}/uploads/${req.file.filename}?raw=1`;
+  const imageUrl = `${SERVER_URL}/uploads/${req.file.filename}`;
   console.log('✅ Image uploaded:', imageUrl);
   res.json({ success: true, url: imageUrl });
 });
@@ -222,7 +222,7 @@ app.post('/api/upload-multiple', upload.array('images', 50), (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: 'No files uploaded' });
   }
-  const urls = req.files.map(file => `${SERVER_URL}/uploads/${file.filename}?raw=1`);
+  const urls = req.files.map(file => `${SERVER_URL}/uploads/${file.filename}`);
   res.json({ success: true, urls: urls });
 });
 

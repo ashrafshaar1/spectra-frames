@@ -218,11 +218,12 @@ function PortfolioDetail() {
     fetch(`${API_URL}/portfolio/${id}`)
       .then(res => res.json())
       .then(data => {
+        console.log('Portfolio detail loaded:', data);
         setItem(data);
         setLoading(false);
       })
       .catch(err => {
-        console.error(err);
+        console.error('Error loading portfolio detail:', err);
         setLoading(false);
       });
   }, [id]);
@@ -297,12 +298,16 @@ function AdminPanel() {
 
   const uploadToServer = async (base64Image) => {
     try {
+      console.log('📤 Uploading image to server...');
       const blob = await fetch(base64Image).then(r => r.blob());
       const formData = new FormData();
       formData.append('image', blob, 'image.jpg');
       const response = await fetch(`${API_URL}/upload-image`, { method: 'POST', body: formData });
       const data = await response.json();
-      if (data.url) return data.url + '?raw=1';
+      console.log('✅ Server response:', data);
+      if (data.url) {
+        return data.url;
+      }
       return null;
     } catch (error) {
       console.error('Upload error:', error);
@@ -314,8 +319,10 @@ function AdminPanel() {
     try {
       const res = await fetch(`${API_URL}/portfolio`);
       const data = await res.json();
+      console.log('📋 Loaded portfolios:', data);
       setPortfolios(data);
     } catch (err) {
+      console.error('Failed to load portfolios:', err);
       setPortfolios([]);
     }
   };
@@ -480,6 +487,9 @@ function AdminPanel() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newPortfolio)
     });
+    
+    const data = await res.json();
+    console.log('Server response:', data);
     
     if (res.ok) {
       alert('Portfolio added successfully!');
@@ -1074,8 +1084,10 @@ function App() {
     try {
       const res = await fetch(`${API_URL}/portfolio`);
       const data = await res.json();
+      console.log('🏠 Main App - Portfolios:', data);
       setPortfolios(data);
     } catch (err) {
+      console.error('Failed to load portfolios:', err);
       setPortfolios([]);
     }
   };
