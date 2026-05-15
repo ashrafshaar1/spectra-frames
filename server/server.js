@@ -17,7 +17,7 @@ app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
-// مجلد رفع الصور
+// مجلد الصور
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
@@ -38,7 +38,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+  limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -49,15 +49,16 @@ const upload = multer({
 });
 
 // رابط السيرفر
-const SERVER_URL = process.env.RENDER
+const SERVER_URL = process.env.NODE_ENV === 'production'
   ? 'https://spectra-frames-api.onrender.com'
   : `http://localhost:${PORT}`;
 
 // ========== ملفات البيانات ==========
 const PORTFOLIO_FILE = path.join(__dirname, 'portfolios.json');
 const PARTNERS_FILE = path.join(__dirname, 'partners.json');
-const INQUIRIES_FILE = path.join(__dirname, 'inquiries.json');
 const CLIENTS_FILE = path.join(__dirname, 'clients.json');
+const INQUIRIES_FILE = path.join(__dirname, 'inquiries.json');
+const SERVICES_FILE = path.join(__dirname, 'services.json');
 
 // دوال مساعدة
 function readJSON(filePath, defaultValue = []) {
@@ -74,36 +75,68 @@ function writeJSON(filePath, data) {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 }
 
+// ========== بيانات افتراضية ==========
+const defaultPortfolios = [
+  {
+    id: '1',
+    title: 'Wedding Elegance',
+    category: 'Wedding',
+    coverImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600',
+    images: ['https://images.unsplash.com/photo-1519741497674-611481863552?w=600'],
+    description: 'Beautiful wedding moments captured with elegance'
+  },
+  {
+    id: '2',
+    title: 'Urban Stories',
+    category: 'Street',
+    coverImage: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600',
+    images: ['https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600'],
+    description: 'Street photography from around the world'
+  }
+];
+
+const defaultPartners = [
+  { id: '1', name: 'Luxury Hotel', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Luxury+Hotel' },
+  { id: '2', name: 'Fashion Brand', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Fashion+Brand' }
+];
+
+const defaultClients = [
+  { id: '1', name: 'Luxury Hotel', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Luxury+Hotel' },
+  { id: '2', name: 'Fashion Brand', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Fashion+Brand' }
+];
+
+const defaultServices = [
+  { id: '1', title: 'Wedding Photography', description: 'Capturing your special day with elegance and emotion', icon: '💍', order: 1 },
+  { id: '2', title: 'Portrait Sessions', description: 'Professional portraits and personal branding', icon: '👤', order: 2 },
+  { id: '3', title: 'Commercial', description: 'High-end product and corporate photography', icon: '🏢', order: 3 },
+  { id: '4', title: 'Fine Art', description: 'Artistic and conceptual visual stories', icon: '🎨', order: 4 },
+  { id: '5', title: 'Event Coverage', description: 'Corporate events and special occasions', icon: '🎬', order: 5 },
+  { id: '6', title: 'Content Creation', description: 'Social media and marketing content', icon: '📱', order: 6 }
+];
+
+// إنشاء الملفات لو مش موجودة
+if (readJSON(PORTFOLIO_FILE).length === 0) writeJSON(PORTFOLIO_FILE, defaultPortfolios);
+if (readJSON(PARTNERS_FILE).length === 0) writeJSON(PARTNERS_FILE, defaultPartners);
+if (readJSON(CLIENTS_FILE).length === 0) writeJSON(CLIENTS_FILE, defaultClients);
+if (readJSON(SERVICES_FILE).length === 0) writeJSON(SERVICES_FILE, defaultServices);
+
 // ========== API - Portfolio ==========
-app.get('/api/portfolio', (req, res) => {
-  const portfolios = readJSON(PORTFOLIO_FILE);
-  res.json(portfolios);
-});
-
-app.get('/api/portfolio/:id', (req, res) => {
-  const portfolios = readJSON(PORTFOLIO_FILE);
-  const item = portfolios.find(p => p.id === req.params.id);
-  item ? res.json(item) : res.status(404).json({ error: 'Not found' });
-});
-
+app.get('/api/portfolio', (req, res) => res.json(readJSON(PORTFOLIO_FILE)));
 app.post('/api/portfolio', (req, res) => {
   const portfolios = readJSON(PORTFOLIO_FILE);
   const newItem = { id: uuidv4(), ...req.body, createdAt: new Date().toISOString() };
   portfolios.push(newItem);
   writeJSON(PORTFOLIO_FILE, portfolios);
-  console.log('✅ Portfolio added:', newItem.title);
   res.json({ success: true, portfolio: newItem });
 });
-
 app.put('/api/portfolio/:id', (req, res) => {
   let portfolios = readJSON(PORTFOLIO_FILE);
   const index = portfolios.findIndex(p => p.id === req.params.id);
   if (index === -1) return res.status(404).json({ error: 'Not found' });
-  portfolios[index] = { ...portfolios[index], ...req.body, updatedAt: new Date().toISOString() };
+  portfolios[index] = { ...portfolios[index], ...req.body };
   writeJSON(PORTFOLIO_FILE, portfolios);
   res.json({ success: true });
 });
-
 app.delete('/api/portfolio/:id', (req, res) => {
   let portfolios = readJSON(PORTFOLIO_FILE);
   portfolios = portfolios.filter(p => p.id !== req.params.id);
@@ -112,20 +145,14 @@ app.delete('/api/portfolio/:id', (req, res) => {
 });
 
 // ========== API - Partners ==========
-app.get('/api/partners', (req, res) => {
-  const partners = readJSON(PARTNERS_FILE);
-  res.json(partners);
-});
-
+app.get('/api/partners', (req, res) => res.json(readJSON(PARTNERS_FILE)));
 app.post('/api/partners', (req, res) => {
   const partners = readJSON(PARTNERS_FILE);
-  const newPartner = { id: uuidv4(), ...req.body, createdAt: new Date().toISOString() };
+  const newPartner = { id: uuidv4(), ...req.body };
   partners.push(newPartner);
   writeJSON(PARTNERS_FILE, partners);
-  console.log('✅ Partner added:', newPartner.name);
   res.json({ success: true, partner: newPartner });
 });
-
 app.delete('/api/partners/:id', (req, res) => {
   let partners = readJSON(PARTNERS_FILE);
   partners = partners.filter(p => p.id !== req.params.id);
@@ -133,20 +160,15 @@ app.delete('/api/partners/:id', (req, res) => {
   res.json({ success: true });
 });
 
-// ========== API - Clients Logos (للشعارات المتحركة) ==========
-app.get('/api/clients', (req, res) => {
-  const clients = readJSON(CLIENTS_FILE);
-  res.json(clients);
-});
-
+// ========== API - Clients ==========
+app.get('/api/clients', (req, res) => res.json(readJSON(CLIENTS_FILE)));
 app.post('/api/clients', (req, res) => {
   const clients = readJSON(CLIENTS_FILE);
-  const newClient = { id: uuidv4(), ...req.body, createdAt: new Date().toISOString() };
+  const newClient = { id: uuidv4(), ...req.body };
   clients.push(newClient);
   writeJSON(CLIENTS_FILE, clients);
   res.json({ success: true, client: newClient });
 });
-
 app.delete('/api/clients/:id', (req, res) => {
   let clients = readJSON(CLIENTS_FILE);
   clients = clients.filter(c => c.id !== req.params.id);
@@ -154,40 +176,44 @@ app.delete('/api/clients/:id', (req, res) => {
   res.json({ success: true });
 });
 
-// ========== API - Contact Inquiries ==========
-app.get('/api/inquiries', (req, res) => {
-  const inquiries = readJSON(INQUIRIES_FILE);
-  res.json(inquiries);
+// ========== API - Services ==========
+app.get('/api/services', (req, res) => res.json(readJSON(SERVICES_FILE, defaultServices)));
+app.post('/api/services', (req, res) => {
+  const services = readJSON(SERVICES_FILE, defaultServices);
+  const newService = { id: uuidv4(), ...req.body, order: services.length + 1 };
+  services.push(newService);
+  writeJSON(SERVICES_FILE, services);
+  res.json({ success: true, service: newService });
+});
+app.put('/api/services/:id', (req, res) => {
+  let services = readJSON(SERVICES_FILE, defaultServices);
+  const index = services.findIndex(s => s.id === req.params.id);
+  if (index === -1) return res.status(404).json({ error: 'Not found' });
+  services[index] = { ...services[index], ...req.body };
+  writeJSON(SERVICES_FILE, services);
+  res.json({ success: true });
+});
+app.delete('/api/services/:id', (req, res) => {
+  let services = readJSON(SERVICES_FILE, defaultServices);
+  services = services.filter(s => s.id !== req.params.id);
+  writeJSON(SERVICES_FILE, services);
+  res.json({ success: true });
 });
 
+// ========== API - Inquiries ==========
+app.get('/api/inquiries', (req, res) => res.json(readJSON(INQUIRIES_FILE)));
 app.post('/api/inquiries', (req, res) => {
-  const { name, email, phone, message, serviceType } = req.body;
-  if (!name || !email || !message) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
-  
   const inquiries = readJSON(INQUIRIES_FILE);
-  const newInquiry = {
-    id: uuidv4(),
-    name,
-    email,
-    phone: phone || '',
-    message,
-    serviceType: serviceType || 'General',
-    createdAt: new Date().toISOString()
-  };
+  const newInquiry = { id: uuidv4(), ...req.body, createdAt: new Date().toISOString() };
   inquiries.push(newInquiry);
   writeJSON(INQUIRIES_FILE, inquiries);
-  console.log('📧 New inquiry from:', name, email);
-  res.json({ success: true, message: 'Inquiry sent successfully!' });
+  res.json({ success: true });
 });
 
 // ========== رفع الصور ==========
 app.post('/api/upload-image', upload.single('image'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded' });
-  }
-  const imageUrl = `${SERVER_URL}/uploads/${req.file.filename}`;
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  const imageUrl = `${SERVER_URL}/uploads/${req.file.filename}?raw=1`;
   console.log('✅ Image uploaded:', imageUrl);
   res.json({ success: true, url: imageUrl });
 });
@@ -196,7 +222,7 @@ app.post('/api/upload-multiple', upload.array('images', 50), (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: 'No files uploaded' });
   }
-  const urls = req.files.map(file => `${SERVER_URL}/uploads/${file.filename}`);
+  const urls = req.files.map(file => `${SERVER_URL}/uploads/${file.filename}?raw=1`);
   res.json({ success: true, urls: urls });
 });
 
@@ -216,58 +242,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running', timestamp: new Date().toISOString() });
 });
 
-// ========== بيانات افتراضية ==========
-const defaultPortfolios = [
-  {
-    id: '1',
-    title: 'Wedding Elegance',
-    category: 'Wedding',
-    coverImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600',
-    images: ['https://images.unsplash.com/photo-1519741497674-611481863552?w=600'],
-    description: 'Beautiful wedding moments captured with elegance'
-  },
-  {
-    id: '2',
-    title: 'Urban Stories',
-    category: 'Street',
-    coverImage: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600',
-    images: ['https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600'],
-    description: 'Street photography from around the world'
-  },
-  {
-    id: '3',
-    title: 'Natural Beauty',
-    category: 'Landscape',
-    coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600',
-    images: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600'],
-    description: 'Breathtaking landscapes and nature scenes'
-  }
-];
-
-const defaultPartners = [
-  { id: '1', name: 'Luxury Hotel', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Luxury+Hotel' },
-  { id: '2', name: 'Fashion Brand', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Fashion+Brand' },
-  { id: '3', name: 'Wedding Planner', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Wedding+Planner' }
-];
-
-const defaultClients = [
-  { id: '1', name: 'Luxury Hotel', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Luxury+Hotel' },
-  { id: '2', name: 'Fashion Brand', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Fashion+Brand' },
-  { id: '3', name: 'Wedding Planner', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Wedding+Planner' },
-  { id: '4', name: 'Real Estate', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Real+Estate' },
-  { id: '5', name: 'Magazine', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Magazine' }
-];
-
-if (readJSON(PORTFOLIO_FILE).length === 0) writeJSON(PORTFOLIO_FILE, defaultPortfolios);
-if (readJSON(PARTNERS_FILE).length === 0) writeJSON(PARTNERS_FILE, defaultPartners);
-if (readJSON(CLIENTS_FILE).length === 0) writeJSON(CLIENTS_FILE, defaultClients);
-
-// بدء السيرفر
 app.listen(PORT, () => {
   console.log(`🚀 Server running on ${SERVER_URL}`);
   console.log(`📁 Uploads folder: ${uploadsDir}`);
-  console.log(`📄 Portfolios: ${PORTFOLIO_FILE}`);
-  console.log(`📄 Partners: ${PARTNERS_FILE}`);
-  console.log(`📄 Clients: ${CLIENTS_FILE}`);
-  console.log(`📄 Inquiries: ${INQUIRIES_FILE}`);
 });
