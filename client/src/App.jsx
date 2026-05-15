@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import './App.css';
 
 // Gallery Modal Component
@@ -335,6 +336,33 @@ function AdminPanel() {
 
   const navigate = useNavigate();
 
+  // ImgBB API Key - REGISTER at https://imgbb.com and get your API key
+  // After registration, go to https://api.imgbb.com to get your key
+  const IMGBB_API_KEY = 'ab1c289a36c63f653e6ab3047f5b6bc4'; // 🔴 استبدل هذا بمفتاح API حقك من ImgBB
+
+  // Upload image to ImgBB
+  const uploadToImgBB = async (base64Image) => {
+    try {
+      // Remove the "data:image/...;base64," prefix
+      const base64Data = base64Image.split(',')[1];
+      
+      const formData = new FormData();
+      formData.append('image', base64Data);
+      formData.append('key', IMGBB_API_KEY);
+      
+      const response = await axios.post('https://api.imgbb.com/1/upload', formData);
+      
+      if (response.data && response.data.data) {
+        return response.data.data.url;
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      console.error('ImgBB upload error:', error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     const loggedIn = localStorage.getItem('adminLoggedIn');
     if (loggedIn === 'true') {
@@ -385,7 +413,6 @@ function AdminPanel() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Upload multiple images for new portfolio - Max 20MB each
   const handleMultipleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     const newImages = [];
@@ -418,7 +445,7 @@ function AdminPanel() {
     setImagePreviews(newPreviews);
   };
 
-  const handleAddPortfolio = (e) => {
+  const handleAddPortfolio = async (e) => {
     e.preventDefault();
     if (!formData.title) {
       alert('Please enter a title!');
@@ -429,13 +456,25 @@ function AdminPanel() {
       return;
     }
     
+    // Upload all images to ImgBB
+    const uploadedUrls = [];
+    for (const img of tempImages) {
+      const url = await uploadToImgBB(img);
+      if (url) {
+        uploadedUrls.push(url);
+      } else {
+        alert('Failed to upload one or more images to ImgBB. Please try again!');
+        return;
+      }
+    }
+    
     const newPortfolio = {
       id: Date.now().toString(),
       title: formData.title,
       category: formData.category,
       description: formData.description,
-      coverImage: tempImages[0],
-      images: [...tempImages],
+      coverImage: uploadedUrls[0],
+      images: uploadedUrls,
       createdAt: new Date().toISOString()
     };
     const updated = [...portfolios, newPortfolio];
@@ -444,7 +483,7 @@ function AdminPanel() {
     setFormData({ title: '', category: 'Wedding', description: '', images: [] });
     setTempImages([]);
     setImagePreviews([]);
-    alert('Portfolio added successfully!');
+    alert(`Portfolio added successfully! ${uploadedUrls.length} images uploaded to ImgBB.`);
   };
 
   const handleDeletePortfolio = (id) => {
@@ -463,7 +502,6 @@ function AdminPanel() {
     setShowImageManager(true);
   };
 
-  // Add images to existing portfolio - Max 20MB each
   const handleAddImagesToPortfolio = (e) => {
     const files = Array.from(e.target.files);
     const newImages = [];
@@ -486,26 +524,40 @@ function AdminPanel() {
     });
   };
 
-  const saveNewImagesToPortfolio = () => {
+  const saveNewImagesToPortfolio = async () => {
     if (newImagesForPortfolio.length === 0) {
       alert('Please select images to add!');
       return;
     }
+    
+    // Upload new images to ImgBB
+    const uploadedUrls = [];
+    for (const img of newImagesForPortfolio) {
+      const url = await uploadToImgBB(img);
+      if (url) {
+        uploadedUrls.push(url);
+      } else {
+        alert('Failed to upload one or more images to ImgBB. Please try again!');
+        return;
+      }
+    }
+    
     const updatedPortfolios = portfolios.map(p => {
       if (p.id === currentPortfolio.id) {
         return {
           ...p,
-          images: [...p.images, ...newImagesForPortfolio],
-          coverImage: p.coverImage || p.images[0] || newImagesForPortfolio[0]
+          images: [...p.images, ...uploadedUrls],
+          coverImage: p.coverImage || p.images[0] || uploadedUrls[0]
         };
       }
       return p;
     });
+    
     setPortfolios(updatedPortfolios);
     localStorage.setItem('spectra_portfolios', JSON.stringify(updatedPortfolios));
     setNewImagesForPortfolio([]);
     setNewImagePreviews([]);
-    alert(`${newImagesForPortfolio.length} images added successfully!`);
+    alert(`${uploadedUrls.length} images added successfully!`);
     loadPortfolios();
   };
 
@@ -537,7 +589,6 @@ function AdminPanel() {
     setNewImagePreviews([]);
   };
 
-  // Partner logo upload - Max 5MB
   const handlePartnerImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -622,7 +673,7 @@ function AdminPanel() {
                   <label className="upload-label">📸 Upload Multiple Images (Max 20MB each)
                     <input type="file" accept="image/*" multiple onChange={handleMultipleImageUpload} style={{ display: 'none' }} />
                   </label>
-                  <p className="image-size-hint">Maximum image size: 20MB</p>
+                  <p className="image-size-hint">Images will be uploaded to ImgBB and visible on all devices</p>
                   {imagePreviews.length > 0 && (
                     <div className="image-previews-grid">
                       {imagePreviews.map((preview, idx) => (
@@ -698,7 +749,7 @@ function AdminPanel() {
                 <label className="upload-label">➕ Select Images to Add (Max 20MB each)
                   <input type="file" accept="image/*" multiple onChange={handleAddImagesToPortfolio} style={{ display: 'none' }} />
                 </label>
-                <p className="image-size-hint">Maximum image size: 20MB</p>
+                <p className="image-size-hint">Images will be uploaded to ImgBB and visible on all devices</p>
                 {newImagePreviews.length > 0 && (
                   <div className="new-images-preview">
                     <h4>New images to add:</h4>
