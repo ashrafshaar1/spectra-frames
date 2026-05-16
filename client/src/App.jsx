@@ -45,7 +45,6 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
   const loadData = () => {
     console.log('🔄 Loading data from server...');
     
-    // جلب العملاء
     fetch(`${API_URL}/clients`)
       .then(res => res.json())
       .then(data => {
@@ -54,7 +53,6 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
       })
       .catch(err => console.error('Failed to load clients:', err));
     
-    // جلب الشركاء
     fetch(`${API_URL}/partners`)
       .then(res => res.json())
       .then(data => {
@@ -63,7 +61,6 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
       })
       .catch(err => console.error('Failed to load partners:', err));
     
-    // جلب الخدمات
     fetch(`${API_URL}/services`)
       .then(res => res.json())
       .then(data => {
@@ -77,7 +74,6 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
     refreshPortfolios();
     loadData();
     
-    // تحديث البيانات كل 10 ثواني (اختياري)
     const interval = setInterval(() => {
       loadData();
     }, 10000);
@@ -132,14 +128,14 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
         </div>
       </section>
 
-      {/* Clients Section */}
-      <section className="clients-section">
-        <div className="container">
-          <div className="section-header">
-            <h2 className="section-title">Our Clients</h2>
-            <p className="section-subtitle">Trusted by leading brands worldwide</p>
-          </div>
-          {clients && clients.length > 0 ? (
+      {/* Clients Section - يظهر فقط إذا فيه عملاء */}
+      {clients.length > 0 && (
+        <section className="clients-section">
+          <div className="container">
+            <div className="section-header">
+              <h2 className="section-title">Our Clients</h2>
+              <p className="section-subtitle">Trusted by leading brands worldwide</p>
+            </div>
             <div className="clients-slider">
               <div className="clients-track">
                 {clients.map((client) => (
@@ -159,22 +155,18 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
                 ))}
               </div>
             </div>
-          ) : (
-            <div className="no-clients-message">
-              <p>No clients yet. Add from Admin Panel.</p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Partners Section */}
-      <section className="partners-section">
-        <div className="container">
-          <div className="section-header">
-            <h2 className="section-title">Our Partners</h2>
-            <p className="section-subtitle">Collaborating with industry leaders</p>
           </div>
-          {partners && partners.length > 0 ? (
+        </section>
+      )}
+
+      {/* Partners Section - يظهر فقط إذا فيه شركاء */}
+      {partners.length > 0 && (
+        <section className="partners-section">
+          <div className="container">
+            <div className="section-header">
+              <h2 className="section-title">Our Partners</h2>
+              <p className="section-subtitle">Collaborating with industry leaders</p>
+            </div>
             <div className="partners-slider">
               <div className="partners-track">
                 {partners.map((partner) => (
@@ -194,13 +186,9 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
                 ))}
               </div>
             </div>
-          ) : (
-            <div className="no-partners-message">
-              <p>No partners yet. Add from Admin Panel.</p>
-            </div>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
       <section id="portfolio" className="portfolio">
         <div className="container">
@@ -450,6 +438,28 @@ function AdminPanel() {
     setShowConfirmModal(false);
     setConfirmAction(null);
     setConfirmId(null);
+  };
+
+  // حذف جميع الشركاء
+  const handleDeleteAllPartners = async () => {
+    showConfirmModalMessage('Are you sure you want to DELETE ALL PARTNERS? This action cannot be undone!', async () => {
+      for (const partner of partners) {
+        await fetch(`${API_URL}/partners/${partner.id}`, { method: 'DELETE' });
+      }
+      showModalMessage('Success', 'All partners deleted successfully!');
+      loadPartners();
+    }, null);
+  };
+
+  // حذف جميع العملاء
+  const handleDeleteAllClients = async () => {
+    showConfirmModalMessage('Are you sure you want to DELETE ALL CLIENTS? This action cannot be undone!', async () => {
+      for (const client of clients) {
+        await fetch(`${API_URL}/clients/${client.id}`, { method: 'DELETE' });
+      }
+      showModalMessage('Success', 'All clients deleted successfully!');
+      loadClients();
+    }, null);
   };
 
   const uploadToServer = async (base64Image, onProgress) => {
@@ -1127,8 +1137,13 @@ function AdminPanel() {
         {activeTab === 'partners' && (
           <>
             <div className="admin-form">
-              <h2>Add Partner</h2>
-              <form key={`partner-${formKey}`} onSubmit={handleAddPartner}>
+              <div className="admin-header" style={{ justifyContent: 'space-between', marginBottom: '20px' }}>
+                <h2>Add Partner</h2>
+                {partners.length > 0 && (
+                  <button onClick={handleDeleteAllPartners} className="delete-all-btn">Delete All Partners</button>
+                )}
+              </div>
+              <form onSubmit={handleAddPartner}>
                 <input type="text" name="name" placeholder="Partner Name" value={partnerFormData.name} onChange={(e) => setPartnerFormData({ ...partnerFormData, name: e.target.value })} required className="form-input" />
                 <div className="image-upload-area">
                   <label className="upload-label">Upload Logo (Max 50MB)
@@ -1173,8 +1188,13 @@ function AdminPanel() {
         {activeTab === 'clients' && (
           <>
             <div className="admin-form">
-              <h2>Add Client Logo</h2>
-              <form key={`client-${formKey}`} onSubmit={handleAddClient}>
+              <div className="admin-header" style={{ justifyContent: 'space-between', marginBottom: '20px' }}>
+                <h2>Add Client Logo</h2>
+                {clients.length > 0 && (
+                  <button onClick={handleDeleteAllClients} className="delete-all-btn">Delete All Clients</button>
+                )}
+              </div>
+              <form onSubmit={handleAddClient}>
                 <input type="text" name="name" placeholder="Client Name" value={clientFormData.name} onChange={(e) => setClientFormData({ ...clientFormData, name: e.target.value })} required className="form-input" />
                 <div className="image-upload-area">
                   <label className="upload-label">Upload Logo (Max 50MB)
