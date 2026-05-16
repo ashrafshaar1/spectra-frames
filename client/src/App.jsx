@@ -28,12 +28,15 @@ function GalleryModal({ images, currentIndex, onClose, onNext, onPrev }) {
 }
 
 // Home Page Component
-function HomePage({ scrollToSection, portfolios, refreshPortfolios, clients, refreshClients }) {
+function HomePage({ scrollToSection, portfolios, refreshPortfolios, refreshClients, refreshPartners }) {
   const [services, setServices] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [partners, setPartners] = useState([]);
 
   useEffect(() => {
     refreshPortfolios();
     refreshClients();
+    refreshPartners();
     fetch(`${API_URL}/services`)
       .then(res => res.json())
       .then(data => setServices(data))
@@ -78,10 +81,6 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios, clients, ref
     }
   };
 
-  const uniqueClients = clients.filter((client, index, self) => 
-    index === self.findIndex(c => c.id === client.id)
-  );
-
   return (
     <>
       <section id="home" className="hero">
@@ -100,16 +99,17 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios, clients, ref
         </div>
       </section>
 
+      {/* Clients Section */}
       <section className="clients-section">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Our Partners</h2>
+            <h2 className="section-title">Our Clients</h2>
             <p className="section-subtitle">Trusted by leading brands worldwide</p>
           </div>
-          {uniqueClients && uniqueClients.length > 0 ? (
+          {clients && clients.length > 0 ? (
             <div className="clients-slider">
               <div className="clients-track">
-                {uniqueClients.map((client) => (
+                {clients.map((client) => (
                   <div key={client.id} className="client-card">
                     <img 
                       src={client.logo} 
@@ -128,6 +128,41 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios, clients, ref
             </div>
           ) : (
             <div className="no-clients-message">
+              <p>Loading clients...</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Partners Section */}
+      <section className="partners-section">
+        <div className="container">
+          <div className="section-header">
+            <h2 className="section-title">Our Partners</h2>
+            <p className="section-subtitle">Collaborating with industry leaders</p>
+          </div>
+          {partners && partners.length > 0 ? (
+            <div className="partners-slider">
+              <div className="partners-track">
+                {partners.map((partner) => (
+                  <div key={partner.id} className="partner-card">
+                    <img 
+                      src={partner.logo} 
+                      alt={partner.name} 
+                      className="partner-logo-img"
+                      onError={(e) => { 
+                        e.target.style.display = 'none'; 
+                        if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; 
+                      }} 
+                    />
+                    <div className="partner-logo-fallback">{partner.name.substring(0, 2)}</div>
+                    <p className="partner-name">{partner.name}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="no-partners-message">
               <p>Loading partners...</p>
             </div>
           )}
@@ -805,7 +840,6 @@ function AdminPanel() {
       setPartnerFormData({ name: '', logo: '' });
       setPartnerImagePreview('');
       loadPartners();
-      loadClients();
       setFormKey(prev => prev + 1);
     } else {
       showModalMessage('Error', 'Failed to add partner');
@@ -818,7 +852,6 @@ function AdminPanel() {
       if (res.ok) { 
         showModalMessage('Success', 'Partner deleted successfully!');
         loadPartners();
-        loadClients();
       }
     }, id);
   };
@@ -877,7 +910,6 @@ function AdminPanel() {
       setClientFormData({ name: '', logo: '' });
       setClientImagePreview('');
       loadClients();
-      loadPartners();
       setFormKey(prev => prev + 1);
     } else {
       showModalMessage('Error', 'Failed to add client');
@@ -890,7 +922,6 @@ function AdminPanel() {
       if (res.ok) { 
         showModalMessage('Success', 'Client deleted successfully!');
         loadClients();
-        loadPartners();
       }
     }, id);
   };
@@ -1328,6 +1359,7 @@ function App() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [portfolios, setPortfolios] = useState([]);
   const [clients, setClients] = useState([]);
+  const [partners, setPartners] = useState([]);
 
   const loadPortfolios = async () => {
     try {
@@ -1349,9 +1381,20 @@ function App() {
     }
   };
 
+  const loadPartners = async () => {
+    try {
+      const res = await fetch(`${API_URL}/partners`);
+      const data = await res.json();
+      setPartners(data);
+    } catch (err) {
+      setPartners([]);
+    }
+  };
+
   useEffect(() => {
     loadPortfolios();
     loadClients();
+    loadPartners();
     const handleScroll = () => setShowScrollTop(window.scrollY > 300);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -1361,6 +1404,7 @@ function App() {
   const scrollToSection = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   const refreshPortfolios = () => loadPortfolios();
   const refreshClients = () => loadClients();
+  const refreshPartners = () => loadPartners();
 
   return (
     <Router>
@@ -1368,7 +1412,7 @@ function App() {
         {showScrollTop && <button onClick={scrollToTop} className="floating-scroll">↑</button>}
         <div className="admin-link"><Link to="/admin">Admin</Link></div>
         <Routes>
-          <Route path="/" element={<HomePage scrollToSection={scrollToSection} portfolios={portfolios} refreshPortfolios={refreshPortfolios} clients={clients} refreshClients={refreshClients} />} />
+          <Route path="/" element={<HomePage scrollToSection={scrollToSection} portfolios={portfolios} refreshPortfolios={refreshPortfolios} refreshClients={refreshClients} refreshPartners={refreshPartners} />} />
           <Route path="/portfolio/:id" element={<PortfolioDetail />} />
           <Route path="/admin" element={<AdminPanel />} />
         </Routes>
