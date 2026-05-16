@@ -335,8 +335,9 @@ function AdminPanel() {
   const [showImageManager, setShowImageManager] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalTitle, setModalTitle] = useState('');
   const [imageUrlInput, setImageUrlInput] = useState('');
   
   const [formData, setFormData] = useState({ title: '', category: 'Wedding', description: '', images: [] });
@@ -356,12 +357,10 @@ function AdminPanel() {
 
   const navigate = useNavigate();
 
-  const showSuccessPopupMessage = (message) => {
-    setSuccessMessage(message);
-    setShowSuccessPopup(true);
-    setTimeout(() => {
-      setShowSuccessPopup(false);
-    }, 3000);
+  const showModalMessage = (title, message) => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setShowModal(true);
   };
 
   const uploadToServer = async (base64Image) => {
@@ -472,7 +471,7 @@ function AdminPanel() {
       localStorage.setItem('adminLoggedIn', 'true');
       refreshAllData();
     } else {
-      alert('Wrong password! Use: admin123');
+      showModalMessage('Error', 'Wrong password! Use: admin123');
     }
   };
 
@@ -492,7 +491,7 @@ function AdminPanel() {
 
     files.forEach(file => {
       if (file.size > 50 * 1024 * 1024) {
-        alert(`Image ${file.name} too large! Maximum size is 50MB`);
+        showModalMessage('Error', `Image ${file.name} too large! Maximum size is 50MB`);
         return;
       }
       const reader = new FileReader();
@@ -513,7 +512,7 @@ function AdminPanel() {
       setTempImages([...tempImages, imageUrlInput]);
       setImagePreviews([...imagePreviews, imageUrlInput]);
       setImageUrlInput('');
-      alert('Image URL added!');
+      showModalMessage('Success', 'Image URL added successfully!');
     }
   };
 
@@ -529,11 +528,11 @@ function AdminPanel() {
   const handleAddPortfolio = async (e) => {
     e.preventDefault();
     if (!formData.title) {
-      alert('Please enter a title!');
+      showModalMessage('Error', 'Please enter a title!');
       return;
     }
     if (tempImages.length === 0) {
-      alert('Please add at least one image!');
+      showModalMessage('Error', 'Please add at least one image!');
       return;
     }
     
@@ -547,7 +546,7 @@ function AdminPanel() {
         if (url) {
           uploadedUrls.push(url);
         } else {
-          alert('Failed to upload image');
+          showModalMessage('Error', 'Failed to upload image');
           setUploading(false);
           return;
         }
@@ -569,11 +568,13 @@ function AdminPanel() {
     });
     
     if (res.ok) {
-      alert('Portfolio added successfully!');
+      showModalMessage('Success', 'Portfolio added successfully!');
       setFormData({ title: '', category: 'Wedding', description: '', images: [] });
       setTempImages([]);
       setImagePreviews([]);
       loadPortfolios();
+    } else {
+      showModalMessage('Error', 'Failed to save portfolio');
     }
     setUploading(false);
   };
@@ -582,7 +583,7 @@ function AdminPanel() {
     if (window.confirm('Delete this portfolio?')) {
       const res = await fetch(`${API_URL}/portfolio/${id}`, { method: 'DELETE' });
       if (res.ok) {
-        alert('Deleted!');
+        showModalMessage('Success', 'Portfolio deleted successfully!');
         loadPortfolios();
       }
     }
@@ -602,7 +603,7 @@ function AdminPanel() {
     const newPreviews = [];
     files.forEach(file => {
       if (file.size > 50 * 1024 * 1024) {
-        alert(`Image ${file.name} too large! Maximum size is 50MB`);
+        showModalMessage('Error', `Image ${file.name} too large! Maximum size is 50MB`);
         return;
       }
       const reader = new FileReader();
@@ -623,13 +624,13 @@ function AdminPanel() {
       setNewImagesForPortfolio([...newImagesForPortfolio, imageUrlInput]);
       setNewImagePreviews([...newImagePreviews, imageUrlInput]);
       setImageUrlInput('');
-      alert('URL added!');
+      showModalMessage('Success', 'Image URL added successfully!');
     }
   };
 
   const saveNewImagesToPortfolio = async () => {
     if (newImagesForPortfolio.length === 0) {
-      alert('No images to add!');
+      showModalMessage('Error', 'No images to add!');
       return;
     }
     
@@ -657,7 +658,7 @@ function AdminPanel() {
     });
     
     if (res.ok) {
-      alert('Images added!');
+      showModalMessage('Success', `${uploadedUrls.length} images added successfully!`);
       setNewImagesForPortfolio([]);
       setNewImagePreviews([]);
       setShowImageManager(false);
@@ -676,7 +677,7 @@ function AdminPanel() {
         body: JSON.stringify({ ...currentPortfolio, images: updatedImages, coverImage: updatedImages[0] || '' })
       });
       if (res.ok) {
-        alert('Image deleted');
+        showModalMessage('Success', 'Image deleted successfully!');
         loadPortfolios();
         setCurrentPortfolio({ ...currentPortfolio, images: updatedImages });
       }
@@ -694,7 +695,7 @@ function AdminPanel() {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 50 * 1024 * 1024) {
-        alert('Logo too large! Maximum size is 50MB');
+        showModalMessage('Error', 'Logo too large! Maximum size is 50MB');
         return;
       }
       
@@ -708,9 +709,8 @@ function AdminPanel() {
         const uploadedUrl = await uploadToServer(base64Image);
         if (uploadedUrl) {
           setPartnerFormData({ ...partnerFormData, logo: uploadedUrl });
-          showSuccessPopupMessage('✓ Partner logo uploaded successfully!');
         } else {
-          alert('Failed to upload logo');
+          showModalMessage('Error', 'Failed to upload logo');
         }
         setUploading(false);
         setTimeout(() => setUploadProgress(0), 1000);
@@ -722,7 +722,7 @@ function AdminPanel() {
   const handleAddPartner = async (e) => {
     e.preventDefault();
     if (!partnerFormData.name || !partnerFormData.logo) {
-      alert('Please fill name and logo!');
+      showModalMessage('Error', 'Please fill name and logo!');
       return;
     }
     
@@ -739,11 +739,13 @@ function AdminPanel() {
     });
     
     if (res.ok) {
-      alert('Partner added!');
+      showModalMessage('Success', 'Partner added successfully!');
       setPartnerFormData({ name: '', logo: '' });
       setPartnerImagePreview('');
       loadPartners();
       loadClients();
+    } else {
+      showModalMessage('Error', 'Failed to add partner');
     }
   };
 
@@ -751,7 +753,7 @@ function AdminPanel() {
     if (window.confirm('Delete this partner?')) {
       const res = await fetch(`${API_URL}/partners/${id}`, { method: 'DELETE' });
       if (res.ok) { 
-        alert('Deleted!');
+        showModalMessage('Success', 'Partner deleted successfully!');
         loadPartners();
         loadClients();
       }
@@ -762,7 +764,7 @@ function AdminPanel() {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 50 * 1024 * 1024) {
-        alert('Logo too large! Maximum size is 50MB');
+        showModalMessage('Error', 'Logo too large! Maximum size is 50MB');
         return;
       }
       
@@ -776,9 +778,8 @@ function AdminPanel() {
         const uploadedUrl = await uploadToServer(base64Image);
         if (uploadedUrl) {
           setClientFormData({ ...clientFormData, logo: uploadedUrl });
-          showSuccessPopupMessage('✓ Client logo uploaded successfully!');
         } else {
-          alert('Failed to upload logo');
+          showModalMessage('Error', 'Failed to upload logo');
         }
         setUploading(false);
         setTimeout(() => setUploadProgress(0), 1000);
@@ -790,7 +791,7 @@ function AdminPanel() {
   const handleAddClient = async (e) => {
     e.preventDefault();
     if (!clientFormData.name || !clientFormData.logo) {
-      alert('Please fill name and logo!');
+      showModalMessage('Error', 'Please fill name and logo!');
       return;
     }
     
@@ -807,11 +808,13 @@ function AdminPanel() {
     });
     
     if (res.ok) {
-      alert('Client added!');
+      showModalMessage('Success', 'Client added successfully!');
       setClientFormData({ name: '', logo: '' });
       setClientImagePreview('');
       loadClients();
       loadPartners();
+    } else {
+      showModalMessage('Error', 'Failed to add client');
     }
   };
 
@@ -819,7 +822,7 @@ function AdminPanel() {
     if (window.confirm('Delete this client?')) {
       const res = await fetch(`${API_URL}/clients/${id}`, { method: 'DELETE' });
       if (res.ok) { 
-        alert('Deleted!');
+        showModalMessage('Success', 'Client deleted successfully!');
         loadClients();
         loadPartners();
       }
@@ -829,7 +832,7 @@ function AdminPanel() {
   const handleAddService = async (e) => {
     e.preventDefault();
     if (!serviceFormData.title || !serviceFormData.description) {
-      alert('Please fill title and description!');
+      showModalMessage('Error', 'Please fill title and description!');
       return;
     }
     
@@ -840,9 +843,11 @@ function AdminPanel() {
     });
     
     if (res.ok) {
-      alert('Service added!');
+      showModalMessage('Success', 'Service added successfully!');
       setServiceFormData({ title: '', description: '' });
       loadServices();
+    } else {
+      showModalMessage('Error', 'Failed to add service');
     }
   };
 
@@ -850,7 +855,7 @@ function AdminPanel() {
     if (window.confirm('Delete this service?')) {
       const res = await fetch(`${API_URL}/services/${id}`, { method: 'DELETE' });
       if (res.ok) {
-        alert('Deleted!');
+        showModalMessage('Success', 'Service deleted successfully!');
         loadServices();
       }
     }
@@ -873,10 +878,12 @@ function AdminPanel() {
     });
     
     if (res.ok) {
-      alert('Service updated!');
+      showModalMessage('Success', 'Service updated successfully!');
       setEditingService(null);
       setEditServiceForm({ title: '', description: '' });
       loadServices();
+    } else {
+      showModalMessage('Error', 'Failed to update service');
     }
   };
 
@@ -1149,11 +1156,21 @@ function AdminPanel() {
         )}
       </div>
       
-      {showSuccessPopup && (
-        <div className="success-popup">
-          <div className="success-popup-content">
-            <span className="success-icon">✓</span>
-            <p>{successMessage}</p>
+      {/* Success/Error Modal */}
+      {showModal && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{modalTitle}</h3>
+              <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="modal-icon">{modalTitle === 'Success' ? '✓' : '!'}</div>
+              <p>{modalMessage}</p>
+            </div>
+            <div className="modal-footer">
+              <button className="modal-btn" onClick={() => setShowModal(false)}>OK</button>
+            </div>
           </div>
         </div>
       )}
