@@ -28,21 +28,8 @@ function GalleryModal({ images, currentIndex, onClose, onNext, onPrev }) {
 }
 
 // Home Page Component
-function HomePage({ scrollToSection, portfolios, refreshPortfolios, refreshClients, refreshPartners }) {
+function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
   const [services, setServices] = useState([]);
-  const [clients, setClients] = useState([]);
-  const [partners, setPartners] = useState([]);
-
-  useEffect(() => {
-    refreshPortfolios();
-    refreshClients();
-    refreshPartners();
-    fetch(`${API_URL}/services`)
-      .then(res => res.json())
-      .then(data => setServices(data))
-      .catch(err => console.error('Failed to load services:', err));
-  }, []);
-
   const [formStatus, setFormStatus] = useState('');
   const [formData, setFormData] = useState({
     name: '',
@@ -51,6 +38,29 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios, refreshClien
     service: 'Wedding Photography',
     message: ''
   });
+
+  // بيانات ثابتة - Clients (تظهر فوراً)
+  const clients = [
+    { id: '1', name: 'Luxury Hotel', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Luxury+Hotel' },
+    { id: '2', name: 'Fashion Brand', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Fashion+Brand' },
+    { id: '3', name: 'Wedding Planner', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Wedding+Planner' }
+  ];
+
+  // بيانات ثابتة - Partners (تظهر فوراً)
+  const partners = [
+    { id: '1', name: 'Canon', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Canon' },
+    { id: '2', name: 'Sony', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Sony' },
+    { id: '3', name: 'Adobe', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Adobe' },
+    { id: '4', name: 'Nikon', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Nikon' }
+  ];
+
+  useEffect(() => {
+    refreshPortfolios();
+    fetch(`${API_URL}/services`)
+      .then(res => res.json())
+      .then(data => setServices(data))
+      .catch(err => console.error('Failed to load services:', err));
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -106,31 +116,25 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios, refreshClien
             <h2 className="section-title">Our Clients</h2>
             <p className="section-subtitle">Trusted by leading brands worldwide</p>
           </div>
-          {clients && clients.length > 0 ? (
-            <div className="clients-slider">
-              <div className="clients-track">
-                {clients.map((client) => (
-                  <div key={client.id} className="client-card">
-                    <img 
-                      src={client.logo} 
-                      alt={client.name} 
-                      className="client-logo-img"
-                      onError={(e) => { 
-                        e.target.style.display = 'none'; 
-                        if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; 
-                      }} 
-                    />
-                    <div className="client-logo-fallback">{client.name.substring(0, 2)}</div>
-                    <p className="client-name">{client.name}</p>
-                  </div>
-                ))}
-              </div>
+          <div className="clients-slider">
+            <div className="clients-track">
+              {clients.map((client) => (
+                <div key={client.id} className="client-card">
+                  <img 
+                    src={client.logo} 
+                    alt={client.name} 
+                    className="client-logo-img"
+                    onError={(e) => { 
+                      e.target.style.display = 'none'; 
+                      if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; 
+                    }} 
+                  />
+                  <div className="client-logo-fallback">{client.name.substring(0, 2)}</div>
+                  <p className="client-name">{client.name}</p>
+                </div>
+              ))}
             </div>
-          ) : (
-            <div className="no-clients-message">
-              <p>Loading clients...</p>
-            </div>
-          )}
+          </div>
         </div>
       </section>
 
@@ -141,31 +145,25 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios, refreshClien
             <h2 className="section-title">Our Partners</h2>
             <p className="section-subtitle">Collaborating with industry leaders</p>
           </div>
-          {partners && partners.length > 0 ? (
-            <div className="partners-slider">
-              <div className="partners-track">
-                {partners.map((partner) => (
-                  <div key={partner.id} className="partner-card">
-                    <img 
-                      src={partner.logo} 
-                      alt={partner.name} 
-                      className="partner-logo-img"
-                      onError={(e) => { 
-                        e.target.style.display = 'none'; 
-                        if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; 
-                      }} 
-                    />
-                    <div className="partner-logo-fallback">{partner.name.substring(0, 2)}</div>
-                    <p className="partner-name">{partner.name}</p>
-                  </div>
-                ))}
-              </div>
+          <div className="partners-slider">
+            <div className="partners-track">
+              {partners.map((partner) => (
+                <div key={partner.id} className="partner-card">
+                  <img 
+                    src={partner.logo} 
+                    alt={partner.name} 
+                    className="partner-logo-img"
+                    onError={(e) => { 
+                      e.target.style.display = 'none'; 
+                      if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; 
+                    }} 
+                  />
+                  <div className="partner-logo-fallback">{partner.name.substring(0, 2)}</div>
+                  <p className="partner-name">{partner.name}</p>
+                </div>
+              ))}
             </div>
-          ) : (
-            <div className="no-partners-message">
-              <p>Loading partners...</p>
-            </div>
-          )}
+          </div>
         </div>
       </section>
 
@@ -1358,8 +1356,6 @@ function AdminPanel() {
 function App() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [portfolios, setPortfolios] = useState([]);
-  const [clients, setClients] = useState([]);
-  const [partners, setPartners] = useState([]);
 
   const loadPortfolios = async () => {
     try {
@@ -1371,34 +1367,8 @@ function App() {
     }
   };
 
-  const loadClients = async () => {
-    try {
-      const res = await fetch(`${API_URL}/clients`);
-      const data = await res.json();
-      console.log('✅ Clients loaded in Main App:', data);
-      setClients(data);
-    } catch (err) {
-      console.error('Failed to load clients:', err);
-      setClients([]);
-    }
-  };
-
-  const loadPartners = async () => {
-    try {
-      const res = await fetch(`${API_URL}/partners`);
-      const data = await res.json();
-      console.log('✅ Partners loaded in Main App:', data);
-      setPartners(data);
-    } catch (err) {
-      console.error('Failed to load partners:', err);
-      setPartners([]);
-    }
-  };
-
   useEffect(() => {
     loadPortfolios();
-    loadClients();
-    loadPartners();
     const handleScroll = () => setShowScrollTop(window.scrollY > 300);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -1407,8 +1377,6 @@ function App() {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
   const scrollToSection = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   const refreshPortfolios = () => loadPortfolios();
-  const refreshClients = () => loadClients();
-  const refreshPartners = () => loadPartners();
 
   return (
     <Router>
@@ -1416,7 +1384,7 @@ function App() {
         {showScrollTop && <button onClick={scrollToTop} className="floating-scroll">↑</button>}
         <div className="admin-link"><Link to="/admin">Admin</Link></div>
         <Routes>
-          <Route path="/" element={<HomePage scrollToSection={scrollToSection} portfolios={portfolios} refreshPortfolios={refreshPortfolios} refreshClients={refreshClients} refreshPartners={refreshPartners} />} />
+          <Route path="/" element={<HomePage scrollToSection={scrollToSection} portfolios={portfolios} refreshPortfolios={refreshPortfolios} />} />
           <Route path="/portfolio/:id" element={<PortfolioDetail />} />
           <Route path="/admin" element={<AdminPanel />} />
         </Routes>
