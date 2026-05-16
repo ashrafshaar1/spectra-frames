@@ -338,6 +338,10 @@ function AdminPanel() {
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [modalTitle, setModalTitle] = useState('');
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const [confirmId, setConfirmId] = useState(null);
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [formKey, setFormKey] = useState(0);
   
@@ -362,6 +366,22 @@ function AdminPanel() {
     setModalTitle(title);
     setModalMessage(message);
     setShowModal(true);
+  };
+
+  const showConfirmModalMessage = (message, action, id) => {
+    setConfirmMessage(message);
+    setConfirmAction(() => action);
+    setConfirmId(id);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (confirmAction) {
+      confirmAction(confirmId);
+    }
+    setShowConfirmModal(false);
+    setConfirmAction(null);
+    setConfirmId(null);
   };
 
   const uploadToServer = async (base64Image, onProgress) => {
@@ -600,14 +620,14 @@ function AdminPanel() {
     setUploading(false);
   };
 
-  const handleDeletePortfolio = async (id) => {
-    if (window.confirm('Delete this portfolio?')) {
-      const res = await fetch(`${API_URL}/portfolio/${id}`, { method: 'DELETE' });
+  const handleDeletePortfolio = (id) => {
+    showConfirmModalMessage('Are you sure you want to delete this portfolio?', async (deleteId) => {
+      const res = await fetch(`${API_URL}/portfolio/${deleteId}`, { method: 'DELETE' });
       if (res.ok) {
         showModalMessage('Success', 'Portfolio deleted successfully!');
         loadPortfolios();
       }
-    }
+    }, id);
   };
 
   const openImageManager = (portfolio) => {
@@ -707,8 +727,8 @@ function AdminPanel() {
     setUploading(false);
   };
 
-  const deleteImageFromPortfolio = async (imageIndex) => {
-    if (window.confirm('Delete this image?')) {
+  const deleteImageFromPortfolio = (imageIndex) => {
+    showConfirmModalMessage('Are you sure you want to delete this image?', async () => {
       const updatedImages = [...currentPortfolio.images];
       updatedImages.splice(imageIndex, 1);
       const res = await fetch(`${API_URL}/portfolio/${currentPortfolio.id}`, {
@@ -721,7 +741,7 @@ function AdminPanel() {
         loadPortfolios();
         setCurrentPortfolio({ ...currentPortfolio, images: updatedImages });
       }
-    }
+    }, null);
   };
 
   const closeImageManager = () => {
@@ -792,15 +812,15 @@ function AdminPanel() {
     }
   };
 
-  const handleDeletePartner = async (id) => {
-    if (window.confirm('Delete this partner?')) {
-      const res = await fetch(`${API_URL}/partners/${id}`, { method: 'DELETE' });
+  const handleDeletePartner = (id) => {
+    showConfirmModalMessage('Are you sure you want to delete this partner?', async (deleteId) => {
+      const res = await fetch(`${API_URL}/partners/${deleteId}`, { method: 'DELETE' });
       if (res.ok) { 
         showModalMessage('Success', 'Partner deleted successfully!');
         loadPartners();
         loadClients();
       }
-    }
+    }, id);
   };
 
   const handleClientImageUpload = async (e) => {
@@ -864,15 +884,15 @@ function AdminPanel() {
     }
   };
 
-  const handleDeleteClient = async (id) => {
-    if (window.confirm('Delete this client?')) {
-      const res = await fetch(`${API_URL}/clients/${id}`, { method: 'DELETE' });
+  const handleDeleteClient = (id) => {
+    showConfirmModalMessage('Are you sure you want to delete this client?', async (deleteId) => {
+      const res = await fetch(`${API_URL}/clients/${deleteId}`, { method: 'DELETE' });
       if (res.ok) { 
         showModalMessage('Success', 'Client deleted successfully!');
         loadClients();
         loadPartners();
       }
-    }
+    }, id);
   };
 
   const handleAddService = async (e) => {
@@ -898,14 +918,14 @@ function AdminPanel() {
     }
   };
 
-  const handleDeleteService = async (id) => {
-    if (window.confirm('Delete this service?')) {
-      const res = await fetch(`${API_URL}/services/${id}`, { method: 'DELETE' });
+  const handleDeleteService = (id) => {
+    showConfirmModalMessage('Are you sure you want to delete this service?', async (deleteId) => {
+      const res = await fetch(`${API_URL}/services/${deleteId}`, { method: 'DELETE' });
       if (res.ok) {
         showModalMessage('Success', 'Service deleted successfully!');
         loadServices();
       }
-    }
+    }, id);
   };
 
   const handleEditService = (service) => {
@@ -1223,6 +1243,26 @@ function AdminPanel() {
             </div>
             <div className="modal-footer">
               <button className="modal-btn" onClick={() => setShowModal(false)}>OK</button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Confirm Delete Modal */}
+      {showConfirmModal && (
+        <div className="modal-overlay" onClick={() => setShowConfirmModal(false)}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Confirm Delete</h3>
+              <button className="modal-close" onClick={() => setShowConfirmModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="confirm-icon">⚠️</div>
+              <p>{confirmMessage}</p>
+            </div>
+            <div className="modal-footer" style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button className="modal-btn-cancel" onClick={() => setShowConfirmModal(false)}>Cancel</button>
+              <button className="modal-btn-danger" onClick={handleConfirmDelete}>Delete</button>
             </div>
           </div>
         </div>

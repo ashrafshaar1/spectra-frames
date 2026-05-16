@@ -2481,3 +2481,63 @@ html {
     font-size: 14px;
   }
 }
+/* Confirm Modal Styles */
+.confirm-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+  color: #dc3545;
+}
+
+.modal-btn-cancel {
+  background: #6c757d;
+  border: none;
+  color: white;
+  padding: 10px 25px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: 'Cinzel', serif;
+}
+
+.modal-btn-cancel:hover {
+  background: #5a6268;
+  transform: scale(1.02);
+}
+
+.modal-btn-danger {
+  background: #dc3545;
+  border: none;
+  color: white;
+  padding: 10px 25px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: 'Cinzel', serif;
+}
+
+.modal-btn-danger:hover {
+  background: #c82333;
+  transform: scale(1.02);
+  box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+}
+
+/* استبدال alert في الـ delete-btn (اختياري) */
+.delete-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s;
+}
+
+.delete-btn:hover {
+  background: #c82333;
+  transform: scale(1.02);
+}
