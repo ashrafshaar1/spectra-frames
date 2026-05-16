@@ -460,7 +460,6 @@ function AdminPanel() {
     const newPreviews = [];
 
     files.forEach(file => {
-      // الحد الأقصى 50 ميجابايت
       if (file.size > 50 * 1024 * 1024) {
         alert(`Image ${file.name} too large! Maximum size is 50MB`);
         return;
@@ -660,18 +659,28 @@ function AdminPanel() {
     setNewImagePreviews([]);
   };
 
-  // Partner Image Upload - 50MB
-  const handlePartnerImageUpload = (e) => {
+  // Partner Image Upload - with preview
+  const handlePartnerImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 50 * 1024 * 1024) {
         alert('Logo too large! Maximum size is 50MB');
         return;
       }
+      
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPartnerImagePreview(reader.result);
-        setPartnerFormData({ ...partnerFormData, logo: reader.result });
+      reader.onloadend = async () => {
+        const base64Image = reader.result;
+        setPartnerImagePreview(base64Image);
+        setUploading(true);
+        
+        const uploadedUrl = await uploadToServer(base64Image);
+        if (uploadedUrl) {
+          setPartnerFormData({ ...partnerFormData, logo: uploadedUrl });
+        } else {
+          alert('Failed to upload logo');
+        }
+        setUploading(false);
       };
       reader.readAsDataURL(file);
     }
@@ -716,18 +725,28 @@ function AdminPanel() {
     }
   };
 
-  // Client Image Upload - 50MB
-  const handleClientImageUpload = (e) => {
+  // Client Image Upload - with preview
+  const handleClientImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 50 * 1024 * 1024) {
         alert('Logo too large! Maximum size is 50MB');
         return;
       }
+      
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setClientImagePreview(reader.result);
-        setClientFormData({ ...clientFormData, logo: reader.result });
+      reader.onloadend = async () => {
+        const base64Image = reader.result;
+        setClientImagePreview(base64Image);
+        setUploading(true);
+        
+        const uploadedUrl = await uploadToServer(base64Image);
+        if (uploadedUrl) {
+          setClientFormData({ ...clientFormData, logo: uploadedUrl });
+        } else {
+          alert('Failed to upload logo');
+        }
+        setUploading(false);
       };
       reader.readAsDataURL(file);
     }
@@ -934,7 +953,13 @@ function AdminPanel() {
                     <input type="file" accept="image/*" onChange={handlePartnerImageUpload} style={{ display: 'none' }} />
                   </label>
                   <p className="image-size-hint">Maximum logo size: 50MB</p>
-                  {partnerImagePreview && <div className="image-preview"><img src={partnerImagePreview} alt="Preview" /><button type="button" onClick={() => { setPartnerImagePreview(''); setPartnerFormData({ ...partnerFormData, logo: '' }); }}>Remove</button></div>}
+                  {uploading && <div className="form-sending">Uploading logo...</div>}
+                  {partnerImagePreview && (
+                    <div className="image-preview">
+                      <img src={partnerImagePreview} alt="Preview" />
+                      <button type="button" onClick={() => { setPartnerImagePreview(''); setPartnerFormData({ ...partnerFormData, logo: '' }); }}>Remove</button>
+                    </div>
+                  )}
                 </div>
                 <button type="submit" className="btn-primary">Add Partner</button>
               </form>
@@ -967,7 +992,13 @@ function AdminPanel() {
                     <input type="file" accept="image/*" onChange={handleClientImageUpload} style={{ display: 'none' }} />
                   </label>
                   <p className="image-size-hint">Maximum logo size: 50MB</p>
-                  {clientImagePreview && <div className="image-preview"><img src={clientImagePreview} alt="Preview" /><button type="button" onClick={() => { setClientImagePreview(''); setClientFormData({ ...clientFormData, logo: '' }); }}>Remove</button></div>}
+                  {uploading && <div className="form-sending">Uploading logo...</div>}
+                  {clientImagePreview && (
+                    <div className="image-preview">
+                      <img src={clientImagePreview} alt="Preview" />
+                      <button type="button" onClick={() => { setClientImagePreview(''); setClientFormData({ ...clientFormData, logo: '' }); }}>Remove</button>
+                    </div>
+                  )}
                 </div>
                 <button type="submit" className="btn-primary">Add Client</button>
               </form>
