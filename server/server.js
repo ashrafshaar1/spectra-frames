@@ -17,18 +17,18 @@ app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
-// استخدام المسار المؤقت (بيشتغل على Render)
-const dataDir = '/tmp/spectra-frames-data';
-const uploadsDir = '/tmp/spectra-frames-uploads';
+// مجلد الصور - مسار ثابت على Render
+const uploadsDir = '/opt/render/project/src/server/uploads';
+const dataDir = '/opt/render/project/src/server/data';
 
 // إنشاء المجلدات
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-  console.log('✅ Data folder created:', dataDir);
-}
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
   console.log('✅ Uploads folder created:', uploadsDir);
+}
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+  console.log('✅ Data folder created:', dataDir);
 }
 
 // خدمة الصور
@@ -71,8 +71,7 @@ const INQUIRIES_FILE = path.join(dataDir, 'inquiries.json');
 function readJSON(filePath, defaultValue = []) {
   if (!fs.existsSync(filePath)) return defaultValue;
   try {
-    const data = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(data);
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
   } catch (err) {
     console.error('Error reading JSON:', err);
     return defaultValue;
@@ -85,7 +84,7 @@ function writeJSON(filePath, data) {
     console.log(`✅ File written: ${filePath}`);
     return true;
   } catch (err) {
-    console.error(`❌ Error writing JSON:`, err);
+    console.error('Error writing JSON:', err);
     return false;
   }
 }
@@ -146,23 +145,30 @@ if (readJSON(SERVICES_FILE).length === 0) writeJSON(SERVICES_FILE, defaultServic
 // ========== API - Portfolio ==========
 app.get('/api/portfolio', (req, res) => {
   const portfolios = readJSON(PORTFOLIO_FILE);
-  console.log('📋 GET portfolios - Count:', portfolios.length);
   res.json(portfolios);
 });
 
 app.post('/api/portfolio', (req, res) => {
   try {
-    console.log('📝 POST portfolio - Received:', req.body.title);
     const portfolios = readJSON(PORTFOLIO_FILE);
     const newItem = { id: uuidv4(), ...req.body, createdAt: new Date().toISOString() };
     portfolios.push(newItem);
     writeJSON(PORTFOLIO_FILE, portfolios);
-    console.log('✅ Portfolio saved with ID:', newItem.id);
+    console.log('✅ Portfolio saved:', newItem.id);
     res.json({ success: true, portfolio: newItem });
   } catch (error) {
-    console.error('❌ Error:', error);
+    console.error('Error saving portfolio:', error);
     res.status(500).json({ error: 'Failed to save portfolio' });
   }
+});
+
+app.put('/api/portfolio/:id', (req, res) => {
+  let portfolios = readJSON(PORTFOLIO_FILE);
+  const index = portfolios.findIndex(p => p.id === req.params.id);
+  if (index === -1) return res.status(404).json({ error: 'Not found' });
+  portfolios[index] = { ...portfolios[index], ...req.body };
+  writeJSON(PORTFOLIO_FILE, portfolios);
+  res.json({ success: true });
 });
 
 app.delete('/api/portfolio/:id', (req, res) => {
@@ -225,6 +231,15 @@ app.post('/api/services', (req, res) => {
   res.json({ success: true, service: newService });
 });
 
+app.put('/api/services/:id', (req, res) => {
+  let services = readJSON(SERVICES_FILE, defaultServices);
+  const index = services.findIndex(s => s.id === req.params.id);
+  if (index === -1) return res.status(404).json({ error: 'Not found' });
+  services[index] = { ...services[index], ...req.body };
+  writeJSON(SERVICES_FILE, services);
+  res.json({ success: true });
+});
+
 app.delete('/api/services/:id', (req, res) => {
   let services = readJSON(SERVICES_FILE, defaultServices);
   services = services.filter(s => s.id !== req.params.id);
@@ -261,14 +276,24 @@ app.post('/api/upload-multiple', upload.array('images', 50), (req, res) => {
   res.json({ success: true, urls: urls });
 });
 
+app.delete('/api/delete-image', (req, res) => {
+  const { filename } = req.body;
+  const filePath = path.join(uploadsDir, filename);
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+    res.json({ success: true });
+  } else {
+    res.status(404).json({ error: 'Image not found' });
+  }
+});
+
 // ========== Health Check ==========
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running', timestamp: new Date().toISOString() });
 });
 
-// ========== بدء السيرفر ==========
 app.listen(PORT, () => {
   console.log(`🚀 Server running on ${SERVER_URL}`);
-  console.log(`📁 Data folder: ${dataDir}`);
   console.log(`📁 Uploads folder: ${uploadsDir}`);
+  console.log(`📁 Data folder: ${dataDir}`);
 });
