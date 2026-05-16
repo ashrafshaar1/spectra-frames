@@ -10,8 +10,58 @@ const API_URL = 'https://spectra-frames-api.onrender.com/api';
 const ADMIN_USERNAME = 'ashrafshaar';
 const ADMIN_PASSWORD = 'ItShYpEr75@';
 
+// Lazy Image Component with skeleton loader
+function LazyImage({ src, alt, className, onError }) {
+  const [loaded, setLoaded] = useState(false);
+  
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      {!loaded && (
+        <div 
+          className="image-skeleton"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%)',
+            backgroundSize: '200% 100%',
+            animation: 'skeleton-loading 1.5s infinite',
+            borderRadius: 'inherit'
+          }}
+        />
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={className}
+        loading="lazy"
+        onLoad={() => setLoaded(true)}
+        onError={(e) => {
+          setLoaded(true);
+          if (onError) onError(e);
+        }}
+        style={{
+          opacity: loaded ? 1 : 0,
+          transition: 'opacity 0.3s ease',
+          width: '100%',
+          height: '100%',
+          objectFit: 'inherit'
+        }}
+      />
+    </div>
+  );
+}
+
 // Gallery Modal Component
 function GalleryModal({ images, currentIndex, onClose, onNext, onPrev }) {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  
+  useEffect(() => {
+    setImageLoaded(false);
+  }, [currentIndex]);
+
   useEffect(() => {
     const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handleEsc);
@@ -23,7 +73,32 @@ function GalleryModal({ images, currentIndex, onClose, onNext, onPrev }) {
       <div className="gallery-modal-content" onClick={(e) => e.stopPropagation()}>
         <button className="gallery-close" onClick={onClose}>×</button>
         <button className="gallery-prev" onClick={onPrev}>‹</button>
-        <img src={images[currentIndex]} alt={`Gallery ${currentIndex + 1}`} className="gallery-image" />
+        
+        {!imageLoaded && (
+          <div 
+            className="image-skeleton"
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '80%',
+              height: '80%',
+              background: 'linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%)',
+              backgroundSize: '200% 100%',
+              animation: 'skeleton-loading 1.5s infinite',
+              borderRadius: '8px'
+            }}
+          />
+        )}
+        <img 
+          src={images[currentIndex]} 
+          alt={`Gallery ${currentIndex + 1}`} 
+          className="gallery-image"
+          onLoad={() => setImageLoaded(true)}
+          style={{ opacity: imageLoaded ? 1 : 0, transition: 'opacity 0.3s ease' }}
+        />
+        
         <button className="gallery-next" onClick={onNext}>›</button>
         <div className="gallery-counter">{currentIndex + 1} / {images.length}</div>
       </div>
@@ -142,15 +217,17 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
               <div className="clients-track">
                 {clients.map((client) => (
                   <div key={client.id} className="client-card">
-                    <img 
-                      src={client.logo} 
-                      alt={client.name} 
-                      className="client-logo-img"
-                      onError={(e) => { 
-                        e.target.style.display = 'none'; 
-                        if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; 
-                      }} 
-                    />
+                    <div className="client-logo-img" style={{ position: 'relative', width: '130px', height: '70px' }}>
+                      <LazyImage 
+                        src={client.logo} 
+                        alt={client.name}
+                        className="client-logo-img"
+                        onError={(e) => { 
+                          e.target.style.display = 'none'; 
+                          if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; 
+                        }}
+                      />
+                    </div>
                     <div className="client-logo-fallback">{client.name.substring(0, 2)}</div>
                     <p className="client-name">{client.name}</p>
                   </div>
@@ -172,15 +249,17 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
               <div className="partners-track">
                 {partners.map((partner) => (
                   <div key={partner.id} className="partner-card">
-                    <img 
-                      src={partner.logo} 
-                      alt={partner.name} 
-                      className="partner-logo-img"
-                      onError={(e) => { 
-                        e.target.style.display = 'none'; 
-                        if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; 
-                      }} 
-                    />
+                    <div className="partner-logo-img" style={{ position: 'relative', width: '130px', height: '70px' }}>
+                      <LazyImage 
+                        src={partner.logo} 
+                        alt={partner.name}
+                        className="partner-logo-img"
+                        onError={(e) => { 
+                          e.target.style.display = 'none'; 
+                          if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; 
+                        }}
+                      />
+                    </div>
                     <div className="partner-logo-fallback">{partner.name.substring(0, 2)}</div>
                     <p className="partner-name">{partner.name}</p>
                   </div>
@@ -201,7 +280,13 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
             {portfolios.map((item) => (
               <Link to={`/portfolio/${item.id}`} key={item.id} className="portfolio-card-link">
                 <div className="portfolio-card">
-                  <img src={item.coverImage || item.images?.[0]} alt={item.title} className="portfolio-img" />
+                  <div className="portfolio-img" style={{ position: 'relative', height: '280px' }}>
+                    <LazyImage 
+                      src={item.coverImage || item.images?.[0]} 
+                      alt={item.title} 
+                      className="portfolio-img"
+                    />
+                  </div>
                   <div className="portfolio-overlay">
                     <div className="portfolio-info">
                       <span className="portfolio-category">{item.category}</span>
@@ -360,7 +445,13 @@ function PortfolioDetail() {
         <div className="gallery-grid">
           {images.map((img, idx) => (
             <div key={idx} className="gallery-item" onClick={() => openGallery(idx)}>
-              <img src={img} alt={`${item.title} ${idx + 1}`} />
+              <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                <LazyImage 
+                  src={img} 
+                  alt={`${item.title} ${idx + 1}`}
+                  className=""
+                />
+              </div>
               {idx === 0 && images.length > 1 && <div className="gallery-overlay"><span>+{images.length - 1}</span></div>}
             </div>
           ))}
