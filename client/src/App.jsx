@@ -1375,8 +1375,10 @@ function App() {
     try {
       const res = await fetch(`${API_URL}/clients`);
       const data = await res.json();
+      console.log('✅ Clients loaded in Main App:', data);
       setClients(data);
     } catch (err) {
+      console.error('Failed to load clients:', err);
       setClients([]);
     }
   };
@@ -1385,8 +1387,10 @@ function App() {
     try {
       const res = await fetch(`${API_URL}/partners`);
       const data = await res.json();
+      console.log('✅ Partners loaded in Main App:', data);
       setPartners(data);
     } catch (err) {
+      console.error('Failed to load partners:', err);
       setPartners([]);
     }
   };
