@@ -249,7 +249,7 @@ html {
   display: flex;
   gap: 30px;
   width: fit-content;
-  animation: scrollAuto 13s linear infinite;
+  animation: scrollAuto 11s linear infinite;
 }
 
 /* منع التمرير اليدوي وإزالة الإطار */
@@ -280,7 +280,7 @@ html {
 @media (max-width: 768px) {
   .clients-track,
   .partners-track {
-    animation: scrollAuto 9s linear infinite;
+    animation: scrollAuto 7s linear infinite;
     gap: 20px;
   }
 }
@@ -288,7 +288,7 @@ html {
 @media (max-width: 576px) {
   .clients-track,
   .partners-track {
-    animation: scrollAuto 7s linear infinite;
+    animation: scrollAuto 5s linear infinite;
     gap: 15px;
   }
 }
