@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
 import './App.css';
-import { FaFacebookF, FaInstagram, FaTiktok, FaWhatsapp } from 'react-icons/fa';
+import { FaFacebookF, FaInstagram, FaTiktok, FaWhatsapp, FaUserLock } from 'react-icons/fa';
 
 // API URL
 const API_URL = 'https://spectra-frames-api.onrender.com/api';
@@ -236,7 +236,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
       <section id="contact" className="contact">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Let\'s Create Together</h2>
+            <h2 className="section-title">Let\\'s Create Together</h2>
             <p className="section-subtitle">Ready to capture your next moment? Reach out to us</p>
           </div>
           <div className="contact-wrapper">
@@ -1459,7 +1459,14 @@ function App() {
     <Router>
       <div className="app">
         {showScrollTop && <button onClick={scrollToTop} className="floating-scroll">↑</button>}
-        <div className="admin-link"><Link to="/admin">Admin</Link></div>
+        
+        {/* Admin Login Icon - Fixed position, no scroll */}
+        <div className="admin-icon-wrapper">
+          <Link to="/admin" className="admin-icon-link">
+            <FaUserLock className="admin-icon" />
+          </Link>
+        </div>
+        
         <Routes>
           <Route path="/" element={<HomePage scrollToSection={scrollToSection} portfolios={portfolios} refreshPortfolios={refreshPortfolios} />} />
           <Route path="/portfolio/:id" element={<PortfolioDetail />} />
