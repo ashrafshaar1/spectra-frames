@@ -672,8 +672,8 @@ function AdminPanel() {
   const handlePartnerImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Logo too large! Max 5MB');
+      if (file.size > 50 * 1024 * 1024) {
+        alert('Logo too large! Max 50MB');
         return;
       }
       const reader = new FileReader();
@@ -727,8 +727,8 @@ function AdminPanel() {
   const handleClientImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Logo too large! Max 5MB');
+      if (file.size > 50 * 1024 * 1024) {
+        alert('Logo too large! Max 50MB');
         return;
       }
       const reader = new FileReader();
@@ -936,7 +936,7 @@ function AdminPanel() {
               <form onSubmit={handleAddPartner}>
                 <input type="text" name="name" placeholder="Partner Name" value={partnerFormData.name} onChange={(e) => setPartnerFormData({ ...partnerFormData, name: e.target.value })} required className="form-input" />
                 <div className="image-upload-area">
-                  <label className="upload-label">Upload Logo (Max 5MB)
+                  <label className="upload-label">Upload Logo (Max 50MB)
                     <input type="file" accept="image/*" onChange={handlePartnerImageUpload} style={{ display: 'none' }} />
                   </label>
                   {partnerImagePreview && <div className="image-preview"><img src={partnerImagePreview} alt="Preview" /><button type="button" onClick={() => { setPartnerImagePreview(''); setPartnerFormData({ ...partnerFormData, logo: '' }); }}>Remove</button></div>}
@@ -968,7 +968,7 @@ function AdminPanel() {
               <form onSubmit={handleAddClient}>
                 <input type="text" name="name" placeholder="Client Name" value={clientFormData.name} onChange={(e) => setClientFormData({ ...clientFormData, name: e.target.value })} required className="form-input" />
                 <div className="image-upload-area">
-                  <label className="upload-label">Upload Logo (Max 5MB)
+                  <label className="upload-label">Upload Logo (Max 50MB)
                     <input type="file" accept="image/*" onChange={handleClientImageUpload} style={{ display: 'none' }} />
                   </label>
                   {clientImagePreview && <div className="image-preview"><img src={clientImagePreview} alt="Preview" /><button type="button" onClick={() => { setClientImagePreview(''); setClientFormData({ ...clientFormData, logo: '' }); }}>Remove</button></div>}
