@@ -205,7 +205,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios, clients, ref
   );
 }
 
-// Portfolio Detail Page - FIXED VERSION
+// Portfolio Detail Page
 function PortfolioDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -220,27 +220,20 @@ function PortfolioDetail() {
       try {
         console.log('🔍 Opening portfolio with ID:', id);
         
-        // First try to get the specific portfolio
         const res = await fetch(`${API_URL}/portfolio/${id}`);
         console.log('📡 Response status:', res.status);
         
         if (!res.ok) {
-          // If not found, try to get all portfolios and find by id
-          console.log('⚠️ Portfolio not found directly, searching in all portfolios...');
           const allRes = await fetch(`${API_URL}/portfolio`);
           const allPortfolios = await allRes.json();
-          console.log('📋 All portfolios:', allPortfolios);
-          
           const found = allPortfolios.find(p => p.id === id);
           if (found) {
-            console.log('✅ Found portfolio in list:', found);
             setItem(found);
           } else {
             throw new Error(`Portfolio with ID "${id}" not found`);
           }
         } else {
           const data = await res.json();
-          console.log('✅ Portfolio loaded directly:', data);
           setItem(data);
         }
       } catch (err) {
@@ -275,7 +268,6 @@ function PortfolioDetail() {
         <div className="container">
           <div className="loading" style={{ textAlign: 'center', padding: '60px 20px' }}>
             <p style={{ color: '#dc3545', marginBottom: '20px' }}>⚠️ Error: {error}</p>
-            <p style={{ color: '#B8B0A8', marginBottom: '30px' }}>The portfolio item you're looking for might have been deleted or the ID is incorrect.</p>
             <button className="back-btn" onClick={() => navigate('/')}>← Back to Home</button>
           </div>
         </div>
@@ -330,7 +322,7 @@ function PortfolioDetail() {
   );
 }
 
-// Admin Panel Component (مختصر للطول - نفس الكود القديم)
+// Admin Panel Component
 function AdminPanel() {
   const [portfolios, setPortfolios] = useState([]);
   const [partners, setPartners] = useState([]);
@@ -380,10 +372,8 @@ function AdminPanel() {
     try {
       const res = await fetch(`${API_URL}/portfolio`);
       const data = await res.json();
-      console.log('📋 Loaded portfolios:', data);
       setPortfolios(data);
     } catch (err) {
-      console.error('Failed to load portfolios:', err);
       setPortfolios([]);
     }
   };
@@ -470,8 +460,9 @@ function AdminPanel() {
     const newPreviews = [];
 
     files.forEach(file => {
+      // الحد الأقصى 50 ميجابايت
       if (file.size > 50 * 1024 * 1024) {
-        alert(`Image ${file.name} too large! Max 50MB`);
+        alert(`Image ${file.name} too large! Maximum size is 50MB`);
         return;
       }
       const reader = new FileReader();
@@ -581,7 +572,7 @@ function AdminPanel() {
     const newPreviews = [];
     files.forEach(file => {
       if (file.size > 50 * 1024 * 1024) {
-        alert(`Image ${file.name} too large!`);
+        alert(`Image ${file.name} too large! Maximum size is 50MB`);
         return;
       }
       const reader = new FileReader();
@@ -672,8 +663,8 @@ function AdminPanel() {
   const handlePartnerImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 50 * 1024 * 1024) {
-        alert('Logo too large! Max 50MB');
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Logo too large! Max 5MB');
         return;
       }
       const reader = new FileReader();
@@ -727,8 +718,8 @@ function AdminPanel() {
   const handleClientImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 50 * 1024 * 1024) {
-        alert('Logo too large! Max 50MB');
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Logo too large! Max 5MB');
         return;
       }
       const reader = new FileReader();
@@ -894,6 +885,7 @@ function AdminPanel() {
                     <input type="text" placeholder="Or enter image URL" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} className="form-input" />
                     <button type="button" onClick={addImageFromUrl} className="btn-secondary">Add URL</button>
                   </div>
+                  <p className="image-size-hint">Maximum image size: 50MB</p>
                   {uploading && <div className="form-sending">Uploading...</div>}
                   {imagePreviews.length > 0 && (
                     <div className="image-previews-grid">
@@ -936,7 +928,7 @@ function AdminPanel() {
               <form onSubmit={handleAddPartner}>
                 <input type="text" name="name" placeholder="Partner Name" value={partnerFormData.name} onChange={(e) => setPartnerFormData({ ...partnerFormData, name: e.target.value })} required className="form-input" />
                 <div className="image-upload-area">
-                  <label className="upload-label">Upload Logo (Max 50MB)
+                  <label className="upload-label">Upload Logo (Max 5MB)
                     <input type="file" accept="image/*" onChange={handlePartnerImageUpload} style={{ display: 'none' }} />
                   </label>
                   {partnerImagePreview && <div className="image-preview"><img src={partnerImagePreview} alt="Preview" /><button type="button" onClick={() => { setPartnerImagePreview(''); setPartnerFormData({ ...partnerFormData, logo: '' }); }}>Remove</button></div>}
@@ -968,7 +960,7 @@ function AdminPanel() {
               <form onSubmit={handleAddClient}>
                 <input type="text" name="name" placeholder="Client Name" value={clientFormData.name} onChange={(e) => setClientFormData({ ...clientFormData, name: e.target.value })} required className="form-input" />
                 <div className="image-upload-area">
-                  <label className="upload-label">Upload Logo (Max 50MB)
+                  <label className="upload-label">Upload Logo (Max 5MB)
                     <input type="file" accept="image/*" onChange={handleClientImageUpload} style={{ display: 'none' }} />
                   </label>
                   {clientImagePreview && <div className="image-preview"><img src={clientImagePreview} alt="Preview" /><button type="button" onClick={() => { setClientImagePreview(''); setClientFormData({ ...clientFormData, logo: '' }); }}>Remove</button></div>}
@@ -1090,6 +1082,7 @@ function AdminPanel() {
                   <input type="text" placeholder="Or enter image URL" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} className="form-input" />
                   <button type="button" onClick={addImageUrlToManager} className="btn-secondary">Add URL</button>
                 </div>
+                <p className="image-size-hint">Maximum image size: 50MB</p>
                 {uploading && <div className="form-sending">Uploading...</div>}
                 {newImagePreviews.length > 0 && (
                   <div className="new-images-preview">
@@ -1130,10 +1123,8 @@ function App() {
     try {
       const res = await fetch(`${API_URL}/portfolio`);
       const data = await res.json();
-      console.log('🏠 Main App - Portfolios:', data);
       setPortfolios(data);
     } catch (err) {
-      console.error('Failed to load portfolios:', err);
       setPortfolios([]);
     }
   };

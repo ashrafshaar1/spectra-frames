@@ -34,7 +34,7 @@ if (!fs.existsSync(dataDir)) {
 // خدمة الصور
 app.use('/uploads', express.static(uploadsDir));
 
-// تكوين multer
+// تكوين multer - الحد الأقصى 50MB
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
@@ -45,7 +45,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 50 * 1024 * 1024 },
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB حد أقصى
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
