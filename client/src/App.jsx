@@ -6,6 +6,10 @@ import { FaFacebookF, FaInstagram, FaTiktok, FaWhatsapp } from 'react-icons/fa';
 // API URL
 const API_URL = 'https://spectra-frames-api.onrender.com/api';
 
+// Admin credentials
+const ADMIN_USERNAME = 'ashrafshaar';
+const ADMIN_PASSWORD = 'ItShYpEr75@';
+
 // Gallery Modal Component
 function GalleryModal({ images, currentIndex, onClose, onNext, onPrev }) {
   useEffect(() => {
@@ -41,7 +45,6 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
     message: ''
   });
 
-  // دالة لجلب البيانات من السيرفر
   const loadData = () => {
     console.log('🔄 Loading data from server...');
     
@@ -128,7 +131,6 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
         </div>
       </section>
 
-      {/* Clients Section - يظهر فقط إذا فيه عملاء */}
       {clients.length > 0 && (
         <section className="clients-section">
           <div className="container">
@@ -159,7 +161,6 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
         </section>
       )}
 
-      {/* Partners Section - يظهر فقط إذا فيه شركاء */}
       {partners.length > 0 && (
         <section className="partners-section">
           <div className="container">
@@ -235,7 +236,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
       <section id="contact" className="contact">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Let's Create Together</h2>
+            <h2 className="section-title">Let\'s Create Together</h2>
             <p className="section-subtitle">Ready to capture your next moment? Reach out to us</p>
           </div>
           <div className="contact-wrapper">
@@ -386,7 +387,9 @@ function AdminPanel() {
   const [inquiries, setInquiries] = useState([]);
   const [services, setServices] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
   const [activeTab, setActiveTab] = useState('portfolio');
   const [showImageManager, setShowImageManager] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -440,7 +443,6 @@ function AdminPanel() {
     setConfirmId(null);
   };
 
-  // حذف جميع الشركاء
   const handleDeleteAllPartners = async () => {
     showConfirmModalMessage('Are you sure you want to DELETE ALL PARTNERS? This action cannot be undone!', async () => {
       for (const partner of partners) {
@@ -451,7 +453,6 @@ function AdminPanel() {
     }, null);
   };
 
-  // حذف جميع العملاء
   const handleDeleteAllClients = async () => {
     showConfirmModalMessage('Are you sure you want to DELETE ALL CLIENTS? This action cannot be undone!', async () => {
       for (const client of clients) {
@@ -568,17 +569,21 @@ function AdminPanel() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (password === 'admin123') {
+    setLoginError('');
+    
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
       setIsLoggedIn(true);
       localStorage.setItem('adminLoggedIn', 'true');
       refreshAllData();
     } else {
-      showModalMessage('Error', 'Wrong password! Use: admin123');
+      setLoginError('Invalid username or password!');
     }
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setUsername('');
+    setPassword('');
     localStorage.removeItem('adminLoggedIn');
   };
 
@@ -1043,10 +1048,25 @@ function AdminPanel() {
             <button className="back-to-home" onClick={() => navigate('/')}>Back to Home</button>
             <h2>Admin Login</h2>
             <form onSubmit={handleLogin}>
-              <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-input" />
+              <input 
+                type="text" 
+                placeholder="Username" 
+                value={username} 
+                onChange={(e) => setUsername(e.target.value)} 
+                className="form-input" 
+                required 
+              />
+              <input 
+                type="password" 
+                placeholder="Password" 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                className="form-input" 
+                required 
+              />
+              {loginError && <div className="form-error" style={{ marginBottom: '15px' }}>{loginError}</div>}
               <button type="submit" className="btn-primary">Login</button>
             </form>
-            <p className="hint">Password: admin123</p>
           </div>
         </div>
       </div>
