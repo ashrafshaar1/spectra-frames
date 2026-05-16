@@ -41,26 +41,48 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
     message: ''
   });
 
-  useEffect(() => {
-    refreshPortfolios();
+  // دالة لجلب البيانات من السيرفر
+  const loadData = () => {
+    console.log('🔄 Loading data from server...');
     
-    // Load services
-    fetch(`${API_URL}/services`)
-      .then(res => res.json())
-      .then(data => setServices(data))
-      .catch(err => console.error('Failed to load services:', err));
-    
-    // Load clients
+    // جلب العملاء
     fetch(`${API_URL}/clients`)
       .then(res => res.json())
-      .then(data => setClients(data))
+      .then(data => {
+        console.log('✅ Clients loaded:', data);
+        setClients(data);
+      })
       .catch(err => console.error('Failed to load clients:', err));
     
-    // Load partners
+    // جلب الشركاء
     fetch(`${API_URL}/partners`)
       .then(res => res.json())
-      .then(data => setPartners(data))
+      .then(data => {
+        console.log('✅ Partners loaded:', data);
+        setPartners(data);
+      })
       .catch(err => console.error('Failed to load partners:', err));
+    
+    // جلب الخدمات
+    fetch(`${API_URL}/services`)
+      .then(res => res.json())
+      .then(data => {
+        console.log('✅ Services loaded:', data);
+        setServices(data);
+      })
+      .catch(err => console.error('Failed to load services:', err));
+  };
+
+  useEffect(() => {
+    refreshPortfolios();
+    loadData();
+    
+    // تحديث البيانات كل 10 ثواني (اختياري)
+    const interval = setInterval(() => {
+      loadData();
+    }, 10000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const handleChange = (e) => {
@@ -117,7 +139,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
             <h2 className="section-title">Our Clients</h2>
             <p className="section-subtitle">Trusted by leading brands worldwide</p>
           </div>
-          {clients.length > 0 ? (
+          {clients && clients.length > 0 ? (
             <div className="clients-slider">
               <div className="clients-track">
                 {clients.map((client) => (
@@ -152,7 +174,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
             <h2 className="section-title">Our Partners</h2>
             <p className="section-subtitle">Collaborating with industry leaders</p>
           </div>
-          {partners.length > 0 ? (
+          {partners && partners.length > 0 ? (
             <div className="partners-slider">
               <div className="partners-track">
                 {partners.map((partner) => (
@@ -480,6 +502,7 @@ function AdminPanel() {
     try {
       const res = await fetch(`${API_URL}/partners`);
       const data = await res.json();
+      console.log('📋 Partners loaded in Admin:', data);
       setPartners(data);
     } catch (err) {
       setPartners([]);
@@ -490,6 +513,7 @@ function AdminPanel() {
     try {
       const res = await fetch(`${API_URL}/clients`);
       const data = await res.json();
+      console.log('📋 Clients loaded in Admin:', data);
       setClients(data);
     } catch (err) {
       setClients([]);
