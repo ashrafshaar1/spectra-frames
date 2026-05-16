@@ -117,14 +117,17 @@ const defaultPortfolios = [
   }
 ];
 
-const defaultPartners = [
-  { id: '1', name: 'Luxury Hotel', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Luxury+Hotel' },
-  { id: '2', name: 'Fashion Brand', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Fashion+Brand' }
-];
-
 const defaultClients = [
   { id: '1', name: 'Luxury Hotel', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Luxury+Hotel' },
-  { id: '2', name: 'Fashion Brand', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Fashion+Brand' }
+  { id: '2', name: 'Fashion Brand', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Fashion+Brand' },
+  { id: '3', name: 'Wedding Planner', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Wedding+Planner' }
+];
+
+const defaultPartners = [
+  { id: '1', name: 'Canon', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Canon' },
+  { id: '2', name: 'Sony', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Sony' },
+  { id: '3', name: 'Adobe', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Adobe' },
+  { id: '4', name: 'Nikon', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Nikon' }
 ];
 
 const defaultServices = [
@@ -138,8 +141,8 @@ const defaultServices = [
 
 // إنشاء الملفات لو مش موجودة
 if (readJSON(PORTFOLIO_FILE).length === 0) writeJSON(PORTFOLIO_FILE, defaultPortfolios);
-if (readJSON(PARTNERS_FILE).length === 0) writeJSON(PARTNERS_FILE, defaultPartners);
 if (readJSON(CLIENTS_FILE).length === 0) writeJSON(CLIENTS_FILE, defaultClients);
+if (readJSON(PARTNERS_FILE).length === 0) writeJSON(PARTNERS_FILE, defaultPartners);
 if (readJSON(SERVICES_FILE).length === 0) writeJSON(SERVICES_FILE, defaultServices);
 
 // ========== API - Portfolio ==========
