@@ -2244,3 +2244,240 @@ html {
     font-size: 14px;
   }
 }
+/* Progress Bar Container */
+.progress-container {
+  margin: 15px 0;
+  background: #2a2a2a;
+  border-radius: 10px;
+  overflow: hidden;
+  height: 35px;
+  position: relative;
+}
+
+.progress-bar {
+  background: linear-gradient(90deg, #D4AF37, #FFD700);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  transition: width 0.3s ease;
+  border-radius: 10px;
+}
+
+.progress-text {
+  color: #1A1A1A;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.upload-status {
+  text-align: center;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #D4AF37;
+}
+
+/* Image Preview */
+.image-preview {
+  margin-top: 15px;
+  position: relative;
+  display: inline-block;
+}
+
+.image-preview img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 2px solid #D4AF37;
+  background: #1A1A1A;
+  padding: 5px;
+}
+
+.image-preview button {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* Image Previews Grid */
+.image-previews-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.image-preview-item {
+  position: relative;
+  width: 100px;
+  height: 100px;
+}
+
+.image-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid #D4AF37;
+}
+
+.image-preview-item button {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-container {
+  background: #1A1A1A;
+  border-radius: 16px;
+  max-width: 400px;
+  width: 90%;
+  border: 1px solid #D4AF37;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  animation: slideInUp 0.3s ease;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.modal-header h3 {
+  color: #D4AF37;
+  font-family: 'Cinzel', serif;
+  margin: 0;
+  font-size: 18px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: #B8B0A8;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.modal-close:hover {
+  color: #D4AF37;
+  transform: scale(1.1);
+}
+
+.modal-body {
+  padding: 30px 20px;
+  text-align: center;
+}
+
+.modal-body p {
+  color: #F2F2F2;
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(212, 175, 55, 0.3);
+  text-align: center;
+}
+
+.modal-btn {
+  background: linear-gradient(135deg, #D4AF37, #B8860B);
+  border: none;
+  color: #1A1A1A;
+  padding: 10px 30px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: 'Cinzel', serif;
+}
+
+.modal-btn:hover {
+  transform: scale(1.02);
+  box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .progress-container {
+    height: 30px;
+  }
+  
+  .progress-text {
+    font-size: 11px;
+  }
+  
+  .image-preview img {
+    width: 90px;
+    height: 90px;
+  }
+  
+  .modal-container {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .modal-body {
+    padding: 20px 15px;
+  }
+  
+  .modal-body p {
+    font-size: 14px;
+  }
+}

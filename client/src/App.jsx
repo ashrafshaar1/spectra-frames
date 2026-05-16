@@ -339,6 +339,7 @@ function AdminPanel() {
   const [modalMessage, setModalMessage] = useState('');
   const [modalTitle, setModalTitle] = useState('');
   const [imageUrlInput, setImageUrlInput] = useState('');
+  const [formKey, setFormKey] = useState(0);
   
   const [formData, setFormData] = useState({ title: '', category: 'Wedding', description: '', images: [] });
   const [tempImages, setTempImages] = useState([]);
@@ -363,7 +364,7 @@ function AdminPanel() {
     setShowModal(true);
   };
 
-  const uploadToServer = async (base64Image) => {
+  const uploadToServer = async (base64Image, onProgress) => {
     try {
       const blob = await fetch(base64Image).then(r => r.blob());
       const formData = new FormData();
@@ -373,12 +374,13 @@ function AdminPanel() {
         const xhr = new XMLHttpRequest();
         xhr.open('POST', `${API_URL}/upload-image`);
         
-        xhr.upload.addEventListener('progress', (e) => {
-          if (e.lengthComputable) {
-            const percent = Math.round((e.loaded / e.total) * 100);
-            setUploadProgress(percent);
-          }
-        });
+        if (onProgress) {
+          xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+              onProgress(Math.round((e.loaded / e.total) * 100));
+            }
+          });
+        }
         
         xhr.onload = () => {
           if (xhr.status === 200) {
@@ -484,27 +486,45 @@ function AdminPanel() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleMultipleImageUpload = (e) => {
+  const handleMultipleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
     const newImages = [];
     const newPreviews = [];
 
-    files.forEach(file => {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
       if (file.size > 50 * 1024 * 1024) {
-        showModalMessage('Error', `Image ${file.name} too large! Maximum size is 50MB`);
-        return;
+        showModalMessage('Error', `Image ${file.name} too large! Max 50MB`);
+        continue;
       }
+      
+      setUploading(true);
+      setUploadProgress(0);
+      
       const reader = new FileReader();
-      reader.onloadend = () => {
-        newImages.push(reader.result);
-        newPreviews.push(reader.result);
-        if (newImages.length === files.length) {
-          setTempImages([...tempImages, ...newImages]);
-          setImagePreviews([...imagePreviews, ...newPreviews]);
-        }
-      };
+      const uploadPromise = new Promise((resolve) => {
+        reader.onloadend = async () => {
+          const base64Image = reader.result;
+          const url = await uploadToServer(base64Image, (progress) => {
+            setUploadProgress(progress);
+          });
+          resolve(url);
+        };
+      });
+      
       reader.readAsDataURL(file);
-    });
+      const url = await uploadPromise;
+      
+      if (url) {
+        newImages.push(url);
+        newPreviews.push(url);
+      }
+    }
+    
+    setTempImages([...tempImages, ...newImages]);
+    setImagePreviews([...imagePreviews, ...newPreviews]);
+    setUploading(false);
+    setTimeout(() => setUploadProgress(0), 1000);
   };
 
   const addImageFromUrl = () => {
@@ -573,6 +593,7 @@ function AdminPanel() {
       setTempImages([]);
       setImagePreviews([]);
       loadPortfolios();
+      setFormKey(prev => prev + 1);
     } else {
       showModalMessage('Error', 'Failed to save portfolio');
     }
@@ -597,26 +618,45 @@ function AdminPanel() {
     setShowImageManager(true);
   };
 
-  const handleAddImagesToPortfolio = (e) => {
+  const handleAddImagesToPortfolio = async (e) => {
     const files = Array.from(e.target.files);
     const newImages = [];
     const newPreviews = [];
-    files.forEach(file => {
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
       if (file.size > 50 * 1024 * 1024) {
-        showModalMessage('Error', `Image ${file.name} too large! Maximum size is 50MB`);
-        return;
+        showModalMessage('Error', `Image ${file.name} too large! Max 50MB`);
+        continue;
       }
+      
+      setUploading(true);
+      setUploadProgress(0);
+      
       const reader = new FileReader();
-      reader.onloadend = () => {
-        newImages.push(reader.result);
-        newPreviews.push(reader.result);
-        if (newImages.length === files.length) {
-          setNewImagesForPortfolio([...newImagesForPortfolio, ...newImages]);
-          setNewImagePreviews([...newImagePreviews, ...newPreviews]);
-        }
-      };
+      const uploadPromise = new Promise((resolve) => {
+        reader.onloadend = async () => {
+          const base64Image = reader.result;
+          const url = await uploadToServer(base64Image, (progress) => {
+            setUploadProgress(progress);
+          });
+          resolve(url);
+        };
+      });
+      
       reader.readAsDataURL(file);
-    });
+      const url = await uploadPromise;
+      
+      if (url) {
+        newImages.push(url);
+        newPreviews.push(url);
+      }
+    }
+    
+    setNewImagesForPortfolio([...newImagesForPortfolio, ...newImages]);
+    setNewImagePreviews([...newImagePreviews, ...newPreviews]);
+    setUploading(false);
+    setTimeout(() => setUploadProgress(0), 1000);
   };
 
   const addImageUrlToManager = () => {
@@ -699,15 +739,17 @@ function AdminPanel() {
         return;
       }
       
+      setUploading(true);
+      setUploadProgress(0);
+      
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64Image = reader.result;
-        setPartnerImagePreview(base64Image);
-        setUploadProgress(0);
-        setUploading(true);
-        
-        const uploadedUrl = await uploadToServer(base64Image);
+        const uploadedUrl = await uploadToServer(base64Image, (progress) => {
+          setUploadProgress(progress);
+        });
         if (uploadedUrl) {
+          setPartnerImagePreview(uploadedUrl);
           setPartnerFormData({ ...partnerFormData, logo: uploadedUrl });
         } else {
           showModalMessage('Error', 'Failed to upload logo');
@@ -744,6 +786,7 @@ function AdminPanel() {
       setPartnerImagePreview('');
       loadPartners();
       loadClients();
+      setFormKey(prev => prev + 1);
     } else {
       showModalMessage('Error', 'Failed to add partner');
     }
@@ -768,15 +811,17 @@ function AdminPanel() {
         return;
       }
       
+      setUploading(true);
+      setUploadProgress(0);
+      
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64Image = reader.result;
-        setClientImagePreview(base64Image);
-        setUploadProgress(0);
-        setUploading(true);
-        
-        const uploadedUrl = await uploadToServer(base64Image);
+        const uploadedUrl = await uploadToServer(base64Image, (progress) => {
+          setUploadProgress(progress);
+        });
         if (uploadedUrl) {
+          setClientImagePreview(uploadedUrl);
           setClientFormData({ ...clientFormData, logo: uploadedUrl });
         } else {
           showModalMessage('Error', 'Failed to upload logo');
@@ -813,6 +858,7 @@ function AdminPanel() {
       setClientImagePreview('');
       loadClients();
       loadPartners();
+      setFormKey(prev => prev + 1);
     } else {
       showModalMessage('Error', 'Failed to add client');
     }
@@ -846,6 +892,7 @@ function AdminPanel() {
       showModalMessage('Success', 'Service added successfully!');
       setServiceFormData({ title: '', description: '' });
       loadServices();
+      setFormKey(prev => prev + 1);
     } else {
       showModalMessage('Error', 'Failed to add service');
     }
@@ -932,7 +979,7 @@ function AdminPanel() {
           <>
             <div className="admin-form">
               <h2>Add New Portfolio Project</h2>
-              <form onSubmit={handleAddPortfolio}>
+              <form key={`portfolio-${formKey}`} onSubmit={handleAddPortfolio}>
                 <input type="text" name="title" placeholder="Project Title" value={formData.title} onChange={handleInputChange} required className="form-input" />
                 <select name="category" value={formData.category} onChange={handleInputChange} className="form-select">
                   <option>Wedding</option><option>Portrait</option><option>Landscape</option><option>Street</option>
@@ -949,7 +996,14 @@ function AdminPanel() {
                     <button type="button" onClick={addImageFromUrl} className="btn-secondary">Add URL</button>
                   </div>
                   <p className="image-size-hint">Maximum image size: 50MB</p>
-                  {uploading && <div className="form-sending">Uploading...</div>}
+                  {uploading && (
+                    <div className="progress-container">
+                      <div className="progress-bar" style={{ width: `${uploadProgress}%` }}>
+                        <span className="progress-text">{uploadProgress}%</span>
+                      </div>
+                      <p className="upload-status">Uploading images... {uploadProgress}%</p>
+                    </div>
+                  )}
                   {imagePreviews.length > 0 && (
                     <div className="image-previews-grid">
                       {imagePreviews.map((preview, idx) => (
@@ -988,7 +1042,7 @@ function AdminPanel() {
           <>
             <div className="admin-form">
               <h2>Add Partner</h2>
-              <form onSubmit={handleAddPartner}>
+              <form key={`partner-${formKey}`} onSubmit={handleAddPartner}>
                 <input type="text" name="name" placeholder="Partner Name" value={partnerFormData.name} onChange={(e) => setPartnerFormData({ ...partnerFormData, name: e.target.value })} required className="form-input" />
                 <div className="image-upload-area">
                   <label className="upload-label">Upload Logo (Max 50MB)
@@ -1034,7 +1088,7 @@ function AdminPanel() {
           <>
             <div className="admin-form">
               <h2>Add Client Logo</h2>
-              <form onSubmit={handleAddClient}>
+              <form key={`client-${formKey}`} onSubmit={handleAddClient}>
                 <input type="text" name="name" placeholder="Client Name" value={clientFormData.name} onChange={(e) => setClientFormData({ ...clientFormData, name: e.target.value })} required className="form-input" />
                 <div className="image-upload-area">
                   <label className="upload-label">Upload Logo (Max 50MB)
@@ -1080,7 +1134,7 @@ function AdminPanel() {
           <>
             <div className="admin-form">
               <h2>{editingService ? 'Edit Service' : 'Add New Service'}</h2>
-              <form onSubmit={editingService ? handleUpdateService : handleAddService}>
+              <form key={`service-${formKey}`} onSubmit={editingService ? handleUpdateService : handleAddService}>
                 <input 
                   type="text" 
                   name="title" 
@@ -1165,7 +1219,6 @@ function AdminPanel() {
               <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
             </div>
             <div className="modal-body">
-              <div className="modal-icon">{modalTitle === 'Success' ? '✓' : '!'}</div>
               <p>{modalMessage}</p>
             </div>
             <div className="modal-footer">
@@ -1193,7 +1246,14 @@ function AdminPanel() {
                   <button type="button" onClick={addImageUrlToManager} className="btn-secondary">Add URL</button>
                 </div>
                 <p className="image-size-hint">Maximum image size: 50MB</p>
-                {uploading && <div className="form-sending">Uploading...</div>}
+                {uploading && (
+                  <div className="progress-container">
+                    <div className="progress-bar" style={{ width: `${uploadProgress}%` }}>
+                      <span className="progress-text">{uploadProgress}%</span>
+                    </div>
+                    <p className="upload-status">Uploading images... {uploadProgress}%</p>
+                  </div>
+                )}
                 {newImagePreviews.length > 0 && (
                   <div className="new-images-preview">
                     <h4>New images to add:</h4>
