@@ -334,6 +334,9 @@ function AdminPanel() {
   const [activeTab, setActiveTab] = useState('portfolio');
   const [showImageManager, setShowImageManager] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [imageUrlInput, setImageUrlInput] = useState('');
   
   const [formData, setFormData] = useState({ title: '', category: 'Wedding', description: '', images: [] });
@@ -353,15 +356,43 @@ function AdminPanel() {
 
   const navigate = useNavigate();
 
+  const showSuccessPopupMessage = (message) => {
+    setSuccessMessage(message);
+    setShowSuccessPopup(true);
+    setTimeout(() => {
+      setShowSuccessPopup(false);
+    }, 3000);
+  };
+
   const uploadToServer = async (base64Image) => {
     try {
       const blob = await fetch(base64Image).then(r => r.blob());
       const formData = new FormData();
       formData.append('image', blob, 'image.jpg');
-      const response = await fetch(`${API_URL}/upload-image`, { method: 'POST', body: formData });
-      const data = await response.json();
-      if (data.url) return data.url;
-      return null;
+      
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `${API_URL}/upload-image`);
+        
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            setUploadProgress(percent);
+          }
+        });
+        
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            const data = JSON.parse(xhr.response);
+            resolve(data.url);
+          } else {
+            reject(new Error('Upload failed'));
+          }
+        };
+        
+        xhr.onerror = () => reject(new Error('Network error'));
+        xhr.send(formData);
+      });
     } catch (error) {
       console.error('Upload error:', error);
       return null;
@@ -659,7 +690,6 @@ function AdminPanel() {
     setNewImagePreviews([]);
   };
 
-  // Partner Image Upload - with preview
   const handlePartnerImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -672,15 +702,18 @@ function AdminPanel() {
       reader.onloadend = async () => {
         const base64Image = reader.result;
         setPartnerImagePreview(base64Image);
+        setUploadProgress(0);
         setUploading(true);
         
         const uploadedUrl = await uploadToServer(base64Image);
         if (uploadedUrl) {
           setPartnerFormData({ ...partnerFormData, logo: uploadedUrl });
+          showSuccessPopupMessage('✓ Partner logo uploaded successfully!');
         } else {
           alert('Failed to upload logo');
         }
         setUploading(false);
+        setTimeout(() => setUploadProgress(0), 1000);
       };
       reader.readAsDataURL(file);
     }
@@ -725,7 +758,6 @@ function AdminPanel() {
     }
   };
 
-  // Client Image Upload - with preview
   const handleClientImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -738,15 +770,18 @@ function AdminPanel() {
       reader.onloadend = async () => {
         const base64Image = reader.result;
         setClientImagePreview(base64Image);
+        setUploadProgress(0);
         setUploading(true);
         
         const uploadedUrl = await uploadToServer(base64Image);
         if (uploadedUrl) {
           setClientFormData({ ...clientFormData, logo: uploadedUrl });
+          showSuccessPopupMessage('✓ Client logo uploaded successfully!');
         } else {
           alert('Failed to upload logo');
         }
         setUploading(false);
+        setTimeout(() => setUploadProgress(0), 1000);
       };
       reader.readAsDataURL(file);
     }
@@ -953,7 +988,14 @@ function AdminPanel() {
                     <input type="file" accept="image/*" onChange={handlePartnerImageUpload} style={{ display: 'none' }} />
                   </label>
                   <p className="image-size-hint">Maximum logo size: 50MB</p>
-                  {uploading && <div className="form-sending">Uploading logo...</div>}
+                  {uploading && (
+                    <div className="progress-container">
+                      <div className="progress-bar" style={{ width: `${uploadProgress}%` }}>
+                        <span className="progress-text">{uploadProgress}%</span>
+                      </div>
+                      <p className="upload-status">Uploading logo... {uploadProgress}%</p>
+                    </div>
+                  )}
                   {partnerImagePreview && (
                     <div className="image-preview">
                       <img src={partnerImagePreview} alt="Preview" />
@@ -992,7 +1034,14 @@ function AdminPanel() {
                     <input type="file" accept="image/*" onChange={handleClientImageUpload} style={{ display: 'none' }} />
                   </label>
                   <p className="image-size-hint">Maximum logo size: 50MB</p>
-                  {uploading && <div className="form-sending">Uploading logo...</div>}
+                  {uploading && (
+                    <div className="progress-container">
+                      <div className="progress-bar" style={{ width: `${uploadProgress}%` }}>
+                        <span className="progress-text">{uploadProgress}%</span>
+                      </div>
+                      <p className="upload-status">Uploading logo... {uploadProgress}%</p>
+                    </div>
+                  )}
                   {clientImagePreview && (
                     <div className="image-preview">
                       <img src={clientImagePreview} alt="Preview" />
@@ -1099,6 +1148,15 @@ function AdminPanel() {
           </div>
         )}
       </div>
+      
+      {showSuccessPopup && (
+        <div className="success-popup">
+          <div className="success-popup-content">
+            <span className="success-icon">✓</span>
+            <p>{successMessage}</p>
+          </div>
+        </div>
+      )}
       
       {showImageManager && currentPortfolio && (
         <div className="image-manager-modal">
