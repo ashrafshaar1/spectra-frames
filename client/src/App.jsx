@@ -660,11 +660,12 @@ function AdminPanel() {
     setNewImagePreviews([]);
   };
 
+  // Partner Image Upload - 50MB
   const handlePartnerImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Logo too large! Max 5MB');
+      if (file.size > 50 * 1024 * 1024) {
+        alert('Logo too large! Maximum size is 50MB');
         return;
       }
       const reader = new FileReader();
@@ -715,11 +716,12 @@ function AdminPanel() {
     }
   };
 
+  // Client Image Upload - 50MB
   const handleClientImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Logo too large! Max 5MB');
+      if (file.size > 50 * 1024 * 1024) {
+        alert('Logo too large! Maximum size is 50MB');
         return;
       }
       const reader = new FileReader();
@@ -928,9 +930,10 @@ function AdminPanel() {
               <form onSubmit={handleAddPartner}>
                 <input type="text" name="name" placeholder="Partner Name" value={partnerFormData.name} onChange={(e) => setPartnerFormData({ ...partnerFormData, name: e.target.value })} required className="form-input" />
                 <div className="image-upload-area">
-                  <label className="upload-label">Upload Logo (Max 5MB)
+                  <label className="upload-label">Upload Logo (Max 50MB)
                     <input type="file" accept="image/*" onChange={handlePartnerImageUpload} style={{ display: 'none' }} />
                   </label>
+                  <p className="image-size-hint">Maximum logo size: 50MB</p>
                   {partnerImagePreview && <div className="image-preview"><img src={partnerImagePreview} alt="Preview" /><button type="button" onClick={() => { setPartnerImagePreview(''); setPartnerFormData({ ...partnerFormData, logo: '' }); }}>Remove</button></div>}
                 </div>
                 <button type="submit" className="btn-primary">Add Partner</button>
@@ -960,9 +963,10 @@ function AdminPanel() {
               <form onSubmit={handleAddClient}>
                 <input type="text" name="name" placeholder="Client Name" value={clientFormData.name} onChange={(e) => setClientFormData({ ...clientFormData, name: e.target.value })} required className="form-input" />
                 <div className="image-upload-area">
-                  <label className="upload-label">Upload Logo (Max 5MB)
+                  <label className="upload-label">Upload Logo (Max 50MB)
                     <input type="file" accept="image/*" onChange={handleClientImageUpload} style={{ display: 'none' }} />
                   </label>
+                  <p className="image-size-hint">Maximum logo size: 50MB</p>
                   {clientImagePreview && <div className="image-preview"><img src={clientImagePreview} alt="Preview" /><button type="button" onClick={() => { setClientImagePreview(''); setClientFormData({ ...clientFormData, logo: '' }); }}>Remove</button></div>}
                 </div>
                 <button type="submit" className="btn-primary">Add Client</button>
