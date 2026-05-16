@@ -1766,3 +1766,516 @@ html {
 ::-webkit-scrollbar-thumb:hover {
   background: #c49f2e;
 }
+/* ============================================
+   تحسينات للأزرار في Admin Panel و Login Page (لجميع الشاشات)
+   ============================================ */
+
+/* Admin Header Buttons */
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.admin-header h1 {
+  color: #D4AF37;
+  font-size: 32px;
+  font-family: 'Cinzel', serif;
+  margin: 0;
+}
+
+.admin-header .btn-secondary,
+.admin-header button {
+  padding: 10px 25px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* Login Page Buttons */
+.login-box .btn-primary {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+}
+
+.back-to-home {
+  background: #D4AF37;
+  border: none;
+  color: #1A1A1A;
+  padding: 10px 25px;
+  border-radius: 30px;
+  cursor: pointer;
+  margin-bottom: 25px;
+  font-family: 'Cinzel', serif;
+  font-weight: bold;
+  font-size: 14px;
+  width: auto;
+  display: inline-block;
+}
+
+/* ============================================
+   Clients & Partners - Auto Scroll فقط بدون إطار
+   ============================================ */
+
+.clients-section,
+.partners-section {
+  padding: 60px 0;
+  background: #121212;
+  overflow: hidden;
+  width: 100%;
+}
+
+.clients-slider,
+.partners-slider {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.clients-track,
+.partners-track {
+  display: flex;
+  gap: 30px;
+  width: fit-content;
+  animation: scrollAuto 25s linear infinite;
+}
+
+/* منع التمرير اليدوي وإزالة الإطار الخارجي */
+.clients-track,
+.partners-track,
+.client-card,
+.partner-card,
+.clients-slider,
+.partners-slider {
+  pointer-events: none;
+  user-select: none;
+  outline: none;
+  border: none;
+}
+
+/* سرعة أسرع على الجوال */
+@media (max-width: 768px) {
+  .clients-track,
+  .partners-track {
+    animation: scrollAuto 18s linear infinite;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  .clients-track,
+  .partners-track {
+    animation: scrollAuto 14s linear infinite;
+    gap: 15px;
+  }
+}
+
+@keyframes scrollAuto {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Hover pause */
+.clients-section:hover .clients-track,
+.partners-section:hover .partners-track {
+  animation-play-state: paused;
+}
+
+/* Card styling - بدون إطار خارجي */
+.client-card,
+.partner-card {
+  min-width: 170px;
+  background: #252525;
+  border-radius: 12px;
+  padding: 15px;
+  text-align: center;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  transition: all 0.3s;
+}
+
+.client-card:hover,
+.partner-card:hover {
+  transform: translateY(-5px);
+  border-color: #D4AF37;
+}
+
+/* ============================================
+   Responsive لجميع الشاشات
+   ============================================ */
+
+/* Mobile (max-width: 768px) */
+@media (max-width: 768px) {
+  /* Admin Header */
+  .admin-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .admin-header .btn-secondary,
+  .admin-header button {
+    width: 100%;
+    max-width: 200px;
+  }
+  
+  /* Admin Tabs */
+  .admin-tabs {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .tab-btn {
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+  }
+  
+  /* Admin Form */
+  .admin-form {
+    padding: 20px;
+  }
+  
+  .url-input-group {
+    flex-direction: column;
+  }
+  
+  .url-input-group .btn-secondary {
+    width: 100%;
+  }
+  
+  /* Admin Grids */
+  .portfolio-admin-grid,
+  .partners-admin-grid,
+  .services-admin-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Login Box */
+  .login-box {
+    padding: 30px 20px;
+    margin: 0 20px;
+    width: auto;
+  }
+  
+  /* Hero Section */
+  .hero-buttons-centered {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    width: 80%;
+    max-width: 220px;
+    text-align: center;
+  }
+  
+  /* Logo */
+  .logo-centered-img,
+  .logo-centered-fallback {
+    width: 220px;
+    height: 220px;
+  }
+  
+  /* Section Titles */
+  .section-title {
+    font-size: 32px;
+  }
+  
+  /* Portfolio */
+  .portfolio-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .portfolio-img {
+    height: 220px;
+  }
+  
+  /* Gallery */
+  .gallery-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .gallery-prev,
+  .gallery-next {
+    width: 35px;
+    height: 35px;
+    font-size: 20px;
+  }
+  .gallery-prev { left: 5px; }
+  .gallery-next { right: 5px; }
+  
+  /* Clients & Partners Cards */
+  .client-card,
+  .partner-card {
+    min-width: 140px;
+  }
+  
+  .client-logo-img,
+  .partner-logo-img,
+  .client-logo-fallback,
+  .partner-logo-fallback {
+    width: 110px;
+    height: 60px;
+  }
+  
+  /* Footer */
+  .footer-social {
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+  
+  .social-link {
+    width: 42px;
+    height: 42px;
+    font-size: 20px;
+  }
+  
+  .footer-logo-text {
+    font-size: 24px;
+  }
+  
+  .footer-contact {
+    font-size: 12px;
+  }
+  
+  /* Modal */
+  .modal-container {
+    width: 95%;
+    margin: 10px;
+  }
+  
+  .modal-body {
+    padding: 20px 15px;
+  }
+}
+
+/* Small Mobile (max-width: 576px) */
+@media (max-width: 576px) {
+  .logo-centered-img,
+  .logo-centered-fallback {
+    width: 180px;
+    height: 180px;
+  }
+  
+  .section-title {
+    font-size: 28px;
+  }
+  
+  .section-subtitle {
+    font-size: 14px;
+  }
+  
+  .hero-buttons-centered {
+    gap: 10px;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    padding: 10px 20px;
+    font-size: 13px;
+    width: 90%;
+  }
+  
+  .portfolio-title {
+    font-size: 18px;
+  }
+  
+  .service-title {
+    font-size: 20px;
+  }
+  
+  .service-card {
+    padding: 25px 20px;
+  }
+  
+  .detail-header h1 {
+    font-size: 28px;
+  }
+  
+  .client-card,
+  .partner-card {
+    min-width: 120px;
+  }
+  
+  .client-logo-img,
+  .partner-logo-img,
+  .client-logo-fallback,
+  .partner-logo-fallback {
+    width: 95px;
+    height: 55px;
+    font-size: 16px;
+  }
+  
+  .client-name,
+  .partner-name {
+    font-size: 11px;
+  }
+  
+  .footer-logo-text {
+    font-size: 20px;
+  }
+  
+  .footer-social {
+    gap: 12px;
+  }
+  
+  .social-link {
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+  }
+  
+  .footer-contact {
+    font-size: 11px;
+  }
+  
+  .admin-header h1 {
+    font-size: 24px;
+  }
+  
+  .tab-btn {
+    font-size: 14px;
+    padding: 10px;
+  }
+  
+  .upload-label {
+    font-size: 13px;
+    padding: 10px 18px;
+  }
+  
+  .image-preview img {
+    width: 90px;
+    height: 90px;
+  }
+  
+  .login-box h2 {
+    font-size: 24px;
+  }
+  
+  .back-to-home {
+    font-size: 12px;
+    padding: 8px 20px;
+  }
+}
+
+/* Extra Small (max-width: 400px) */
+@media (max-width: 400px) {
+  .logo-centered-img,
+  .logo-centered-fallback {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .logo-centered-fallback {
+    font-size: 40px;
+  }
+  
+  .section-title {
+    font-size: 24px;
+  }
+  
+  .hero-buttons-centered {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    width: 95%;
+    padding: 10px 16px;
+    font-size: 12px;
+  }
+  
+  .portfolio-img {
+    height: 180px;
+  }
+  
+  .client-card,
+  .partner-card {
+    min-width: 110px;
+  }
+  
+  .client-logo-img,
+  .partner-logo-img,
+  .client-logo-fallback,
+  .partner-logo-fallback {
+    width: 85px;
+    height: 50px;
+  }
+  
+  .clients-track,
+  .partners-track {
+    gap: 12px;
+  }
+  
+  .admin-header .btn-secondary,
+  .admin-header button {
+    max-width: 100%;
+  }
+  
+  .tab-btn {
+    font-size: 12px;
+    padding: 8px;
+  }
+  
+  .login-box {
+    padding: 20px 15px;
+  }
+  
+  .login-box h2 {
+    font-size: 20px;
+  }
+  
+  .footer-social {
+    gap: 10px;
+  }
+  
+  .social-link {
+    width: 35px;
+    height: 35px;
+    font-size: 16px;
+  }
+  
+  .footer-logo-text {
+    font-size: 18px;
+  }
+  
+  .footer-contact {
+    font-size: 10px;
+  }
+}
+
+/* ============================================
+   إزالة الإطار من Clients & Partners
+   ============================================ */
+
+.clients-section,
+.partners-section,
+.clients-slider,
+.partners-slider,
+.clients-track,
+.partners-track {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+/* تحسين شريط التمرير العام */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #2a2a2a;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D4AF37;
+  border-radius: 10px;
+}
