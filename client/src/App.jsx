@@ -30,6 +30,8 @@ function GalleryModal({ images, currentIndex, onClose, onNext, onPrev }) {
 // Home Page Component
 function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
   const [services, setServices] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [partners, setPartners] = useState([]);
   const [formStatus, setFormStatus] = useState('');
   const [formData, setFormData] = useState({
     name: '',
@@ -39,27 +41,26 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
     message: ''
   });
 
-  // بيانات ثابتة - Clients (تظهر فوراً)
-  const clients = [
-    { id: '1', name: 'Luxury Hotel', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Luxury+Hotel' },
-    { id: '2', name: 'Fashion Brand', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Fashion+Brand' },
-    { id: '3', name: 'Wedding Planner', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Wedding+Planner' }
-  ];
-
-  // بيانات ثابتة - Partners (تظهر فوراً)
-  const partners = [
-    { id: '1', name: 'Canon', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Canon' },
-    { id: '2', name: 'Sony', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Sony' },
-    { id: '3', name: 'Adobe', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Adobe' },
-    { id: '4', name: 'Nikon', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Nikon' }
-  ];
-
   useEffect(() => {
     refreshPortfolios();
+    
+    // Load services
     fetch(`${API_URL}/services`)
       .then(res => res.json())
       .then(data => setServices(data))
       .catch(err => console.error('Failed to load services:', err));
+    
+    // Load clients
+    fetch(`${API_URL}/clients`)
+      .then(res => res.json())
+      .then(data => setClients(data))
+      .catch(err => console.error('Failed to load clients:', err));
+    
+    // Load partners
+    fetch(`${API_URL}/partners`)
+      .then(res => res.json())
+      .then(data => setPartners(data))
+      .catch(err => console.error('Failed to load partners:', err));
   }, []);
 
   const handleChange = (e) => {
@@ -116,25 +117,31 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
             <h2 className="section-title">Our Clients</h2>
             <p className="section-subtitle">Trusted by leading brands worldwide</p>
           </div>
-          <div className="clients-slider">
-            <div className="clients-track">
-              {clients.map((client) => (
-                <div key={client.id} className="client-card">
-                  <img 
-                    src={client.logo} 
-                    alt={client.name} 
-                    className="client-logo-img"
-                    onError={(e) => { 
-                      e.target.style.display = 'none'; 
-                      if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; 
-                    }} 
-                  />
-                  <div className="client-logo-fallback">{client.name.substring(0, 2)}</div>
-                  <p className="client-name">{client.name}</p>
-                </div>
-              ))}
+          {clients.length > 0 ? (
+            <div className="clients-slider">
+              <div className="clients-track">
+                {clients.map((client) => (
+                  <div key={client.id} className="client-card">
+                    <img 
+                      src={client.logo} 
+                      alt={client.name} 
+                      className="client-logo-img"
+                      onError={(e) => { 
+                        e.target.style.display = 'none'; 
+                        if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; 
+                      }} 
+                    />
+                    <div className="client-logo-fallback">{client.name.substring(0, 2)}</div>
+                    <p className="client-name">{client.name}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="no-clients-message">
+              <p>No clients yet. Add from Admin Panel.</p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -145,25 +152,31 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
             <h2 className="section-title">Our Partners</h2>
             <p className="section-subtitle">Collaborating with industry leaders</p>
           </div>
-          <div className="partners-slider">
-            <div className="partners-track">
-              {partners.map((partner) => (
-                <div key={partner.id} className="partner-card">
-                  <img 
-                    src={partner.logo} 
-                    alt={partner.name} 
-                    className="partner-logo-img"
-                    onError={(e) => { 
-                      e.target.style.display = 'none'; 
-                      if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; 
-                    }} 
-                  />
-                  <div className="partner-logo-fallback">{partner.name.substring(0, 2)}</div>
-                  <p className="partner-name">{partner.name}</p>
-                </div>
-              ))}
+          {partners.length > 0 ? (
+            <div className="partners-slider">
+              <div className="partners-track">
+                {partners.map((partner) => (
+                  <div key={partner.id} className="partner-card">
+                    <img 
+                      src={partner.logo} 
+                      alt={partner.name} 
+                      className="partner-logo-img"
+                      onError={(e) => { 
+                        e.target.style.display = 'none'; 
+                        if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; 
+                      }} 
+                    />
+                    <div className="partner-logo-fallback">{partner.name.substring(0, 2)}</div>
+                    <p className="partner-name">{partner.name}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="no-partners-message">
+              <p>No partners yet. Add from Admin Panel.</p>
+            </div>
+          )}
         </div>
       </section>
 
