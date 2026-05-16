@@ -205,26 +205,58 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios, clients, ref
   );
 }
 
-// Portfolio Detail Page
+// Portfolio Detail Page - FIXED VERSION
 function PortfolioDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
-    fetch(`${API_URL}/portfolio/${id}`)
-      .then(res => res.json())
-      .then(data => {
-        setItem(data);
+    const fetchPortfolio = async () => {
+      try {
+        console.log('🔍 Opening portfolio with ID:', id);
+        
+        // First try to get the specific portfolio
+        const res = await fetch(`${API_URL}/portfolio/${id}`);
+        console.log('📡 Response status:', res.status);
+        
+        if (!res.ok) {
+          // If not found, try to get all portfolios and find by id
+          console.log('⚠️ Portfolio not found directly, searching in all portfolios...');
+          const allRes = await fetch(`${API_URL}/portfolio`);
+          const allPortfolios = await allRes.json();
+          console.log('📋 All portfolios:', allPortfolios);
+          
+          const found = allPortfolios.find(p => p.id === id);
+          if (found) {
+            console.log('✅ Found portfolio in list:', found);
+            setItem(found);
+          } else {
+            throw new Error(`Portfolio with ID "${id}" not found`);
+          }
+        } else {
+          const data = await res.json();
+          console.log('✅ Portfolio loaded directly:', data);
+          setItem(data);
+        }
+      } catch (err) {
+        console.error('❌ Error loading portfolio:', err);
+        setError(err.message);
+      } finally {
         setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error loading portfolio:', err);
-        setLoading(false);
-      });
+      }
+    };
+    
+    if (id) {
+      fetchPortfolio();
+    } else {
+      setError('No portfolio ID provided');
+      setLoading(false);
+    }
   }, [id]);
 
   const openGallery = (index) => {
@@ -236,9 +268,35 @@ function PortfolioDetail() {
   const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + (item?.images?.length || 1)) % (item?.images?.length || 1));
 
   if (loading) return <div className="loading">Loading...</div>;
-  if (!item) return <div className="loading">Project not found</div>;
+  
+  if (error) {
+    return (
+      <div className="portfolio-detail">
+        <div className="container">
+          <div className="loading" style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <p style={{ color: '#dc3545', marginBottom: '20px' }}>⚠️ Error: {error}</p>
+            <p style={{ color: '#B8B0A8', marginBottom: '30px' }}>The portfolio item you're looking for might have been deleted or the ID is incorrect.</p>
+            <button className="back-btn" onClick={() => navigate('/')}>← Back to Home</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!item) {
+    return (
+      <div className="portfolio-detail">
+        <div className="container">
+          <div className="loading" style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <p style={{ color: '#D4AF37', marginBottom: '30px' }}>Project not found</p>
+            <button className="back-btn" onClick={() => navigate('/')}>← Back to Home</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const images = item.images || [item.coverImage];
+  const images = item.images || (item.coverImage ? [item.coverImage] : []);
 
   return (
     <div className="portfolio-detail">
@@ -258,13 +316,21 @@ function PortfolioDetail() {
             </div>
           ))}
         </div>
-        {modalOpen && <GalleryModal images={images} currentIndex={currentImageIndex} onClose={() => setModalOpen(false)} onNext={nextImage} onPrev={prevImage} />}
+        {modalOpen && (
+          <GalleryModal 
+            images={images} 
+            currentIndex={currentImageIndex} 
+            onClose={() => setModalOpen(false)} 
+            onNext={nextImage} 
+            onPrev={prevImage} 
+          />
+        )}
       </div>
     </div>
   );
 }
 
-// Admin Panel Component
+// Admin Panel Component (مختصر للطول - نفس الكود القديم)
 function AdminPanel() {
   const [portfolios, setPortfolios] = useState([]);
   const [partners, setPartners] = useState([]);
@@ -314,8 +380,10 @@ function AdminPanel() {
     try {
       const res = await fetch(`${API_URL}/portfolio`);
       const data = await res.json();
+      console.log('📋 Loaded portfolios:', data);
       setPortfolios(data);
     } catch (err) {
+      console.error('Failed to load portfolios:', err);
       setPortfolios([]);
     }
   };
@@ -1062,8 +1130,10 @@ function App() {
     try {
       const res = await fetch(`${API_URL}/portfolio`);
       const data = await res.json();
+      console.log('🏠 Main App - Portfolios:', data);
       setPortfolios(data);
     } catch (err) {
+      console.error('Failed to load portfolios:', err);
       setPortfolios([]);
     }
   };
