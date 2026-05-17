@@ -63,7 +63,7 @@ function LazyImage({ src, alt, className, onError }) {
           transition: 'opacity 0.3s ease',
           width: '100%',
           height: '100%',
-          objectFit: 'cover',
+          objectFit: 'contain',
           position: 'relative',
           zIndex: 2
         }}
@@ -221,7 +221,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
               <div className="clients-track">
                 {clients.map((client) => (
                   <div key={client._id} className="client-card">
-                    <div className="client-logo-img" style={{ position: 'relative', width: '130px', height: '70px' }}>
+                    <div className="client-logo-img">
                       <LazyImage src={client.logo} alt={client.name} className="client-logo-img" />
                     </div>
                     <p className="client-name">{client.name}</p>
@@ -244,7 +244,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
               <div className="partners-track">
                 {partners.map((partner) => (
                   <div key={partner._id} className="partner-card">
-                    <div className="partner-logo-img" style={{ position: 'relative', width: '130px', height: '70px' }}>
+                    <div className="partner-logo-img">
                       <LazyImage src={partner.logo} alt={partner.name} className="partner-logo-img" />
                     </div>
                     <p className="partner-name">{partner.name}</p>
@@ -580,7 +580,7 @@ function AdminPanel() {
     }, null);
   };
 
-  // Resize image before upload
+  // Resize image function
   const resizeImage = (base64Image, maxWidth = 1200, maxHeight = 1200) => {
     return new Promise((resolve) => {
       const img = new Image();
@@ -758,7 +758,6 @@ function AdminPanel() {
       const uploadPromise = new Promise((resolve) => {
         reader.onloadend = async () => {
           let base64Image = reader.result;
-          // Resize image
           const resizedImage = await resizeImage(base64Image);
           const url = await uploadToServer(resizedImage, (progress) => {
             setUploadProgress(progress);
