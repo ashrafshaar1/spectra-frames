@@ -5,14 +5,32 @@ import { FaFacebookF, FaInstagram, FaTiktok, FaWhatsapp, FaUserLock } from 'reac
 
 // API URL
 const API_URL = 'https://spectra-frames-api.onrender.com/api';
+// للـ local development استخدم:
+// const API_URL = 'http://localhost:3001/api';
 
 // Admin credentials
 const ADMIN_USERNAME = 'ashrafshaar';
 const ADMIN_PASSWORD = 'ItShYpEr75@';
 
-// Lazy Image Component with skeleton loader
+// Lazy Image Component with skeleton loader (معدل)
 function LazyImage({ src, alt, className, onError }) {
   const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+  
+  if (error) {
+    return (
+      <div className={`${className} image-error`} style={{
+        background: '#2a2a2a',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#D4AF37',
+        fontSize: '14px'
+      }}>
+        📷
+      </div>
+    );
+  }
   
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -28,7 +46,8 @@ function LazyImage({ src, alt, className, onError }) {
             background: 'linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%)',
             backgroundSize: '200% 100%',
             animation: 'skeleton-loading 1.5s infinite',
-            borderRadius: 'inherit'
+            borderRadius: 'inherit',
+            zIndex: 1
           }}
         />
       )}
@@ -38,16 +57,15 @@ function LazyImage({ src, alt, className, onError }) {
         className={className}
         loading="lazy"
         onLoad={() => setLoaded(true)}
-        onError={(e) => {
-          setLoaded(true);
-          if (onError) onError(e);
-        }}
+        onError={() => setError(true)}
         style={{
           opacity: loaded ? 1 : 0,
           transition: 'opacity 0.3s ease',
           width: '100%',
           height: '100%',
-          objectFit: 'inherit'
+          objectFit: 'cover',
+          position: 'relative',
+          zIndex: 2
         }}
       />
     </div>
@@ -121,30 +139,19 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
   });
 
   const loadData = () => {
-    console.log('🔄 Loading data from server...');
-    
     fetch(`${API_URL}/clients`)
       .then(res => res.json())
-      .then(data => {
-        console.log('✅ Clients loaded:', data);
-        setClients(data);
-      })
+      .then(data => setClients(data))
       .catch(err => console.error('Failed to load clients:', err));
     
     fetch(`${API_URL}/partners`)
       .then(res => res.json())
-      .then(data => {
-        console.log('✅ Partners loaded:', data);
-        setPartners(data);
-      })
+      .then(data => setPartners(data))
       .catch(err => console.error('Failed to load partners:', err));
     
     fetch(`${API_URL}/services`)
       .then(res => res.json())
-      .then(data => {
-        console.log('✅ Services loaded:', data);
-        setServices(data);
-      })
+      .then(data => setServices(data))
       .catch(err => console.error('Failed to load services:', err));
   };
 
@@ -152,10 +159,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
     refreshPortfolios();
     loadData();
     
-    const interval = setInterval(() => {
-      loadData();
-    }, 10000);
-    
+    const interval = setInterval(() => loadData(), 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -216,19 +220,10 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
             <div className="clients-slider">
               <div className="clients-track">
                 {clients.map((client) => (
-                  <div key={client.id} className="client-card">
+                  <div key={client._id} className="client-card">
                     <div className="client-logo-img" style={{ position: 'relative', width: '130px', height: '70px' }}>
-                      <LazyImage 
-                        src={client.logo} 
-                        alt={client.name}
-                        className="client-logo-img"
-                        onError={(e) => { 
-                          e.target.style.display = 'none'; 
-                          if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; 
-                        }}
-                      />
+                      <LazyImage src={client.logo} alt={client.name} className="client-logo-img" />
                     </div>
-                    <div className="client-logo-fallback">{client.name.substring(0, 2)}</div>
                     <p className="client-name">{client.name}</p>
                   </div>
                 ))}
@@ -248,19 +243,10 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
             <div className="partners-slider">
               <div className="partners-track">
                 {partners.map((partner) => (
-                  <div key={partner.id} className="partner-card">
+                  <div key={partner._id} className="partner-card">
                     <div className="partner-logo-img" style={{ position: 'relative', width: '130px', height: '70px' }}>
-                      <LazyImage 
-                        src={partner.logo} 
-                        alt={partner.name}
-                        className="partner-logo-img"
-                        onError={(e) => { 
-                          e.target.style.display = 'none'; 
-                          if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; 
-                        }}
-                      />
+                      <LazyImage src={partner.logo} alt={partner.name} className="partner-logo-img" />
                     </div>
-                    <div className="partner-logo-fallback">{partner.name.substring(0, 2)}</div>
                     <p className="partner-name">{partner.name}</p>
                   </div>
                 ))}
@@ -278,13 +264,13 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
           </div>
           <div className="portfolio-grid">
             {portfolios.map((item) => (
-              <Link to={`/portfolio/${item.id}`} key={item.id} className="portfolio-card-link">
+              <Link to={`/portfolio/${item._id}`} key={item._id} className="portfolio-card-link">
                 <div className="portfolio-card">
-                  <div className="portfolio-img" style={{ position: 'relative', height: '280px' }}>
+                  <div className="portfolio-img">
                     <LazyImage 
                       src={item.coverImage || item.images?.[0]} 
                       alt={item.title} 
-                      className="portfolio-img"
+                      className="portfolio-img-img"
                     />
                   </div>
                   <div className="portfolio-overlay">
@@ -309,7 +295,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
           </div>
           <div className="services-grid">
             {services.map((service) => (
-              <div key={service.id} className="service-card">
+              <div key={service._id} className="service-card">
                 <h3 className="service-title">{service.title}</h3>
                 <p className="service-desc">{service.description}</p>
               </div>
@@ -321,7 +307,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
       <section id="contact" className="contact">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Let\\'s Create Together</h2>
+            <h2 className="section-title">Let's Create Together</h2>
             <p className="section-subtitle">Ready to capture your next moment? Reach out to us</p>
           </div>
           <div className="contact-wrapper">
@@ -334,7 +320,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
               <input type="tel" name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleChange} className="form-input" />
               <select name="service" value={formData.service} onChange={handleChange} className="form-select">
                 {services.map((service) => (
-                  <option key={service.id} value={service.title}>{service.title}</option>
+                  <option key={service._id} value={service.title}>{service.title}</option>
                 ))}
               </select>
               <textarea name="message" rows="4" placeholder="Tell us about your vision..." value={formData.message} onChange={handleChange} required className="form-textarea"></textarea>
@@ -360,38 +346,17 @@ function PortfolioDetail() {
   useEffect(() => {
     const fetchPortfolio = async () => {
       try {
-        console.log('🔍 Opening portfolio with ID:', id);
-        
         const res = await fetch(`${API_URL}/portfolio/${id}`);
-        console.log('📡 Response status:', res.status);
-        
-        if (!res.ok) {
-          const allRes = await fetch(`${API_URL}/portfolio`);
-          const allPortfolios = await allRes.json();
-          const found = allPortfolios.find(p => p.id === id);
-          if (found) {
-            setItem(found);
-          } else {
-            throw new Error(`Portfolio with ID "${id}" not found`);
-          }
-        } else {
-          const data = await res.json();
-          setItem(data);
-        }
+        if (!res.ok) throw new Error('Not found');
+        const data = await res.json();
+        setItem(data);
       } catch (err) {
-        console.error('❌ Error loading portfolio:', err);
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
-    
-    if (id) {
-      fetchPortfolio();
-    } else {
-      setError('No portfolio ID provided');
-      setLoading(false);
-    }
+    if (id) fetchPortfolio();
   }, [id]);
 
   const openGallery = (index) => {
@@ -403,39 +368,15 @@ function PortfolioDetail() {
   const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + (item?.images?.length || 1)) % (item?.images?.length || 1));
 
   if (loading) return <div className="loading">Loading...</div>;
-  
-  if (error) {
-    return (
-      <div className="portfolio-detail">
-        <div className="container">
-          <div className="loading" style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <p style={{ color: '#dc3545', marginBottom: '20px' }}>⚠️ Error: {error}</p>
-            <button className="back-btn" onClick={() => navigate('/')}>← Back to Home</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
-  if (!item) {
-    return (
-      <div className="portfolio-detail">
-        <div className="container">
-          <div className="loading" style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <p style={{ color: '#D4AF37', marginBottom: '30px' }}>Project not found</p>
-            <button className="back-btn" onClick={() => navigate('/')}>← Back to Home</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (error) return <div className="loading">Error: {error}</div>;
+  if (!item) return <div className="loading">Not found</div>;
 
   const images = item.images || (item.coverImage ? [item.coverImage] : []);
 
   return (
     <div className="portfolio-detail">
       <div className="container">
-        <button className="back-btn" onClick={() => navigate('/')}>Back to Home</button>
+        <button className="back-btn" onClick={() => navigate('/')}>← Back to Home</button>
         <div className="detail-header">
           <h1>{item.title}</h1>
           <span className="detail-category">{item.category}</span>
@@ -445,13 +386,7 @@ function PortfolioDetail() {
         <div className="gallery-grid">
           {images.map((img, idx) => (
             <div key={idx} className="gallery-item" onClick={() => openGallery(idx)}>
-              <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                <LazyImage 
-                  src={img} 
-                  alt={`${item.title} ${idx + 1}`}
-                  className=""
-                />
-              </div>
+              <LazyImage src={img} alt={`${item.title} ${idx + 1}`} className="" />
               {idx === 0 && images.length > 1 && <div className="gallery-overlay"><span>+{images.length - 1}</span></div>}
             </div>
           ))}
@@ -534,26 +469,118 @@ function AdminPanel() {
     setConfirmId(null);
   };
 
-  const handleDeleteAllPartners = async () => {
-    showConfirmModalMessage('Are you sure you want to DELETE ALL PARTNERS? This action cannot be undone!', async () => {
-      for (const partner of partners) {
-        await fetch(`${API_URL}/partners/${partner.id}`, { method: 'DELETE' });
+  // ========== DELETE FUNCTIONS (المصلحة) ==========
+  
+  const handleDeletePortfolio = async (id) => {
+    console.log('🛑 Deleting portfolio with _id:', id);
+    if (!id || id === 'undefined') {
+      showModalMessage('Error', 'Invalid ID');
+      return;
+    }
+    
+    showConfirmModalMessage('Are you sure you want to delete this portfolio?', async () => {
+      try {
+        const res = await fetch(`${API_URL}/portfolio/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          showModalMessage('Success', 'Portfolio deleted successfully!');
+          loadPortfolios();
+        } else {
+          const error = await res.json();
+          showModalMessage('Error', error.error || 'Delete failed');
+        }
+      } catch (error) {
+        showModalMessage('Error', 'Network error');
       }
-      showModalMessage('Success', 'All partners deleted successfully!');
+    }, id);
+  };
+
+  const handleDeletePartner = async (id) => {
+    console.log('🛑 Deleting partner with _id:', id);
+    if (!id || id === 'undefined') {
+      showModalMessage('Error', 'Invalid ID');
+      return;
+    }
+    
+    showConfirmModalMessage('Are you sure you want to delete this partner?', async () => {
+      try {
+        const res = await fetch(`${API_URL}/partners/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          showModalMessage('Success', 'Partner deleted successfully!');
+          loadPartners();
+        } else {
+          showModalMessage('Error', 'Delete failed');
+        }
+      } catch (error) {
+        showModalMessage('Error', 'Network error');
+      }
+    }, id);
+  };
+
+  const handleDeleteClient = async (id) => {
+    console.log('🛑 Deleting client with _id:', id);
+    if (!id || id === 'undefined') {
+      showModalMessage('Error', 'Invalid ID');
+      return;
+    }
+    
+    showConfirmModalMessage('Are you sure you want to delete this client?', async () => {
+      try {
+        const res = await fetch(`${API_URL}/clients/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          showModalMessage('Success', 'Client deleted successfully!');
+          loadClients();
+        } else {
+          showModalMessage('Error', 'Delete failed');
+        }
+      } catch (error) {
+        showModalMessage('Error', 'Network error');
+      }
+    }, id);
+  };
+
+  const handleDeleteService = async (id) => {
+    console.log('🛑 Deleting service with _id:', id);
+    if (!id || id === 'undefined') {
+      showModalMessage('Error', 'Invalid ID');
+      return;
+    }
+    
+    showConfirmModalMessage('Are you sure you want to delete this service?', async () => {
+      try {
+        const res = await fetch(`${API_URL}/services/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          showModalMessage('Success', 'Service deleted successfully!');
+          loadServices();
+        } else {
+          showModalMessage('Error', 'Delete failed');
+        }
+      } catch (error) {
+        showModalMessage('Error', 'Network error');
+      }
+    }, id);
+  };
+
+  const handleDeleteAllPartners = async () => {
+    showConfirmModalMessage('Are you sure you want to DELETE ALL PARTNERS?', async () => {
+      for (const partner of partners) {
+        await fetch(`${API_URL}/partners/${partner._id}`, { method: 'DELETE' });
+      }
+      showModalMessage('Success', 'All partners deleted!');
       loadPartners();
     }, null);
   };
 
   const handleDeleteAllClients = async () => {
-    showConfirmModalMessage('Are you sure you want to DELETE ALL CLIENTS? This action cannot be undone!', async () => {
+    showConfirmModalMessage('Are you sure you want to DELETE ALL CLIENTS?', async () => {
       for (const client of clients) {
-        await fetch(`${API_URL}/clients/${client.id}`, { method: 'DELETE' });
+        await fetch(`${API_URL}/clients/${client._id}`, { method: 'DELETE' });
       }
-      showModalMessage('Success', 'All clients deleted successfully!');
+      showModalMessage('Success', 'All clients deleted!');
       loadClients();
     }, null);
   };
 
+  // Upload functions
   const uploadToServer = async (base64Image, onProgress) => {
     try {
       const blob = await fetch(base64Image).then(r => r.blob());
@@ -590,6 +617,7 @@ function AdminPanel() {
     }
   };
 
+  // Load functions
   const loadPortfolios = async () => {
     try {
       const res = await fetch(`${API_URL}/portfolio`);
@@ -604,7 +632,6 @@ function AdminPanel() {
     try {
       const res = await fetch(`${API_URL}/partners`);
       const data = await res.json();
-      console.log('📋 Partners loaded in Admin:', data);
       setPartners(data);
     } catch (err) {
       setPartners([]);
@@ -615,7 +642,6 @@ function AdminPanel() {
     try {
       const res = await fetch(`${API_URL}/clients`);
       const data = await res.json();
-      console.log('📋 Clients loaded in Admin:', data);
       setClients(data);
     } catch (err) {
       setClients([]);
@@ -690,7 +716,7 @@ function AdminPanel() {
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (file.size > 50 * 1024 * 1024) {
-        showModalMessage('Error', `Image ${file.name} too large! Max 50MB`);
+        showModalMessage('Error', `Image ${file.name} too large!`);
         continue;
       }
       
@@ -761,10 +787,6 @@ function AdminPanel() {
         const url = await uploadToServer(img);
         if (url) {
           uploadedUrls.push(url);
-        } else {
-          showModalMessage('Error', 'Failed to upload image');
-          setUploading(false);
-          return;
         }
       }
     }
@@ -796,16 +818,6 @@ function AdminPanel() {
     setUploading(false);
   };
 
-  const handleDeletePortfolio = (id) => {
-    showConfirmModalMessage('Are you sure you want to delete this portfolio?', async (deleteId) => {
-      const res = await fetch(`${API_URL}/portfolio/${deleteId}`, { method: 'DELETE' });
-      if (res.ok) {
-        showModalMessage('Success', 'Portfolio deleted successfully!');
-        loadPortfolios();
-      }
-    }, id);
-  };
-
   const openImageManager = (portfolio) => {
     setCurrentPortfolio(portfolio);
     setNewImagesForPortfolio([]);
@@ -821,10 +833,7 @@ function AdminPanel() {
     
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      if (file.size > 50 * 1024 * 1024) {
-        showModalMessage('Error', `Image ${file.name} too large! Max 50MB`);
-        continue;
-      }
+      if (file.size > 50 * 1024 * 1024) continue;
       
       setUploading(true);
       setUploadProgress(0);
@@ -887,14 +896,14 @@ function AdminPanel() {
       coverImage: currentPortfolio.coverImage || uploadedUrls[0]
     };
     
-    const res = await fetch(`${API_URL}/portfolio/${currentPortfolio.id}`, {
+    const res = await fetch(`${API_URL}/portfolio/${currentPortfolio._id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updatedPortfolio)
     });
     
     if (res.ok) {
-      showModalMessage('Success', `${uploadedUrls.length} images added successfully!`);
+      showModalMessage('Success', `${uploadedUrls.length} images added!`);
       setNewImagesForPortfolio([]);
       setNewImagePreviews([]);
       setShowImageManager(false);
@@ -904,16 +913,16 @@ function AdminPanel() {
   };
 
   const deleteImageFromPortfolio = (imageIndex) => {
-    showConfirmModalMessage('Are you sure you want to delete this image?', async () => {
+    showConfirmModalMessage('Delete this image?', async () => {
       const updatedImages = [...currentPortfolio.images];
       updatedImages.splice(imageIndex, 1);
-      const res = await fetch(`${API_URL}/portfolio/${currentPortfolio.id}`, {
+      const res = await fetch(`${API_URL}/portfolio/${currentPortfolio._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...currentPortfolio, images: updatedImages, coverImage: updatedImages[0] || '' })
       });
       if (res.ok) {
-        showModalMessage('Success', 'Image deleted successfully!');
+        showModalMessage('Success', 'Image deleted!');
         loadPortfolios();
         setCurrentPortfolio({ ...currentPortfolio, images: updatedImages });
       }
@@ -931,7 +940,7 @@ function AdminPanel() {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 50 * 1024 * 1024) {
-        showModalMessage('Error', 'Logo too large! Maximum size is 50MB');
+        showModalMessage('Error', 'Logo too large!');
         return;
       }
       
@@ -947,8 +956,6 @@ function AdminPanel() {
         if (uploadedUrl) {
           setPartnerImagePreview(uploadedUrl);
           setPartnerFormData({ ...partnerFormData, logo: uploadedUrl });
-        } else {
-          showModalMessage('Error', 'Failed to upload logo');
         }
         setUploading(false);
         setTimeout(() => setUploadProgress(0), 1000);
@@ -977,31 +984,20 @@ function AdminPanel() {
     });
     
     if (res.ok) {
-      showModalMessage('Success', 'Partner added successfully!');
+      showModalMessage('Success', 'Partner added!');
       setPartnerFormData({ name: '', logo: '' });
       setPartnerImagePreview('');
       loadPartners();
-      setFormKey(prev => prev + 1);
     } else {
       showModalMessage('Error', 'Failed to add partner');
     }
-  };
-
-  const handleDeletePartner = (id) => {
-    showConfirmModalMessage('Are you sure you want to delete this partner?', async (deleteId) => {
-      const res = await fetch(`${API_URL}/partners/${deleteId}`, { method: 'DELETE' });
-      if (res.ok) { 
-        showModalMessage('Success', 'Partner deleted successfully!');
-        loadPartners();
-      }
-    }, id);
   };
 
   const handleClientImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 50 * 1024 * 1024) {
-        showModalMessage('Error', 'Logo too large! Maximum size is 50MB');
+        showModalMessage('Error', 'Logo too large!');
         return;
       }
       
@@ -1017,8 +1013,6 @@ function AdminPanel() {
         if (uploadedUrl) {
           setClientImagePreview(uploadedUrl);
           setClientFormData({ ...clientFormData, logo: uploadedUrl });
-        } else {
-          showModalMessage('Error', 'Failed to upload logo');
         }
         setUploading(false);
         setTimeout(() => setUploadProgress(0), 1000);
@@ -1047,24 +1041,13 @@ function AdminPanel() {
     });
     
     if (res.ok) {
-      showModalMessage('Success', 'Client added successfully!');
+      showModalMessage('Success', 'Client added!');
       setClientFormData({ name: '', logo: '' });
       setClientImagePreview('');
       loadClients();
-      setFormKey(prev => prev + 1);
     } else {
       showModalMessage('Error', 'Failed to add client');
     }
-  };
-
-  const handleDeleteClient = (id) => {
-    showConfirmModalMessage('Are you sure you want to delete this client?', async (deleteId) => {
-      const res = await fetch(`${API_URL}/clients/${deleteId}`, { method: 'DELETE' });
-      if (res.ok) { 
-        showModalMessage('Success', 'Client deleted successfully!');
-        loadClients();
-      }
-    }, id);
   };
 
   const handleAddService = async (e) => {
@@ -1081,23 +1064,12 @@ function AdminPanel() {
     });
     
     if (res.ok) {
-      showModalMessage('Success', 'Service added successfully!');
+      showModalMessage('Success', 'Service added!');
       setServiceFormData({ title: '', description: '' });
       loadServices();
-      setFormKey(prev => prev + 1);
     } else {
       showModalMessage('Error', 'Failed to add service');
     }
-  };
-
-  const handleDeleteService = (id) => {
-    showConfirmModalMessage('Are you sure you want to delete this service?', async (deleteId) => {
-      const res = await fetch(`${API_URL}/services/${deleteId}`, { method: 'DELETE' });
-      if (res.ok) {
-        showModalMessage('Success', 'Service deleted successfully!');
-        loadServices();
-      }
-    }, id);
   };
 
   const handleEditService = (service) => {
@@ -1110,16 +1082,15 @@ function AdminPanel() {
 
   const handleUpdateService = async (e) => {
     e.preventDefault();
-    const res = await fetch(`${API_URL}/services/${editingService.id}`, {
+    const res = await fetch(`${API_URL}/services/${editingService._id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(editServiceForm)
     });
     
     if (res.ok) {
-      showModalMessage('Success', 'Service updated successfully!');
+      showModalMessage('Success', 'Service updated!');
       setEditingService(null);
-      setEditServiceForm({ title: '', description: '' });
       loadServices();
     } else {
       showModalMessage('Error', 'Failed to update service');
@@ -1139,23 +1110,9 @@ function AdminPanel() {
             <button className="back-to-home" onClick={() => navigate('/')}>Back to Home</button>
             <h2>Admin Login</h2>
             <form onSubmit={handleLogin}>
-              <input 
-                type="text" 
-                placeholder="Username" 
-                value={username} 
-                onChange={(e) => setUsername(e.target.value)} 
-                className="form-input" 
-                required 
-              />
-              <input 
-                type="password" 
-                placeholder="Password" 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-                className="form-input" 
-                required 
-              />
-              {loginError && <div className="form-error" style={{ marginBottom: '15px' }}>{loginError}</div>}
+              <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} className="form-input" required />
+              <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-input" required />
+              {loginError && <div className="form-error">{loginError}</div>}
               <button type="submit" className="btn-primary">Login</button>
             </form>
           </div>
@@ -1174,6 +1131,7 @@ function AdminPanel() {
             <button onClick={handleLogout} className="btn-secondary">Logout</button>
           </div>
         </div>
+        
         <div className="admin-tabs">
           <button className={`tab-btn ${activeTab === 'portfolio' ? 'active' : ''}`} onClick={() => setActiveTab('portfolio')}>Portfolio ({portfolios.length})</button>
           <button className={`tab-btn ${activeTab === 'partners' ? 'active' : ''}`} onClick={() => setActiveTab('partners')}>Partners ({partners.length})</button>
@@ -1195,20 +1153,18 @@ function AdminPanel() {
                 <textarea name="description" placeholder="Description" value={formData.description} onChange={handleInputChange} rows="3" className="form-textarea"></textarea>
                 <div className="image-upload-area">
                   <h3>Add Images</h3>
-                  <label className="upload-label">Upload from Device (Max 50MB)
+                  <label className="upload-label">Upload from Device
                     <input type="file" accept="image/*" multiple onChange={handleMultipleImageUpload} style={{ display: 'none' }} />
                   </label>
                   <div className="url-input-group">
                     <input type="text" placeholder="Or enter image URL" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} className="form-input" />
                     <button type="button" onClick={addImageFromUrl} className="btn-secondary">Add URL</button>
                   </div>
-                  <p className="image-size-hint">Maximum image size: 50MB</p>
                   {uploading && (
                     <div className="progress-container">
                       <div className="progress-bar" style={{ width: `${uploadProgress}%` }}>
                         <span className="progress-text">{uploadProgress}%</span>
                       </div>
-                      <p className="upload-status">Uploading images... {uploadProgress}%</p>
                     </div>
                   )}
                   {imagePreviews.length > 0 && (
@@ -1226,17 +1182,17 @@ function AdminPanel() {
               </form>
             </div>
             <div className="admin-list">
-              <h2>Your Portfolio Projects</h2>
+              <h2>Your Portfolio Projects ({portfolios.length})</h2>
               <div className="portfolio-admin-grid">
                 {portfolios.map(item => (
-                  <div key={item.id} className="portfolio-admin-card">
+                  <div key={item._id} className="portfolio-admin-card">
                     <img src={item.coverImage || item.images?.[0]} alt={item.title} />
                     <div className="info">
                       <h3>{item.title}</h3>
                       <p>{item.category}</p>
                       <p className="photos-count">{item.images?.length || 0} photos</p>
                       <button onClick={() => openImageManager(item)} className="edit-btn">Manage Images</button>
-                      <button onClick={() => handleDeletePortfolio(item.id)} className="delete-btn">Delete</button>
+                      <button onClick={() => handleDeletePortfolio(item._id)} className="delete-btn">Delete</button>
                     </div>
                   </div>
                 ))}
@@ -1248,27 +1204,19 @@ function AdminPanel() {
         {activeTab === 'partners' && (
           <>
             <div className="admin-form">
-              <div className="admin-header" style={{ justifyContent: 'space-between', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
                 <h2>Add Partner</h2>
                 {partners.length > 0 && (
-                  <button onClick={handleDeleteAllPartners} className="delete-all-btn">Delete All Partners</button>
+                  <button onClick={handleDeleteAllPartners} className="delete-all-btn">Delete All</button>
                 )}
               </div>
               <form onSubmit={handleAddPartner}>
-                <input type="text" name="name" placeholder="Partner Name" value={partnerFormData.name} onChange={(e) => setPartnerFormData({ ...partnerFormData, name: e.target.value })} required className="form-input" />
+                <input type="text" placeholder="Partner Name" value={partnerFormData.name} onChange={(e) => setPartnerFormData({ ...partnerFormData, name: e.target.value })} required className="form-input" />
                 <div className="image-upload-area">
-                  <label className="upload-label">Upload Logo (Max 50MB)
+                  <label className="upload-label">Upload Logo
                     <input type="file" accept="image/*" onChange={handlePartnerImageUpload} style={{ display: 'none' }} />
                   </label>
-                  <p className="image-size-hint">Maximum logo size: 50MB</p>
-                  {uploading && (
-                    <div className="progress-container">
-                      <div className="progress-bar" style={{ width: `${uploadProgress}%` }}>
-                        <span className="progress-text">{uploadProgress}%</span>
-                      </div>
-                      <p className="upload-status">Uploading logo... {uploadProgress}%</p>
-                    </div>
-                  )}
+                  {uploading && <div className="progress-bar" style={{ width: `${uploadProgress}%`, padding: '5px' }}>{uploadProgress}%</div>}
                   {partnerImagePreview && (
                     <div className="image-preview">
                       <img src={partnerImagePreview} alt="Preview" />
@@ -1283,12 +1231,10 @@ function AdminPanel() {
               <h2>Partners ({partners.length})</h2>
               <div className="partners-admin-grid">
                 {partners.map(partner => (
-                  <div key={partner.id} className="partner-admin-card">
+                  <div key={partner._id} className="partner-admin-card">
                     <img src={partner.logo} alt={partner.name} />
-                    <div className="info">
-                      <h3>{partner.name}</h3>
-                      <button onClick={() => handleDeletePartner(partner.id)} className="delete-btn">Delete</button>
-                    </div>
+                    <h3>{partner.name}</h3>
+                    <button onClick={() => handleDeletePartner(partner._id)} className="delete-btn">Delete</button>
                   </div>
                 ))}
               </div>
@@ -1299,27 +1245,19 @@ function AdminPanel() {
         {activeTab === 'clients' && (
           <>
             <div className="admin-form">
-              <div className="admin-header" style={{ justifyContent: 'space-between', marginBottom: '20px' }}>
-                <h2>Add Client Logo</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <h2>Add Client</h2>
                 {clients.length > 0 && (
-                  <button onClick={handleDeleteAllClients} className="delete-all-btn">Delete All Clients</button>
+                  <button onClick={handleDeleteAllClients} className="delete-all-btn">Delete All</button>
                 )}
               </div>
               <form onSubmit={handleAddClient}>
-                <input type="text" name="name" placeholder="Client Name" value={clientFormData.name} onChange={(e) => setClientFormData({ ...clientFormData, name: e.target.value })} required className="form-input" />
+                <input type="text" placeholder="Client Name" value={clientFormData.name} onChange={(e) => setClientFormData({ ...clientFormData, name: e.target.value })} required className="form-input" />
                 <div className="image-upload-area">
-                  <label className="upload-label">Upload Logo (Max 50MB)
+                  <label className="upload-label">Upload Logo
                     <input type="file" accept="image/*" onChange={handleClientImageUpload} style={{ display: 'none' }} />
                   </label>
-                  <p className="image-size-hint">Maximum logo size: 50MB</p>
-                  {uploading && (
-                    <div className="progress-container">
-                      <div className="progress-bar" style={{ width: `${uploadProgress}%` }}>
-                        <span className="progress-text">{uploadProgress}%</span>
-                      </div>
-                      <p className="upload-status">Uploading logo... {uploadProgress}%</p>
-                    </div>
-                  )}
+                  {uploading && <div className="progress-bar" style={{ width: `${uploadProgress}%`, padding: '5px' }}>{uploadProgress}%</div>}
                   {clientImagePreview && (
                     <div className="image-preview">
                       <img src={clientImagePreview} alt="Preview" />
@@ -1331,15 +1269,13 @@ function AdminPanel() {
               </form>
             </div>
             <div className="admin-list">
-              <h2>Clients Logos ({clients.length})</h2>
+              <h2>Clients ({clients.length})</h2>
               <div className="partners-admin-grid">
                 {clients.map(client => (
-                  <div key={client.id} className="partner-admin-card">
+                  <div key={client._id} className="partner-admin-card">
                     <img src={client.logo} alt={client.name} />
-                    <div className="info">
-                      <h3>{client.name}</h3>
-                      <button onClick={() => handleDeleteClient(client.id)} className="delete-btn">Delete</button>
-                    </div>
+                    <h3>{client.name}</h3>
+                    <button onClick={() => handleDeleteClient(client._id)} className="delete-btn">Delete</button>
                   </div>
                 ))}
               </div>
@@ -1351,55 +1287,25 @@ function AdminPanel() {
           <>
             <div className="admin-form">
               <h2>{editingService ? 'Edit Service' : 'Add New Service'}</h2>
-              <form key={`service-${formKey}`} onSubmit={editingService ? handleUpdateService : handleAddService}>
-                <input 
-                  type="text" 
-                  name="title" 
-                  placeholder="Service Title" 
-                  value={editingService ? editServiceForm.title : serviceFormData.title} 
-                  onChange={(e) => editingService 
-                    ? setEditServiceForm({ ...editServiceForm, title: e.target.value })
-                    : setServiceFormData({ ...serviceFormData, title: e.target.value })
-                  } 
-                  required 
-                  className="form-input" 
-                />
-                <textarea 
-                  name="description" 
-                  placeholder="Service Description" 
-                  value={editingService ? editServiceForm.description : serviceFormData.description} 
-                  onChange={(e) => editingService 
-                    ? setEditServiceForm({ ...editServiceForm, description: e.target.value })
-                    : setServiceFormData({ ...serviceFormData, description: e.target.value })
-                  } 
-                  rows="3" 
-                  required 
-                  className="form-textarea"
-                />
+              <form onSubmit={editingService ? handleUpdateService : handleAddService}>
+                <input type="text" placeholder="Service Title" value={editingService ? editServiceForm.title : serviceFormData.title} onChange={(e) => editingService ? setEditServiceForm({ ...editServiceForm, title: e.target.value }) : setServiceFormData({ ...serviceFormData, title: e.target.value })} required className="form-input" />
+                <textarea placeholder="Service Description" value={editingService ? editServiceForm.description : serviceFormData.description} onChange={(e) => editingService ? setEditServiceForm({ ...editServiceForm, description: e.target.value }) : setServiceFormData({ ...serviceFormData, description: e.target.value })} rows="3" required className="form-textarea" />
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <button type="submit" className="btn-primary">
-                    {editingService ? 'Update Service' : 'Add Service'}
-                  </button>
-                  {editingService && (
-                    <button type="button" onClick={handleCancelEdit} className="btn-secondary">
-                      Cancel
-                    </button>
-                  )}
+                  <button type="submit" className="btn-primary">{editingService ? 'Update' : 'Add'}</button>
+                  {editingService && <button type="button" onClick={handleCancelEdit} className="btn-secondary">Cancel</button>}
                 </div>
               </form>
             </div>
             <div className="admin-list">
-              <h2>Services List ({services.length})</h2>
+              <h2>Services ({services.length})</h2>
               <div className="services-admin-grid">
                 {services.map(service => (
-                  <div key={service.id} className="service-admin-card">
-                    <div className="info">
-                      <h3>{service.title}</h3>
-                      <p>{service.description}</p>
-                      <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                        <button onClick={() => handleEditService(service)} className="edit-btn">Edit</button>
-                        <button onClick={() => handleDeleteService(service.id)} className="delete-btn">Delete</button>
-                      </div>
+                  <div key={service._id} className="service-admin-card">
+                    <h3>{service.title}</h3>
+                    <p>{service.description}</p>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                      <button onClick={() => handleEditService(service)} className="edit-btn">Edit</button>
+                      <button onClick={() => handleDeleteService(service._id)} className="delete-btn">Delete</button>
                     </div>
                   </div>
                 ))}
@@ -1413,7 +1319,7 @@ function AdminPanel() {
             <h2>Contact Inquiries ({inquiries.length})</h2>
             <div className="inquiries-list">
               {inquiries.map(inquiry => (
-                <div key={inquiry.id} className="inquiry-card">
+                <div key={inquiry._id} className="inquiry-card">
                   <p><strong>Name:</strong> {inquiry.name}</p>
                   <p><strong>Email:</strong> {inquiry.email}</p>
                   <p><strong>Phone:</strong> {inquiry.phone || '-'}</p>
@@ -1427,7 +1333,7 @@ function AdminPanel() {
         )}
       </div>
       
-      {/* Success/Error Modal */}
+      {/* Modals */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-container" onClick={(e) => e.stopPropagation()}>
@@ -1445,7 +1351,6 @@ function AdminPanel() {
         </div>
       )}
       
-      {/* Confirm Delete Modal */}
       {showConfirmModal && (
         <div className="modal-overlay" onClick={() => setShowConfirmModal(false)}>
           <div className="modal-container" onClick={(e) => e.stopPropagation()}>
@@ -1475,29 +1380,24 @@ function AdminPanel() {
             <div className="image-manager-body">
               <div className="add-images-section">
                 <h3>Add New Images</h3>
-                <label className="upload-label">Upload from Device (Max 50MB)
+                <label className="upload-label">Upload from Device
                   <input type="file" accept="image/*" multiple onChange={handleAddImagesToPortfolio} style={{ display: 'none' }} />
                 </label>
                 <div className="url-input-group">
                   <input type="text" placeholder="Or enter image URL" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} className="form-input" />
                   <button type="button" onClick={addImageUrlToManager} className="btn-secondary">Add URL</button>
                 </div>
-                <p className="image-size-hint">Maximum image size: 50MB</p>
-                {uploading && (
-                  <div className="progress-container">
-                    <div className="progress-bar" style={{ width: `${uploadProgress}%` }}>
-                      <span className="progress-text">{uploadProgress}%</span>
-                    </div>
-                    <p className="upload-status">Uploading images... {uploadProgress}%</p>
-                  </div>
-                )}
                 {newImagePreviews.length > 0 && (
-                  <div className="new-images-preview">
+                  <div>
                     <h4>New images to add:</h4>
                     <div className="new-images-grid">
-                      {newImagePreviews.map((preview, idx) => <div key={idx} className="new-image-item"><img src={preview} alt="New" /></div>)}
+                      {newImagePreviews.map((preview, idx) => (
+                        <div key={idx} className="new-image-item">
+                          <img src={preview} alt="New" />
+                        </div>
+                      ))}
                     </div>
-                    <button onClick={saveNewImagesToPortfolio} className="btn-primary" disabled={uploading}>Save Images</button>
+                    <button onClick={saveNewImagesToPortfolio} className="btn-primary">Save Images</button>
                   </div>
                 )}
               </div>
@@ -1551,7 +1451,6 @@ function App() {
       <div className="app">
         {showScrollTop && <button onClick={scrollToTop} className="floating-scroll">↑</button>}
         
-        {/* Admin Login Icon - Fixed position, no scroll */}
         <div className="admin-icon-wrapper">
           <Link to="/admin" className="admin-icon-link">
             <FaUserLock className="admin-icon" />
@@ -1563,24 +1462,17 @@ function App() {
           <Route path="/portfolio/:id" element={<PortfolioDetail />} />
           <Route path="/admin" element={<AdminPanel />} />
         </Routes>
+        
         <footer className="footer">
           <div className="container">
             <div className="footer-logo">
               <span className="footer-logo-text">SPECTRA FRAMES</span>
             </div>
             <div className="footer-social">
-              <a href="https://facebook.com/spectraframes" target="_blank" rel="noopener noreferrer" className="social-link facebook">
-                <FaFacebookF />
-              </a>
-              <a href="https://instagram.com/spectraframes" target="_blank" rel="noopener noreferrer" className="social-link instagram">
-                <FaInstagram />
-              </a>
-              <a href="https://tiktok.com/@spectraframes" target="_blank" rel="noopener noreferrer" className="social-link tiktok">
-                <FaTiktok />
-              </a>
-              <a href="https://wa.me/96171234567" target="_blank" rel="noopener noreferrer" className="social-link whatsapp">
-                <FaWhatsapp />
-              </a>
+              <a href="https://facebook.com/spectraframes" target="_blank" rel="noopener noreferrer" className="social-link facebook"><FaFacebookF /></a>
+              <a href="https://instagram.com/spectraframes" target="_blank" rel="noopener noreferrer" className="social-link instagram"><FaInstagram /></a>
+              <a href="https://tiktok.com/@spectraframes" target="_blank" rel="noopener noreferrer" className="social-link tiktok"><FaTiktok /></a>
+              <a href="https://wa.me/96171234567" target="_blank" rel="noopener noreferrer" className="social-link whatsapp"><FaWhatsapp /></a>
             </div>
             <div className="footer-contact-info">
               <p className="footer-contact">Beirut, Lebanon | +961 71 123 456 | <a href="mailto:spectraframes.00@gmail.com" className="footer-email-link">spectraframes.00@gmail.com</a></p>
