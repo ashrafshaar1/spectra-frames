@@ -1794,3 +1794,243 @@ html {
   from { transform: translateY(30px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+/* ============================================
+   FIX: UPLOADED IMAGES PREVIEW SIZE
+   ============================================ */
+.image-preview {
+  margin-top: 15px;
+  position: relative;
+  display: inline-block;
+}
+
+.image-preview img {
+  width: 100px !important;
+  height: 100px !important;
+  object-fit: cover !important;
+  border-radius: 10px;
+  border: 2px solid #D4AF37;
+  background: #1A1A1A;
+  padding: 5px;
+}
+
+.image-preview button {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+  z-index: 10;
+}
+
+.image-preview button:hover {
+  transform: scale(1.1);
+  background: #c82333;
+}
+
+/* Preview images grid */
+.image-previews-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.image-preview-item {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.image-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid #D4AF37;
+}
+
+.image-preview-item button {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-preview-item button:hover {
+  background: #c82333;
+  transform: scale(1.05);
+}
+
+/* ============================================
+   FIX: LOGO CONTAINER - NOT CUT OFF
+   ============================================ */
+.logo-centered {
+  margin-bottom: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  overflow: visible;
+}
+
+.logo-centered-img {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  object-fit: contain;
+  border-radius: 30px;
+  transition: transform 0.4s ease;
+  filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.3));
+  display: block;
+}
+
+.logo-centered-fallback {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+  border-radius: 30px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 100px;
+  font-weight: bold;
+  color: #1A1A1A;
+  font-family: 'Cinzel', serif;
+  box-shadow: 0 0 40px rgba(212, 175, 55, 0.4);
+}
+
+/* Logo Responsive - ضبط الأحجام */
+@media (min-width: 1200px) {
+  .logo-centered-img, .logo-centered-fallback { max-width: 400px; }
+  .logo-centered-fallback { font-size: 100px; }
+}
+@media (max-width: 1024px) {
+  .logo-centered-img, .logo-centered-fallback { max-width: 320px; }
+  .logo-centered-fallback { font-size: 75px; }
+}
+@media (max-width: 768px) {
+  .logo-centered-img, .logo-centered-fallback { max-width: 280px; }
+  .logo-centered-fallback { font-size: 65px; }
+}
+@media (max-width: 576px) {
+  .logo-centered-img, .logo-centered-fallback { max-width: 240px; }
+  .logo-centered-fallback { font-size: 55px; }
+}
+@media (max-width: 480px) {
+  .logo-centered-img, .logo-centered-fallback { max-width: 200px; }
+  .logo-centered-fallback { font-size: 50px; }
+}
+@media (max-width: 400px) {
+  .logo-centered-img, .logo-centered-fallback { max-width: 180px; }
+  .logo-centered-fallback { font-size: 45px; }
+}
+
+/* ============================================
+   FIX: HERO SECTION - PREVENT CUT OFF
+   ============================================ */
+.hero {
+  padding: 40px 0 80px;
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
+  background: radial-gradient(ellipse at center, #1A1A1A 0%, #0a0a0a 100%);
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+
+.hero-content-centered {
+  text-align: center;
+  max-width: 900px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  padding: 0 20px;
+}
+
+/* ============================================
+   FIX: UPLOAD BUTTONS STYLE
+   ============================================ */
+.upload-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #D4AF37, #B8860B);
+  color: #1A1A1A;
+  padding: 12px 25px;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: bold;
+  font-family: 'Cinzel', serif;
+  margin: 10px 0;
+  transition: all 0.3s;
+  border: none;
+  font-size: 14px;
+}
+
+.upload-label:hover {
+  transform: scale(1.02);
+  box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+}
+
+/* Remove button in admin forms */
+.admin-form .btn-secondary {
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  color: #D4AF37;
+  padding: 10px 20px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.admin-form .btn-secondary:hover {
+  background: #D4AF37;
+  color: #1A1A1A;
+}
+
+/* URL input group */
+.url-input-group {
+  display: flex;
+  gap: 10px;
+  margin: 15px 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.url-input-group .form-input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.url-input-group .btn-secondary {
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .url-input-group {
+    flex-direction: column;
+  }
+  .url-input-group .btn-secondary {
+    width: 100%;
+  }
+}

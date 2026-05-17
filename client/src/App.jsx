@@ -12,7 +12,7 @@ const API_URL = 'https://spectra-frames-api.onrender.com/api';
 const ADMIN_USERNAME = 'ashrafshaar';
 const ADMIN_PASSWORD = 'ItShYpEr75@';
 
-// Lazy Image Component with skeleton loader (معدل)
+// Lazy Image Component with skeleton loader
 function LazyImage({ src, alt, className, onError }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
@@ -469,7 +469,7 @@ function AdminPanel() {
     setConfirmId(null);
   };
 
-  // ========== DELETE FUNCTIONS (المصلحة) ==========
+  // ========== DELETE FUNCTIONS ==========
   
   const handleDeletePortfolio = async (id) => {
     console.log('🛑 Deleting portfolio with _id:', id);
@@ -580,7 +580,38 @@ function AdminPanel() {
     }, null);
   };
 
-  // Upload functions
+  // Resize image before upload
+  const resizeImage = (base64Image, maxWidth = 1200, maxHeight = 1200) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = base64Image;
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > height) {
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = (width * maxHeight) / height;
+            height = maxHeight;
+          }
+        }
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        resolve(canvas.toDataURL('image/jpeg', 0.8));
+      };
+    });
+  };
+
   const uploadToServer = async (base64Image, onProgress) => {
     try {
       const blob = await fetch(base64Image).then(r => r.blob());
@@ -726,8 +757,10 @@ function AdminPanel() {
       const reader = new FileReader();
       const uploadPromise = new Promise((resolve) => {
         reader.onloadend = async () => {
-          const base64Image = reader.result;
-          const url = await uploadToServer(base64Image, (progress) => {
+          let base64Image = reader.result;
+          // Resize image
+          const resizedImage = await resizeImage(base64Image);
+          const url = await uploadToServer(resizedImage, (progress) => {
             setUploadProgress(progress);
           });
           resolve(url);
@@ -841,8 +874,9 @@ function AdminPanel() {
       const reader = new FileReader();
       const uploadPromise = new Promise((resolve) => {
         reader.onloadend = async () => {
-          const base64Image = reader.result;
-          const url = await uploadToServer(base64Image, (progress) => {
+          let base64Image = reader.result;
+          const resizedImage = await resizeImage(base64Image);
+          const url = await uploadToServer(resizedImage, (progress) => {
             setUploadProgress(progress);
           });
           resolve(url);
@@ -949,8 +983,9 @@ function AdminPanel() {
       
       const reader = new FileReader();
       reader.onloadend = async () => {
-        const base64Image = reader.result;
-        const uploadedUrl = await uploadToServer(base64Image, (progress) => {
+        let base64Image = reader.result;
+        const resizedImage = await resizeImage(base64Image, 500, 500);
+        const uploadedUrl = await uploadToServer(resizedImage, (progress) => {
           setUploadProgress(progress);
         });
         if (uploadedUrl) {
@@ -1006,8 +1041,9 @@ function AdminPanel() {
       
       const reader = new FileReader();
       reader.onloadend = async () => {
-        const base64Image = reader.result;
-        const uploadedUrl = await uploadToServer(base64Image, (progress) => {
+        let base64Image = reader.result;
+        const resizedImage = await resizeImage(base64Image, 500, 500);
+        const uploadedUrl = await uploadToServer(resizedImage, (progress) => {
           setUploadProgress(progress);
         });
         if (uploadedUrl) {
