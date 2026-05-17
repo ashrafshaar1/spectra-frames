@@ -15,6 +15,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Middleware
 app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
@@ -28,7 +29,7 @@ if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
 app.use('/uploads', express.static(uploadsDir));
 
-// Multer
+// Multer config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
@@ -106,11 +107,10 @@ const Partner = mongoose.model('Partner', partnerSchema);
 const Service = mongoose.model('Service', serviceSchema);
 const Inquiry = mongoose.model('Inquiry', inquirySchema);
 
-// ========== Seed Default Data (مرة وحدة فقط) ==========
+// ========== Seed Default Data ==========
 async function seedDefaultData() {
   console.log('🌱 Checking and seeding default data...');
   
-  // Portfolio
   const portfolioCount = await Portfolio.countDocuments();
   if (portfolioCount === 0) {
     console.log('📸 Seeding Portfolio...');
@@ -121,7 +121,6 @@ async function seedDefaultData() {
     ]);
   }
   
-  // Clients
   const clientsCount = await Client.countDocuments();
   if (clientsCount === 0) {
     console.log('👥 Seeding Clients...');
@@ -132,7 +131,6 @@ async function seedDefaultData() {
     ]);
   }
   
-  // Partners
   const partnersCount = await Partner.countDocuments();
   if (partnersCount === 0) {
     console.log('🤝 Seeding Partners...');
@@ -144,7 +142,6 @@ async function seedDefaultData() {
     ]);
   }
   
-  // Services
   const servicesCount = await Service.countDocuments();
   if (servicesCount === 0) {
     console.log('⚙️ Seeding Services...');
@@ -160,64 +157,6 @@ async function seedDefaultData() {
   
   console.log('✅ Seeding complete!');
 }
-
-// ========== DELETE Endpoints (المصلحة) ==========
-
-// Delete Portfolio
-app.delete('/api/portfolio/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    console.log('🗑️ Deleting portfolio ID:', id);
-    
-    if (!id || id === 'undefined') {
-      return res.status(400).json({ error: 'Invalid ID' });
-    }
-    
-    const deleted = await Portfolio.findByIdAndDelete(id);
-    if (!deleted) {
-      return res.status(404).json({ error: 'Item not found' });
-    }
-    
-    console.log('✅ Deleted portfolio:', deleted.title);
-    res.json({ success: true, message: 'Portfolio deleted successfully' });
-  } catch (error) {
-    console.error('❌ Delete error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Delete Client
-app.delete('/api/clients/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    await Client.findByIdAndDelete(id);
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Delete Partner
-app.delete('/api/partners/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    await Partner.findByIdAndDelete(id);
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Delete Service
-app.delete('/api/services/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    await Service.findByIdAndDelete(id);
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
 // ========== GET Endpoints ==========
 
@@ -354,6 +293,88 @@ app.put('/api/services/:id', async (req, res) => {
   }
 });
 
+// ========== DELETE Endpoints ==========
+
+// Delete Portfolio
+app.delete('/api/portfolio/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log('🗑️ Deleting portfolio ID:', id);
+    
+    if (!id || id === 'undefined') {
+      return res.status(400).json({ error: 'Invalid ID' });
+    }
+    
+    const deleted = await Portfolio.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
+    
+    console.log('✅ Deleted portfolio:', deleted.title);
+    res.json({ success: true, message: 'Portfolio deleted successfully' });
+  } catch (error) {
+    console.error('❌ Delete error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete Client
+app.delete('/api/clients/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log('🗑️ Deleting client ID:', id);
+    
+    const deleted = await Client.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Client not found' });
+    }
+    
+    console.log('✅ Deleted client:', deleted.name);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('❌ Delete error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete Partner
+app.delete('/api/partners/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log('🗑️ Deleting partner ID:', id);
+    
+    const deleted = await Partner.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Partner not found' });
+    }
+    
+    console.log('✅ Deleted partner:', deleted.name);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('❌ Delete error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete Service
+app.delete('/api/services/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log('🗑️ Deleting service ID:', id);
+    
+    const deleted = await Service.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+    
+    console.log('✅ Deleted service:', deleted.title);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('❌ Delete error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ========== Image Upload ==========
 
 app.post('/api/upload-image', upload.single('image'), (req, res) => {
@@ -388,6 +409,28 @@ app.get('/api/health', (req, res) => {
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     timestamp: new Date().toISOString() 
   });
+});
+
+// ========== Export All Data (Backup) ==========
+
+app.get('/api/export-all', async (req, res) => {
+  try {
+    const portfolios = await Portfolio.find();
+    const clients = await Client.find();
+    const partners = await Partner.find();
+    const services = await Service.find();
+    const inquiries = await Inquiry.find();
+    
+    res.json({
+      portfolios,
+      clients,
+      partners,
+      services,
+      inquiries
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // ========== Start Server ==========
