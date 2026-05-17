@@ -1,10 +1,15 @@
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
+import sql from 'mssql';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import fs from 'fs';
+import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
+
+// Load environment variables
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,293 +22,608 @@ app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
-// مجلدات
+// ========== SQL Server Configuration ==========
+const sqlConfig = {
+    user: process.env.DB_USER || 'sa',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'SpectraFrames',
+    server: process.env.DB_SERVER || 'localhost',
+    options: {
+        encrypt: false,
+        trustServerCertificate: true,
+        enableArithAbort: true
+    }
+};
+
+// Add trusted connection option if no user/password
+if (!process.env.DB_USER || process.env.DB_USER === '') {
+    sqlConfig.options.trustedConnection = true;
+}
+
+let pool = null;
+
+// ========== Database Connection Function ==========
+async function connectToDatabase() {
+    try {
+        pool = await sql.connect(sqlConfig);
+        console.log('✅ SQL Server Connected Successfully');
+        
+        // Create tables if they don't exist
+        await ensureTablesExist();
+        
+        // Seed default data if empty
+        await seedDefaultData();
+        
+        return pool;
+    } catch (err) {
+        console.error('❌ SQL Server Connection Error:', err);
+        console.log('⚠️ Make sure SQL Server is running and credentials are correct');
+        console.log('⚠️ Retrying in 5 seconds...');
+        setTimeout(connectToDatabase, 5000);
+        return null;
+    }
+}
+
+// ========== Create Tables ==========
+async function ensureTablesExist() {
+    try {
+        // Portfolio Table
+        await pool.request().query(`
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Portfolio' AND xtype='U')
+            CREATE TABLE Portfolio (
+                Id VARCHAR(50) PRIMARY KEY,
+                Title NVARCHAR(200) NOT NULL,
+                Category NVARCHAR(100) NOT NULL,
+                Description NVARCHAR(MAX),
+                CoverImage NVARCHAR(500) NOT NULL,
+                Images NVARCHAR(MAX),
+                CreatedAt DATETIME DEFAULT GETDATE()
+            )
+        `);
+        
+        // Clients Table
+        await pool.request().query(`
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Clients' AND xtype='U')
+            CREATE TABLE Clients (
+                Id VARCHAR(50) PRIMARY KEY,
+                Name NVARCHAR(200) NOT NULL,
+                Logo NVARCHAR(500) NOT NULL,
+                CreatedAt DATETIME DEFAULT GETDATE()
+            )
+        `);
+        
+        // Partners Table
+        await pool.request().query(`
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Partners' AND xtype='U')
+            CREATE TABLE Partners (
+                Id VARCHAR(50) PRIMARY KEY,
+                Name NVARCHAR(200) NOT NULL,
+                Logo NVARCHAR(500) NOT NULL,
+                CreatedAt DATETIME DEFAULT GETDATE()
+            )
+        `);
+        
+        // Services Table
+        await pool.request().query(`
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Services' AND xtype='U')
+            CREATE TABLE Services (
+                Id VARCHAR(50) PRIMARY KEY,
+                Title NVARCHAR(200) NOT NULL,
+                Description NVARCHAR(500) NOT NULL,
+                [Order] INT DEFAULT 0,
+                Icon NVARCHAR(50) DEFAULT '📷',
+                CreatedAt DATETIME DEFAULT GETDATE()
+            )
+        `);
+        
+        // Inquiries Table
+        await pool.request().query(`
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Inquiries' AND xtype='U')
+            CREATE TABLE Inquiries (
+                Id VARCHAR(50) PRIMARY KEY,
+                Name NVARCHAR(200) NOT NULL,
+                Email NVARCHAR(200) NOT NULL,
+                Phone NVARCHAR(50),
+                ServiceType NVARCHAR(200),
+                Message NVARCHAR(MAX) NOT NULL,
+                CreatedAt DATETIME DEFAULT GETDATE()
+            )
+        `);
+        
+        console.log('✅ All tables verified/created');
+    } catch (err) {
+        console.error('Error creating tables:', err);
+    }
+}
+
+// ========== Seed Default Data ==========
+async function seedDefaultData() {
+    try {
+        // Check Portfolio
+        const portfolioResult = await pool.request().query('SELECT COUNT(*) as count FROM Portfolio');
+        if (portfolioResult.recordset[0].count === 0) {
+            console.log('🌱 Seeding default portfolio data...');
+            
+            const defaultPortfolios = [
+                { id: uuidv4(), title: 'Wedding Elegance', category: 'Wedding', coverImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600', images: JSON.stringify(['https://images.unsplash.com/photo-1519741497674-611481863552?w=600']), description: 'Beautiful wedding moments captured with elegance' },
+                { id: uuidv4(), title: 'Urban Stories', category: 'Street', coverImage: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600', images: JSON.stringify(['https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600']), description: 'Street photography from around the world' },
+                { id: uuidv4(), title: 'Natural Beauty', category: 'Landscape', coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600', images: JSON.stringify(['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600']), description: 'Breathtaking landscapes' }
+            ];
+            
+            for (const p of defaultPortfolios) {
+                await pool.request()
+                    .input('Id', sql.VarChar(50), p.id)
+                    .input('Title', sql.NVarChar(200), p.title)
+                    .input('Category', sql.NVarChar(100), p.category)
+                    .input('Description', sql.NVarChar(sql.MAX), p.description)
+                    .input('CoverImage', sql.NVarChar(500), p.coverImage)
+                    .input('Images', sql.NVarChar(sql.MAX), p.images)
+                    .query(`INSERT INTO Portfolio (Id, Title, Category, Description, CoverImage, Images) 
+                            VALUES (@Id, @Title, @Category, @Description, @CoverImage, @Images)`);
+            }
+        }
+        
+        // Check Clients
+        const clientsResult = await pool.request().query('SELECT COUNT(*) as count FROM Clients');
+        if (clientsResult.recordset[0].count === 0) {
+            console.log('🌱 Seeding default clients data...');
+            
+            const defaultClients = [
+                { id: uuidv4(), name: 'Luxury Hotel', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Luxury+Hotel' },
+                { id: uuidv4(), name: 'Fashion Brand', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Fashion+Brand' },
+                { id: uuidv4(), name: 'Wedding Planner', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Wedding+Planner' }
+            ];
+            
+            for (const c of defaultClients) {
+                await pool.request()
+                    .input('Id', sql.VarChar(50), c.id)
+                    .input('Name', sql.NVarChar(200), c.name)
+                    .input('Logo', sql.NVarChar(500), c.logo)
+                    .query(`INSERT INTO Clients (Id, Name, Logo) VALUES (@Id, @Name, @Logo)`);
+            }
+        }
+        
+        // Check Partners
+        const partnersResult = await pool.request().query('SELECT COUNT(*) as count FROM Partners');
+        if (partnersResult.recordset[0].count === 0) {
+            console.log('🌱 Seeding default partners data...');
+            
+            const defaultPartners = [
+                { id: uuidv4(), name: 'Canon', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Canon' },
+                { id: uuidv4(), name: 'Sony', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Sony' },
+                { id: uuidv4(), name: 'Adobe', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Adobe' },
+                { id: uuidv4(), name: 'Nikon', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Nikon' }
+            ];
+            
+            for (const p of defaultPartners) {
+                await pool.request()
+                    .input('Id', sql.VarChar(50), p.id)
+                    .input('Name', sql.NVarChar(200), p.name)
+                    .input('Logo', sql.NVarChar(500), p.logo)
+                    .query(`INSERT INTO Partners (Id, Name, Logo) VALUES (@Id, @Name, @Logo)`);
+            }
+        }
+        
+        // Check Services
+        const servicesResult = await pool.request().query('SELECT COUNT(*) as count FROM Services');
+        if (servicesResult.recordset[0].count === 0) {
+            console.log('🌱 Seeding default services data...');
+            
+            const defaultServices = [
+                { id: uuidv4(), title: 'Wedding Photography', description: 'Capturing your special day with elegance and emotion', order: 1 },
+                { id: uuidv4(), title: 'Portrait Sessions', description: 'Professional portraits and personal branding', order: 2 },
+                { id: uuidv4(), title: 'Commercial', description: 'High-end product and corporate photography', order: 3 },
+                { id: uuidv4(), title: 'Fine Art', description: 'Artistic and conceptual visual stories', order: 4 },
+                { id: uuidv4(), title: 'Event Coverage', description: 'Corporate events and special occasions', order: 5 },
+                { id: uuidv4(), title: 'Content Creation', description: 'Social media and marketing content', order: 6 }
+            ];
+            
+            for (const s of defaultServices) {
+                await pool.request()
+                    .input('Id', sql.VarChar(50), s.id)
+                    .input('Title', sql.NVarChar(200), s.title)
+                    .input('Description', sql.NVarChar(500), s.description)
+                    .input('Order', sql.Int, s.order)
+                    .query(`INSERT INTO Services (Id, Title, Description, [Order]) 
+                            VALUES (@Id, @Title, @Description, @Order)`);
+            }
+        }
+        
+        console.log('✅ Default data seeded successfully!');
+    } catch (err) {
+        console.error('Error seeding data:', err);
+    }
+}
+
+// ========== Uploads Folder ==========
 const uploadsDir = path.join(__dirname, 'uploads');
-const dataDir = path.join(__dirname, 'data');
-
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
-
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('✅ Uploads folder created:', uploadsDir);
+}
 app.use('/uploads', express.static(uploadsDir));
 
-// Multer config
+// ========== Multer Configuration for Image Upload ==========
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
+    destination: (req, file, cb) => cb(null, uploadsDir),
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
 });
 
 const upload = multer({
-  storage,
-  limits: { fileSize: 50 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    if (allowedTypes.test(path.extname(file.originalname).toLowerCase()) && allowedTypes.test(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed'));
+    storage,
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = /jpeg|jpg|png|gif|webp/;
+        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = allowedTypes.test(file.mimetype);
+        if (extname && mimetype) {
+            return cb(null, true);
+        }
+        cb(new Error('Only image files are allowed'));
     }
-  }
 });
 
 const SERVER_URL = process.env.NODE_ENV === 'production'
-  ? 'https://spectra-frames-api.onrender.com'
-  : `http://localhost:${PORT}`;
-
-// ملفات البيانات
-const PORTFOLIO_FILE = path.join(dataDir, 'portfolios.json');
-const PARTNERS_FILE = path.join(dataDir, 'partners.json');
-const CLIENTS_FILE = path.join(dataDir, 'clients.json');
-const SERVICES_FILE = path.join(dataDir, 'services.json');
-const INQUIRIES_FILE = path.join(dataDir, 'inquiries.json');
-
-// دوال مساعدة
-function readJSON(filePath, defaultValue = []) {
-  if (!fs.existsSync(filePath)) return defaultValue;
-  try {
-    const data = fs.readFileSync(filePath, 'utf8');
-    return data.trim() ? JSON.parse(data) : defaultValue;
-  } catch (err) {
-    console.error('Error reading JSON:', err);
-    return defaultValue;
-  }
-}
-
-function writeJSON(filePath, data) {
-  try {
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-    return true;
-  } catch (err) {
-    console.error('Error writing JSON:', err);
-    return false;
-  }
-}
-
-// ========== بيانات افتراضية (للاستخدام الأول فقط) ==========
-const defaultPortfolios = [
-  { id: '1', title: 'Wedding Elegance', category: 'Wedding', coverImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600', images: ['https://images.unsplash.com/photo-1519741497674-611481863552?w=600'], description: 'Beautiful wedding moments captured with elegance' },
-  { id: '2', title: 'Urban Stories', category: 'Street', coverImage: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600', images: ['https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600'], description: 'Street photography from around the world' },
-  { id: '3', title: 'Natural Beauty', category: 'Landscape', coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600', images: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600'], description: 'Breathtaking landscapes and nature scenes' }
-];
-
-const defaultClients = [
-  { id: '1', name: 'Luxury Hotel', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Luxury+Hotel' },
-  { id: '2', name: 'Fashion Brand', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Fashion+Brand' },
-  { id: '3', name: 'Wedding Planner', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Wedding+Planner' }
-];
-
-const defaultPartners = [
-  { id: '1', name: 'Canon', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Canon' },
-  { id: '2', name: 'Sony', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Sony' },
-  { id: '3', name: 'Adobe', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Adobe' },
-  { id: '4', name: 'Nikon', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Nikon' }
-];
-
-const defaultServices = [
-  { id: '1', title: 'Wedding Photography', description: 'Capturing your special day with elegance and emotion', order: 1 },
-  { id: '2', title: 'Portrait Sessions', description: 'Professional portraits and personal branding', order: 2 },
-  { id: '3', title: 'Commercial', description: 'High-end product and corporate photography', order: 3 },
-  { id: '4', title: 'Fine Art', description: 'Artistic and conceptual visual stories', order: 4 },
-  { id: '5', title: 'Event Coverage', description: 'Corporate events and special occasions', order: 5 },
-  { id: '6', title: 'Content Creation', description: 'Social media and marketing content', order: 6 }
-];
-
-// ========== تهيئة آمنة للملفات - بدون فقدان البيانات! ==========
-function safeInitFile(filePath, defaultData, fileName) {
-  if (!fs.existsSync(filePath)) {
-    writeJSON(filePath, defaultData);
-    console.log(`✅ Created new ${fileName}: ${defaultData.length} items`);
-    return defaultData;
-  }
-  
-  const existing = readJSON(filePath);
-  if (existing.length === 0) {
-    writeJSON(filePath, defaultData);
-    console.log(`⚠️ ${fileName} was empty, restored defaults`);
-    return defaultData;
-  }
-  
-  console.log(`✅ Loaded ${fileName}: ${existing.length} items`);
-  return existing;
-}
-
-// تنفيذ التهيئة الآمنة
-safeInitFile(PORTFOLIO_FILE, defaultPortfolios, 'portfolios.json');
-safeInitFile(CLIENTS_FILE, defaultClients, 'clients.json');
-safeInitFile(PARTNERS_FILE, defaultPartners, 'partners.json');
-safeInitFile(SERVICES_FILE, defaultServices, 'services.json');
+    ? 'https://spectra-frames-api.onrender.com'
+    : `http://localhost:${PORT}`;
 
 // ========== API Endpoints ==========
 
-// Portfolio
-app.get('/api/portfolio', (req, res) => {
-  res.json(readJSON(PORTFOLIO_FILE));
+// ===== PORTFOLIO =====
+app.get('/api/portfolio', async (req, res) => {
+    try {
+        const result = await pool.request().query('SELECT * FROM Portfolio ORDER BY CreatedAt DESC');
+        const portfolios = result.recordset.map(p => ({
+            ...p,
+            images: p.Images ? JSON.parse(p.Images) : []
+        }));
+        res.json(portfolios);
+    } catch (error) {
+        console.error('Error fetching portfolios:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
-app.get('/api/portfolio/:id', (req, res) => {
-  const portfolios = readJSON(PORTFOLIO_FILE);
-  const portfolio = portfolios.find(p => p.id === req.params.id);
-  if (!portfolio) return res.status(404).json({ error: 'Not found' });
-  res.json(portfolio);
+app.get('/api/portfolio/:id', async (req, res) => {
+    try {
+        const result = await pool.request()
+            .input('Id', sql.VarChar(50), req.params.id)
+            .query('SELECT * FROM Portfolio WHERE Id = @Id');
+        
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ error: 'Portfolio not found' });
+        }
+        
+        const portfolio = {
+            ...result.recordset[0],
+            images: result.recordset[0].Images ? JSON.parse(result.recordset[0].Images) : []
+        };
+        res.json(portfolio);
+    } catch (error) {
+        console.error('Error fetching portfolio:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
-app.post('/api/portfolio', (req, res) => {
-  const portfolios = readJSON(PORTFOLIO_FILE);
-  const newItem = { id: uuidv4(), ...req.body, createdAt: new Date().toISOString() };
-  portfolios.push(newItem);
-  writeJSON(PORTFOLIO_FILE, portfolios);
-  res.json({ success: true, portfolio: newItem });
+app.post('/api/portfolio', async (req, res) => {
+    try {
+        const id = uuidv4();
+        const { title, category, description, coverImage, images } = req.body;
+        
+        await pool.request()
+            .input('Id', sql.VarChar(50), id)
+            .input('Title', sql.NVarChar(200), title)
+            .input('Category', sql.NVarChar(100), category)
+            .input('Description', sql.NVarChar(sql.MAX), description || '')
+            .input('CoverImage', sql.NVarChar(500), coverImage)
+            .input('Images', sql.NVarChar(sql.MAX), JSON.stringify(images || []))
+            .query(`INSERT INTO Portfolio (Id, Title, Category, Description, CoverImage, Images) 
+                    VALUES (@Id, @Title, @Category, @Description, @CoverImage, @Images)`);
+        
+        res.json({ success: true, portfolio: { id, title, category, description, coverImage, images } });
+    } catch (error) {
+        console.error('Error creating portfolio:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
-app.put('/api/portfolio/:id', (req, res) => {
-  let portfolios = readJSON(PORTFOLIO_FILE);
-  const index = portfolios.findIndex(p => p.id === req.params.id);
-  if (index === -1) return res.status(404).json({ error: 'Not found' });
-  portfolios[index] = { ...portfolios[index], ...req.body };
-  writeJSON(PORTFOLIO_FILE, portfolios);
-  res.json({ success: true });
+app.put('/api/portfolio/:id', async (req, res) => {
+    try {
+        const { title, category, description, coverImage, images } = req.body;
+        
+        await pool.request()
+            .input('Id', sql.VarChar(50), req.params.id)
+            .input('Title', sql.NVarChar(200), title)
+            .input('Category', sql.NVarChar(100), category)
+            .input('Description', sql.NVarChar(sql.MAX), description || '')
+            .input('CoverImage', sql.NVarChar(500), coverImage)
+            .input('Images', sql.NVarChar(sql.MAX), JSON.stringify(images || []))
+            .query(`UPDATE Portfolio SET 
+                    Title = @Title, 
+                    Category = @Category, 
+                    Description = @Description, 
+                    CoverImage = @CoverImage, 
+                    Images = @Images 
+                    WHERE Id = @Id`);
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error updating portfolio:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
-app.delete('/api/portfolio/:id', (req, res) => {
-  let portfolios = readJSON(PORTFOLIO_FILE);
-  portfolios = portfolios.filter(p => p.id !== req.params.id);
-  writeJSON(PORTFOLIO_FILE, portfolios);
-  res.json({ success: true });
+app.delete('/api/portfolio/:id', async (req, res) => {
+    try {
+        await pool.request()
+            .input('Id', sql.VarChar(50), req.params.id)
+            .query('DELETE FROM Portfolio WHERE Id = @Id');
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting portfolio:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
-// Partners
-app.get('/api/partners', (req, res) => {
-  res.json(readJSON(PARTNERS_FILE));
+// ===== CLIENTS =====
+app.get('/api/clients', async (req, res) => {
+    try {
+        const result = await pool.request().query('SELECT * FROM Clients ORDER BY CreatedAt DESC');
+        res.json(result.recordset);
+    } catch (error) {
+        console.error('Error fetching clients:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
-app.post('/api/partners', (req, res) => {
-  const partners = readJSON(PARTNERS_FILE);
-  const newPartner = { id: uuidv4(), ...req.body };
-  partners.push(newPartner);
-  writeJSON(PARTNERS_FILE, partners);
-  res.json({ success: true, partner: newPartner });
+app.post('/api/clients', async (req, res) => {
+    try {
+        const id = uuidv4();
+        const { name, logo } = req.body;
+        
+        await pool.request()
+            .input('Id', sql.VarChar(50), id)
+            .input('Name', sql.NVarChar(200), name)
+            .input('Logo', sql.NVarChar(500), logo)
+            .query(`INSERT INTO Clients (Id, Name, Logo) VALUES (@Id, @Name, @Logo)`);
+        
+        res.json({ success: true, client: { id, name, logo } });
+    } catch (error) {
+        console.error('Error creating client:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
-app.delete('/api/partners/:id', (req, res) => {
-  let partners = readJSON(PARTNERS_FILE);
-  partners = partners.filter(p => p.id !== req.params.id);
-  writeJSON(PARTNERS_FILE, partners);
-  res.json({ success: true });
+app.delete('/api/clients/:id', async (req, res) => {
+    try {
+        await pool.request()
+            .input('Id', sql.VarChar(50), req.params.id)
+            .query('DELETE FROM Clients WHERE Id = @Id');
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting client:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
-// Clients
-app.get('/api/clients', (req, res) => {
-  res.json(readJSON(CLIENTS_FILE));
+// ===== PARTNERS =====
+app.get('/api/partners', async (req, res) => {
+    try {
+        const result = await pool.request().query('SELECT * FROM Partners ORDER BY CreatedAt DESC');
+        res.json(result.recordset);
+    } catch (error) {
+        console.error('Error fetching partners:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
-app.post('/api/clients', (req, res) => {
-  const clients = readJSON(CLIENTS_FILE);
-  const newClient = { id: uuidv4(), ...req.body };
-  clients.push(newClient);
-  writeJSON(CLIENTS_FILE, clients);
-  res.json({ success: true, client: newClient });
+app.post('/api/partners', async (req, res) => {
+    try {
+        const id = uuidv4();
+        const { name, logo } = req.body;
+        
+        await pool.request()
+            .input('Id', sql.VarChar(50), id)
+            .input('Name', sql.NVarChar(200), name)
+            .input('Logo', sql.NVarChar(500), logo)
+            .query(`INSERT INTO Partners (Id, Name, Logo) VALUES (@Id, @Name, @Logo)`);
+        
+        res.json({ success: true, partner: { id, name, logo } });
+    } catch (error) {
+        console.error('Error creating partner:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
-app.delete('/api/clients/:id', (req, res) => {
-  let clients = readJSON(CLIENTS_FILE);
-  clients = clients.filter(c => c.id !== req.params.id);
-  writeJSON(CLIENTS_FILE, clients);
-  res.json({ success: true });
+app.delete('/api/partners/:id', async (req, res) => {
+    try {
+        await pool.request()
+            .input('Id', sql.VarChar(50), req.params.id)
+            .query('DELETE FROM Partners WHERE Id = @Id');
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting partner:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
-// Services
-app.get('/api/services', (req, res) => {
-  res.json(readJSON(SERVICES_FILE));
+// ===== SERVICES =====
+app.get('/api/services', async (req, res) => {
+    try {
+        const result = await pool.request().query('SELECT * FROM Services ORDER BY [Order] ASC');
+        res.json(result.recordset);
+    } catch (error) {
+        console.error('Error fetching services:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
-app.post('/api/services', (req, res) => {
-  const services = readJSON(SERVICES_FILE);
-  const newService = { id: uuidv4(), ...req.body, order: services.length + 1 };
-  services.push(newService);
-  writeJSON(SERVICES_FILE, services);
-  res.json({ success: true, service: newService });
+app.post('/api/services', async (req, res) => {
+    try {
+        const id = uuidv4();
+        const { title, description, order, icon } = req.body;
+        
+        await pool.request()
+            .input('Id', sql.VarChar(50), id)
+            .input('Title', sql.NVarChar(200), title)
+            .input('Description', sql.NVarChar(500), description)
+            .input('Order', sql.Int, order || 0)
+            .input('Icon', sql.NVarChar(50), icon || '📷')
+            .query(`INSERT INTO Services (Id, Title, Description, [Order], Icon) 
+                    VALUES (@Id, @Title, @Description, @Order, @Icon)`);
+        
+        res.json({ success: true, service: { id, title, description, order, icon } });
+    } catch (error) {
+        console.error('Error creating service:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
-app.put('/api/services/:id', (req, res) => {
-  let services = readJSON(SERVICES_FILE);
-  const index = services.findIndex(s => s.id === req.params.id);
-  if (index === -1) return res.status(404).json({ error: 'Not found' });
-  services[index] = { ...services[index], ...req.body };
-  writeJSON(SERVICES_FILE, services);
-  res.json({ success: true });
+app.put('/api/services/:id', async (req, res) => {
+    try {
+        const { title, description, order, icon } = req.body;
+        
+        await pool.request()
+            .input('Id', sql.VarChar(50), req.params.id)
+            .input('Title', sql.NVarChar(200), title)
+            .input('Description', sql.NVarChar(500), description)
+            .input('Order', sql.Int, order || 0)
+            .input('Icon', sql.NVarChar(50), icon || '📷')
+            .query(`UPDATE Services SET 
+                    Title = @Title, 
+                    Description = @Description, 
+                    [Order] = @Order, 
+                    Icon = @Icon 
+                    WHERE Id = @Id`);
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error updating service:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
-app.delete('/api/services/:id', (req, res) => {
-  let services = readJSON(SERVICES_FILE);
-  services = services.filter(s => s.id !== req.params.id);
-  writeJSON(SERVICES_FILE, services);
-  res.json({ success: true });
+app.delete('/api/services/:id', async (req, res) => {
+    try {
+        await pool.request()
+            .input('Id', sql.VarChar(50), req.params.id)
+            .query('DELETE FROM Services WHERE Id = @Id');
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting service:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
-// Inquiries
-app.get('/api/inquiries', (req, res) => {
-  res.json(readJSON(INQUIRIES_FILE));
+// ===== INQUIRIES =====
+app.get('/api/inquiries', async (req, res) => {
+    try {
+        const result = await pool.request().query('SELECT * FROM Inquiries ORDER BY CreatedAt DESC');
+        res.json(result.recordset);
+    } catch (error) {
+        console.error('Error fetching inquiries:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
-app.post('/api/inquiries', (req, res) => {
-  const inquiries = readJSON(INQUIRIES_FILE);
-  const newInquiry = {
-    id: uuidv4(),
-    name: req.body.name,
-    email: req.body.email,
-    phone: req.body.phone || '',
-    serviceType: req.body.service || req.body.serviceType,
-    message: req.body.message,
-    createdAt: new Date().toISOString()
-  };
-  inquiries.push(newInquiry);
-  writeJSON(INQUIRIES_FILE, inquiries);
-  res.json({ success: true });
+app.post('/api/inquiries', async (req, res) => {
+    try {
+        const id = uuidv4();
+        const { name, email, phone, service, message } = req.body;
+        
+        await pool.request()
+            .input('Id', sql.VarChar(50), id)
+            .input('Name', sql.NVarChar(200), name)
+            .input('Email', sql.NVarChar(200), email)
+            .input('Phone', sql.NVarChar(50), phone || '')
+            .input('ServiceType', sql.NVarChar(200), service || '')
+            .input('Message', sql.NVarChar(sql.MAX), message)
+            .query(`INSERT INTO Inquiries (Id, Name, Email, Phone, ServiceType, Message) 
+                    VALUES (@Id, @Name, @Email, @Phone, @ServiceType, @Message)`);
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error saving inquiry:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
-// Upload
+// ===== IMAGE UPLOAD =====
 app.post('/api/upload-image', upload.single('image'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  res.json({ success: true, url: `${SERVER_URL}/uploads/${req.file.filename}` });
+    if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+    }
+    const imageUrl = `${SERVER_URL}/uploads/${req.file.filename}`;
+    console.log('✅ Image uploaded:', imageUrl);
+    res.json({ success: true, url: imageUrl });
 });
 
 app.post('/api/upload-multiple', upload.array('images', 50), (req, res) => {
-  if (!req.files || req.files.length === 0) {
-    return res.status(400).json({ error: 'No files uploaded' });
-  }
-  const urls = req.files.map(file => `${SERVER_URL}/uploads/${file.filename}`);
-  res.json({ success: true, urls });
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ error: 'No files uploaded' });
+    }
+    const urls = req.files.map(file => `${SERVER_URL}/uploads/${file.filename}`);
+    res.json({ success: true, urls });
 });
 
 app.delete('/api/delete-image', (req, res) => {
-  const { filename } = req.body;
-  const filePath = path.join(uploadsDir, filename);
-  if (fs.existsSync(filePath)) {
-    fs.unlinkSync(filePath);
-    res.json({ success: true });
-  } else {
-    res.status(404).json({ error: 'Image not found' });
-  }
+    const { filename } = req.body;
+    const filePath = path.join(uploadsDir, filename);
+    if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ error: 'Image not found' });
+    }
 });
 
-// Health check
+// ===== HEALTH CHECK =====
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.json({ 
+        status: 'ok', 
+        message: 'Server is running',
+        database: pool ? 'connected' : 'disconnected',
+        timestamp: new Date().toISOString() 
+    });
 });
 
-// Export all data (for backup)
-app.get('/api/export-all', (req, res) => {
-  res.json({
-    portfolios: readJSON(PORTFOLIO_FILE),
-    clients: readJSON(CLIENTS_FILE),
-    partners: readJSON(PARTNERS_FILE),
-    services: readJSON(SERVICES_FILE),
-    inquiries: readJSON(INQUIRIES_FILE)
-  });
+// ===== EXPORT ALL DATA (for backup) =====
+app.get('/api/export-all', async (req, res) => {
+    try {
+        const portfolios = await pool.request().query('SELECT * FROM Portfolio');
+        const clients = await pool.request().query('SELECT * FROM Clients');
+        const partners = await pool.request().query('SELECT * FROM Partners');
+        const services = await pool.request().query('SELECT * FROM Services');
+        const inquiries = await pool.request().query('SELECT * FROM Inquiries');
+        
+        res.json({
+            portfolios: portfolios.recordset,
+            clients: clients.recordset,
+            partners: partners.recordset,
+            services: services.recordset,
+            inquiries: inquiries.recordset
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on ${SERVER_URL}`);
-});
+// ===== START SERVER =====
+async function startServer() {
+    const dbConnected = await connectToDatabase();
+    if (dbConnected) {
+        app.listen(PORT, () => {
+            console.log(`🚀 Server running on ${SERVER_URL}`);
+            console.log(`📁 Uploads folder: ${uploadsDir}`);
+            console.log(`🗄️ Database: SQL Server (${process.env.DB_NAME || 'SpectraFrames'})`);
+        });
+    } else {
+        console.log('❌ Server cannot start without database connection');
+        process.exit(1);
+    }
+}
+
+startServer();
