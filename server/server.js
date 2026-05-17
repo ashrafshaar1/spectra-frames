@@ -107,56 +107,45 @@ const Partner = mongoose.model('Partner', partnerSchema);
 const Service = mongoose.model('Service', serviceSchema);
 const Inquiry = mongoose.model('Inquiry', inquirySchema);
 
-// ========== Seed Default Data ==========
+// ========== Seed Default Data - معطل تماماً ==========
 async function seedDefaultData() {
-  console.log('🌱 Checking and seeding default data...');
+  console.log('🚫 Auto-seed is DISABLED. Database will remain empty.');
+  console.log('💡 You can add data manually from Admin Panel.');
   
   const portfolioCount = await Portfolio.countDocuments();
-  if (portfolioCount === 0) {
-    console.log('📸 Seeding Portfolio...');
-    await Portfolio.insertMany([
-      { title: 'Wedding Elegance', category: 'Wedding', coverImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600', images: ['https://images.unsplash.com/photo-1519741497674-611481863552?w=600'], description: 'Beautiful wedding moments captured with elegance' },
-      { title: 'Urban Stories', category: 'Street', coverImage: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600', images: ['https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600'], description: 'Street photography from around the world' },
-      { title: 'Natural Beauty', category: 'Landscape', coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600', images: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600'], description: 'Breathtaking landscapes' }
-    ]);
-  }
-  
   const clientsCount = await Client.countDocuments();
-  if (clientsCount === 0) {
-    console.log('👥 Seeding Clients...');
-    await Client.insertMany([
-      { name: 'Luxury Hotel', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Luxury+Hotel' },
-      { name: 'Fashion Brand', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Fashion+Brand' },
-      { name: 'Wedding Planner', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Wedding+Planner' }
-    ]);
-  }
-  
   const partnersCount = await Partner.countDocuments();
-  if (partnersCount === 0) {
-    console.log('🤝 Seeding Partners...');
-    await Partner.insertMany([
-      { name: 'Canon', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Canon' },
-      { name: 'Sony', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Sony' },
-      { name: 'Adobe', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Adobe' },
-      { name: 'Nikon', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Nikon' }
-    ]);
-  }
-  
   const servicesCount = await Service.countDocuments();
-  if (servicesCount === 0) {
-    console.log('⚙️ Seeding Services...');
-    await Service.insertMany([
-      { title: 'Wedding Photography', description: 'Capturing your special day with elegance and emotion', order: 1 },
-      { title: 'Portrait Sessions', description: 'Professional portraits and personal branding', order: 2 },
-      { title: 'Commercial', description: 'High-end product and corporate photography', order: 3 },
-      { title: 'Fine Art', description: 'Artistic and conceptual visual stories', order: 4 },
-      { title: 'Event Coverage', description: 'Corporate events and special occasions', order: 5 },
-      { title: 'Content Creation', description: 'Social media and marketing content', order: 6 }
-    ]);
-  }
+  const inquiriesCount = await Inquiry.countDocuments();
   
-  console.log('✅ Seeding complete!');
+  console.log(`📊 Current data counts:`);
+  console.log(`   Portfolio: ${portfolioCount} items`);
+  console.log(`   Clients: ${clientsCount} items`);
+  console.log(`   Partners: ${partnersCount} items`);
+  console.log(`   Services: ${servicesCount} items`);
+  console.log(`   Inquiries: ${inquiriesCount} items`);
 }
+
+// ========== DELETE ALL DATA (لإفراغ قاعدة البيانات) ==========
+app.delete('/api/delete-all-data', async (req, res) => {
+  try {
+    const { secret } = req.query;
+    if (secret !== 'DELETE_ALL_SPECTRA') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    await Portfolio.deleteMany({});
+    await Client.deleteMany({});
+    await Partner.deleteMany({});
+    await Service.deleteMany({});
+    await Inquiry.deleteMany({});
+    
+    console.log('🗑️ ALL DATA DELETED!');
+    res.json({ success: true, message: 'All data deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // ========== GET Endpoints ==========
 
@@ -295,7 +284,6 @@ app.put('/api/services/:id', async (req, res) => {
 
 // ========== DELETE Endpoints ==========
 
-// Delete Portfolio
 app.delete('/api/portfolio/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -318,7 +306,6 @@ app.delete('/api/portfolio/:id', async (req, res) => {
   }
 });
 
-// Delete Client
 app.delete('/api/clients/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -337,7 +324,6 @@ app.delete('/api/clients/:id', async (req, res) => {
   }
 });
 
-// Delete Partner
 app.delete('/api/partners/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -356,7 +342,6 @@ app.delete('/api/partners/:id', async (req, res) => {
   }
 });
 
-// Delete Service
 app.delete('/api/services/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -409,28 +394,6 @@ app.get('/api/health', (req, res) => {
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     timestamp: new Date().toISOString() 
   });
-});
-
-// ========== Export All Data (Backup) ==========
-
-app.get('/api/export-all', async (req, res) => {
-  try {
-    const portfolios = await Portfolio.find();
-    const clients = await Client.find();
-    const partners = await Partner.find();
-    const services = await Service.find();
-    const inquiries = await Inquiry.find();
-    
-    res.json({
-      portfolios,
-      clients,
-      partners,
-      services,
-      inquiries
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
 });
 
 // ========== Start Server ==========
