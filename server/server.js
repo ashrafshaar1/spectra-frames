@@ -8,7 +8,6 @@ import fs from 'fs';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 
-// Load environment variables
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -22,12 +21,48 @@ app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
+// مجلدات
+const uploadsDir = path.join(__dirname, 'uploads');
+const dataDir = path.join(__dirname, 'data');
+
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+
+app.use('/uploads', express.static(uploadsDir));
+
+// Multer config
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadsDir),
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    if (allowedTypes.test(path.extname(file.originalname).toLowerCase()) && allowedTypes.test(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
+
+const SERVER_URL = process.env.NODE_ENV === 'production'
+  ? 'https://spectra-frames-api.onrender.com'
+  : `http://localhost:${PORT}`;
+
 // ========== SQL Server Configuration ==========
+// استخدام Windows Authentication
 const sqlConfig = {
-    user: process.env.DB_USER || 'sa',
-    password: process.env.DB_PASSWORD || '',
+    server: process.env.DB_SERVER || 'localhost\SQLEXPRESS',
     database: process.env.DB_NAME || 'SpectraFrames',
-    server: process.env.DB_SERVER || 'localhost',
+    user: process.env.DB_USER || 'spectraframes',
+    password: process.env.DB_PASSWORD || 'SpectraFrames2024!',
     options: {
         encrypt: false,
         trustServerCertificate: true,
@@ -35,39 +70,33 @@ const sqlConfig = {
     }
 };
 
-// Add trusted connection option if no user/password
-if (!process.env.DB_USER || process.env.DB_USER === '') {
-    sqlConfig.options.trustedConnection = true;
-}
+console.log('🔌 Connecting to SQL Server:', sqlConfig.server);
+console.log('📚 Database:', sqlConfig.database);
+console.log('🔐 Authentication: Windows Authentication');
 
 let pool = null;
 
-// ========== Database Connection Function ==========
 async function connectToDatabase() {
     try {
         pool = await sql.connect(sqlConfig);
         console.log('✅ SQL Server Connected Successfully');
-        
-        // Create tables if they don't exist
         await ensureTablesExist();
-        
-        // Seed default data if empty
         await seedDefaultData();
-        
-        return pool;
+        return true;
     } catch (err) {
-        console.error('❌ SQL Server Connection Error:', err);
-        console.log('⚠️ Make sure SQL Server is running and credentials are correct');
-        console.log('⚠️ Retrying in 5 seconds...');
-        setTimeout(connectToDatabase, 5000);
-        return null;
+        console.error('❌ SQL Server Connection Error:', err.message);
+        console.log('\n📌 Troubleshooting tips:');
+        console.log('   1. Make sure SQL Server is running');
+        console.log('   2. Check if you can connect using SSMS with Windows Authentication');
+        console.log('   3. Server name should be: localhost\\SQLEXPRESS');
+        console.log('   4. Try restarting SQL Server service\n');
+        return false;
     }
 }
 
-// ========== Create Tables ==========
+// Create Tables
 async function ensureTablesExist() {
     try {
-        // Portfolio Table
         await pool.request().query(`
             IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Portfolio' AND xtype='U')
             CREATE TABLE Portfolio (
@@ -81,7 +110,6 @@ async function ensureTablesExist() {
             )
         `);
         
-        // Clients Table
         await pool.request().query(`
             IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Clients' AND xtype='U')
             CREATE TABLE Clients (
@@ -92,7 +120,6 @@ async function ensureTablesExist() {
             )
         `);
         
-        // Partners Table
         await pool.request().query(`
             IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Partners' AND xtype='U')
             CREATE TABLE Partners (
@@ -103,7 +130,6 @@ async function ensureTablesExist() {
             )
         `);
         
-        // Services Table
         await pool.request().query(`
             IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Services' AND xtype='U')
             CREATE TABLE Services (
@@ -116,7 +142,6 @@ async function ensureTablesExist() {
             )
         `);
         
-        // Inquiries Table
         await pool.request().query(`
             IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Inquiries' AND xtype='U')
             CREATE TABLE Inquiries (
@@ -130,18 +155,17 @@ async function ensureTablesExist() {
             )
         `);
         
-        console.log('✅ All tables verified/created');
+        console.log('✅ Tables verified/created');
     } catch (err) {
         console.error('Error creating tables:', err);
     }
 }
 
-// ========== Seed Default Data ==========
+// Seed Default Data
 async function seedDefaultData() {
     try {
-        // Check Portfolio
-        const portfolioResult = await pool.request().query('SELECT COUNT(*) as count FROM Portfolio');
-        if (portfolioResult.recordset[0].count === 0) {
+        const result = await pool.request().query('SELECT COUNT(*) as count FROM Portfolio');
+        if (result.recordset[0].count === 0) {
             console.log('🌱 Seeding default portfolio data...');
             
             const defaultPortfolios = [
@@ -163,7 +187,6 @@ async function seedDefaultData() {
             }
         }
         
-        // Check Clients
         const clientsResult = await pool.request().query('SELECT COUNT(*) as count FROM Clients');
         if (clientsResult.recordset[0].count === 0) {
             console.log('🌱 Seeding default clients data...');
@@ -183,7 +206,6 @@ async function seedDefaultData() {
             }
         }
         
-        // Check Partners
         const partnersResult = await pool.request().query('SELECT COUNT(*) as count FROM Partners');
         if (partnersResult.recordset[0].count === 0) {
             console.log('🌱 Seeding default partners data...');
@@ -204,7 +226,6 @@ async function seedDefaultData() {
             }
         }
         
-        // Check Services
         const servicesResult = await pool.request().query('SELECT COUNT(*) as count FROM Services');
         if (servicesResult.recordset[0].count === 0) {
             console.log('🌱 Seeding default services data...');
@@ -235,44 +256,9 @@ async function seedDefaultData() {
     }
 }
 
-// ========== Uploads Folder ==========
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-    console.log('✅ Uploads folder created:', uploadsDir);
-}
-app.use('/uploads', express.static(uploadsDir));
-
-// ========== Multer Configuration for Image Upload ==========
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, uploadsDir),
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
-});
-
-const upload = multer({
-    storage,
-    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
-    fileFilter: (req, file, cb) => {
-        const allowedTypes = /jpeg|jpg|png|gif|webp/;
-        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = allowedTypes.test(file.mimetype);
-        if (extname && mimetype) {
-            return cb(null, true);
-        }
-        cb(new Error('Only image files are allowed'));
-    }
-});
-
-const SERVER_URL = process.env.NODE_ENV === 'production'
-    ? 'https://spectra-frames-api.onrender.com'
-    : `http://localhost:${PORT}`;
-
 // ========== API Endpoints ==========
 
-// ===== PORTFOLIO =====
+// Portfolio
 app.get('/api/portfolio', async (req, res) => {
     try {
         const result = await pool.request().query('SELECT * FROM Portfolio ORDER BY CreatedAt DESC');
@@ -368,7 +354,7 @@ app.delete('/api/portfolio/:id', async (req, res) => {
     }
 });
 
-// ===== CLIENTS =====
+// Clients
 app.get('/api/clients', async (req, res) => {
     try {
         const result = await pool.request().query('SELECT * FROM Clients ORDER BY CreatedAt DESC');
@@ -409,7 +395,7 @@ app.delete('/api/clients/:id', async (req, res) => {
     }
 });
 
-// ===== PARTNERS =====
+// Partners
 app.get('/api/partners', async (req, res) => {
     try {
         const result = await pool.request().query('SELECT * FROM Partners ORDER BY CreatedAt DESC');
@@ -450,7 +436,7 @@ app.delete('/api/partners/:id', async (req, res) => {
     }
 });
 
-// ===== SERVICES =====
+// Services
 app.get('/api/services', async (req, res) => {
     try {
         const result = await pool.request().query('SELECT * FROM Services ORDER BY [Order] ASC');
@@ -518,7 +504,7 @@ app.delete('/api/services/:id', async (req, res) => {
     }
 });
 
-// ===== INQUIRIES =====
+// Inquiries
 app.get('/api/inquiries', async (req, res) => {
     try {
         const result = await pool.request().query('SELECT * FROM Inquiries ORDER BY CreatedAt DESC');
@@ -551,14 +537,10 @@ app.post('/api/inquiries', async (req, res) => {
     }
 });
 
-// ===== IMAGE UPLOAD =====
+// Image Upload
 app.post('/api/upload-image', upload.single('image'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
-    }
-    const imageUrl = `${SERVER_URL}/uploads/${req.file.filename}`;
-    console.log('✅ Image uploaded:', imageUrl);
-    res.json({ success: true, url: imageUrl });
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    res.json({ success: true, url: `${SERVER_URL}/uploads/${req.file.filename}` });
 });
 
 app.post('/api/upload-multiple', upload.array('images', 50), (req, res) => {
@@ -580,17 +562,12 @@ app.delete('/api/delete-image', (req, res) => {
     }
 });
 
-// ===== HEALTH CHECK =====
+// Health Check
 app.get('/api/health', (req, res) => {
-    res.json({ 
-        status: 'ok', 
-        message: 'Server is running',
-        database: pool ? 'connected' : 'disconnected',
-        timestamp: new Date().toISOString() 
-    });
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ===== EXPORT ALL DATA (for backup) =====
+// Export All Data (for backup)
 app.get('/api/export-all', async (req, res) => {
     try {
         const portfolios = await pool.request().query('SELECT * FROM Portfolio');
@@ -600,7 +577,7 @@ app.get('/api/export-all', async (req, res) => {
         const inquiries = await pool.request().query('SELECT * FROM Inquiries');
         
         res.json({
-            portfolios: portfolios.recordset,
+            portfolios: portfolios.recordset.map(p => ({ ...p, images: p.Images ? JSON.parse(p.Images) : [] })),
             clients: clients.recordset,
             partners: partners.recordset,
             services: services.recordset,
@@ -611,17 +588,20 @@ app.get('/api/export-all', async (req, res) => {
     }
 });
 
-// ===== START SERVER =====
+// Start Server
 async function startServer() {
-    const dbConnected = await connectToDatabase();
-    if (dbConnected) {
+    const connected = await connectToDatabase();
+    if (connected) {
         app.listen(PORT, () => {
-            console.log(`🚀 Server running on ${SERVER_URL}`);
-            console.log(`📁 Uploads folder: ${uploadsDir}`);
-            console.log(`🗄️ Database: SQL Server (${process.env.DB_NAME || 'SpectraFrames'})`);
+            console.log(`\n🚀 Server running on ${SERVER_URL}`);
+            console.log(`🗄️ SQL Server Express 2022 is connected`);
+            console.log(`📁 Uploads: ${uploadsDir}`);
+            console.log(`📁 Data: ${dataDir}`);
+            console.log(`\n✅ Ready to accept requests!\n`);
         });
     } else {
-        console.log('❌ Server cannot start without database connection');
+        console.log('\n❌ Server cannot start without database connection');
+        console.log('💡 Tip: Make sure SQL Server is running and you can connect using SSMS\n');
         process.exit(1);
     }
 }

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "1",
+    "name": "Canon",
+    "logo": "https://placehold.co/150x80/D4AF37/1A1A1A?text=Canon"
+  },
+  {
+    "id": "2",
+    "name": "Sony",
+    "logo": "https://placehold.co/150x80/D4AF37/1A1A1A?text=Sony"
+  },
+  {
+    "id": "3",
+    "name": "Adobe",
+    "logo": "https://placehold.co/150x80/D4AF37/1A1A1A?text=Adobe"
+  },
+  {
+    "id": "4",
+    "name": "Nikon",
+    "logo": "https://placehold.co/150x80/D4AF37/1A1A1A?text=Nikon"
+  }
+]
