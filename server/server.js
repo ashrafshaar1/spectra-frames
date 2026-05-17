@@ -17,9 +17,9 @@ app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
-// مجلد الصور - مسار ثابت على Render
-const uploadsDir = '/opt/render/project/src/server/uploads';
-const dataDir = '/opt/render/project/src/server/data';
+// مجلد الصور - استخدام المسار المحلي
+const uploadsDir = path.join(__dirname, 'uploads');
+const dataDir = path.join(__dirname, 'data');
 
 // إنشاء المجلدات
 if (!fs.existsSync(uploadsDir)) {
@@ -34,7 +34,7 @@ if (!fs.existsSync(dataDir)) {
 // خدمة الصور
 app.use('/uploads', express.static(uploadsDir));
 
-// تكوين multer - الحد الأقصى 50MB للكل
+// تكوين multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
@@ -45,7 +45,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB حد أقصى للكل
+  limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -146,11 +146,23 @@ if (readJSON(PARTNERS_FILE).length === 0) writeJSON(PARTNERS_FILE, defaultPartne
 if (readJSON(SERVICES_FILE).length === 0) writeJSON(SERVICES_FILE, defaultServices);
 
 // ========== API - Portfolio ==========
+// GET all portfolios
 app.get('/api/portfolio', (req, res) => {
   const portfolios = readJSON(PORTFOLIO_FILE);
   res.json(portfolios);
 });
 
+// GET portfolio by ID (المُضافة حديثاً)
+app.get('/api/portfolio/:id', (req, res) => {
+  const portfolios = readJSON(PORTFOLIO_FILE);
+  const portfolio = portfolios.find(p => p.id === req.params.id);
+  if (!portfolio) {
+    return res.status(404).json({ error: 'Portfolio not found' });
+  }
+  res.json(portfolio);
+});
+
+// POST new portfolio
 app.post('/api/portfolio', (req, res) => {
   try {
     const portfolios = readJSON(PORTFOLIO_FILE);
@@ -165,6 +177,7 @@ app.post('/api/portfolio', (req, res) => {
   }
 });
 
+// PUT update portfolio
 app.put('/api/portfolio/:id', (req, res) => {
   let portfolios = readJSON(PORTFOLIO_FILE);
   const index = portfolios.findIndex(p => p.id === req.params.id);
@@ -174,6 +187,7 @@ app.put('/api/portfolio/:id', (req, res) => {
   res.json({ success: true });
 });
 
+// DELETE portfolio
 app.delete('/api/portfolio/:id', (req, res) => {
   let portfolios = readJSON(PORTFOLIO_FILE);
   portfolios = portfolios.filter(p => p.id !== req.params.id);
@@ -250,16 +264,25 @@ app.delete('/api/services/:id', (req, res) => {
   res.json({ success: true });
 });
 
-// ========== API - Inquiries ==========
+// ========== API - Inquiries (المُصلحة) ==========
 app.get('/api/inquiries', (req, res) => {
   res.json(readJSON(INQUIRIES_FILE));
 });
 
 app.post('/api/inquiries', (req, res) => {
   const inquiries = readJSON(INQUIRIES_FILE);
-  const newInquiry = { id: uuidv4(), ...req.body, createdAt: new Date().toISOString() };
+  const newInquiry = { 
+    id: uuidv4(), 
+    name: req.body.name,
+    email: req.body.email,
+    phone: req.body.phone || '',
+    serviceType: req.body.service || req.body.serviceType,
+    message: req.body.message,
+    createdAt: new Date().toISOString() 
+  };
   inquiries.push(newInquiry);
   writeJSON(INQUIRIES_FILE, inquiries);
+  console.log('✅ New inquiry saved:', newInquiry.name);
   res.json({ success: true });
 });
 
@@ -295,6 +318,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running', timestamp: new Date().toISOString() });
 });
 
+// ========== تشغيل السيرفر ==========
 app.listen(PORT, () => {
   console.log(`🚀 Server running on ${SERVER_URL}`);
   console.log(`📁 Uploads folder: ${uploadsDir}`);
