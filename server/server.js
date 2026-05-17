@@ -2,8 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
 import mongoose from 'mongoose';
+import { GridFsStorage } from 'multer-gridfs-storage';
+import crypto from 'crypto';
 import path from 'path';
-import fs from 'fs';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 
@@ -20,21 +21,46 @@ app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
-// مجلدات
-const uploadsDir = path.join(__dirname, 'uploads');
-const dataDir = path.join(__dirname, 'data');
+// ========== MongoDB Connection ==========
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/spectraframes';
 
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+let gridFsBucket;
+let conn = mongoose.connection;
 
-app.use('/uploads', express.static(uploadsDir));
+conn.once('open', () => {
+  gridFsBucket = new mongoose.mongo.GridFSBucket(conn.db, {
+    bucketName: 'uploads'
+  });
+  console.log('✅ GridFS Bucket initialized');
+});
 
-// Multer config
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('✅ MongoDB Connected'))
+  .catch(err => console.error('❌ MongoDB Error:', err));
+
+const SERVER_URL = process.env.NODE_ENV === 'production'
+  ? 'https://spectra-frames-api.onrender.com'
+  : `http://localhost:${PORT}`;
+
+// ========== Multer GridFS Storage ==========
+const storage = new GridFsStorage({
+  url: MONGODB_URI,
+  file: (req, file) => {
+    return new Promise((resolve, reject) => {
+      crypto.randomBytes(16, (err, buf) => {
+        if (err) return reject(err);
+        const filename = buf.toString('hex') + path.extname(file.originalname);
+        const fileInfo = {
+          filename: filename,
+          bucketName: 'uploads',
+          metadata: {
+            originalName: file.originalname,
+            uploadDate: Date.now()
+          }
+        };
+        resolve(fileInfo);
+      });
+    });
   }
 });
 
@@ -51,16 +77,24 @@ const upload = multer({
   }
 });
 
-const SERVER_URL = process.env.NODE_ENV === 'production'
-  ? 'https://spectra-frames-api.onrender.com'
-  : `http://localhost:${PORT}`;
-
-// ========== MongoDB Connection ==========
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/spectraframes';
-
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('✅ MongoDB Connected'))
-  .catch(err => console.error('❌ MongoDB Error:', err));
+// ========== Serve Images from MongoDB ==========
+app.get('/api/image/:filename', async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const bucket = new mongoose.mongo.GridFSBucket(conn.db, { bucketName: 'uploads' });
+    
+    const files = await conn.db.collection('uploads.files').find({ filename }).toArray();
+    if (!files || files.length === 0) {
+      return res.status(404).json({ error: 'Image not found' });
+    }
+    
+    res.set('Content-Type', files[0].contentType || 'image/jpeg');
+    const downloadStream = bucket.openDownloadStreamByName(filename);
+    downloadStream.pipe(res);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // ========== Mongoose Schemas ==========
 const portfolioSchema = new mongoose.Schema({
@@ -126,7 +160,7 @@ async function seedDefaultData() {
   console.log(`   Inquiries: ${inquiriesCount} items`);
 }
 
-// ========== DELETE ALL DATA (لإفراغ قاعدة البيانات) ==========
+// ========== DELETE ALL DATA ==========
 app.delete('/api/delete-all-data', async (req, res) => {
   try {
     const { secret } = req.query;
@@ -134,14 +168,21 @@ app.delete('/api/delete-all-data', async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     
+    // Delete all data from collections
     await Portfolio.deleteMany({});
     await Client.deleteMany({});
     await Partner.deleteMany({});
     await Service.deleteMany({});
     await Inquiry.deleteMany({});
     
-    console.log('🗑️ ALL DATA DELETED!');
-    res.json({ success: true, message: 'All data deleted successfully' });
+    // Delete all images from GridFS
+    const files = await conn.db.collection('uploads.files').find({}).toArray();
+    for (const file of files) {
+      await gridFsBucket.delete(file._id);
+    }
+    
+    console.log('🗑️ ALL DATA AND IMAGES DELETED!');
+    res.json({ success: true, message: 'All data and images deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -299,7 +340,7 @@ app.delete('/api/portfolio/:id', async (req, res) => {
     }
     
     console.log('✅ Deleted portfolio:', deleted.title);
-    res.json({ success: true, message: 'Portfolio deleted successfully' });
+    res.json({ success: true });
   } catch (error) {
     console.error('❌ Delete error:', error);
     res.status(500).json({ error: error.message });
@@ -309,17 +350,12 @@ app.delete('/api/portfolio/:id', async (req, res) => {
 app.delete('/api/clients/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    console.log('🗑️ Deleting client ID:', id);
-    
     const deleted = await Client.findByIdAndDelete(id);
     if (!deleted) {
       return res.status(404).json({ error: 'Client not found' });
     }
-    
-    console.log('✅ Deleted client:', deleted.name);
     res.json({ success: true });
   } catch (error) {
-    console.error('❌ Delete error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -327,17 +363,12 @@ app.delete('/api/clients/:id', async (req, res) => {
 app.delete('/api/partners/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    console.log('🗑️ Deleting partner ID:', id);
-    
     const deleted = await Partner.findByIdAndDelete(id);
     if (!deleted) {
       return res.status(404).json({ error: 'Partner not found' });
     }
-    
-    console.log('✅ Deleted partner:', deleted.name);
     res.json({ success: true });
   } catch (error) {
-    console.error('❌ Delete error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -345,44 +376,48 @@ app.delete('/api/partners/:id', async (req, res) => {
 app.delete('/api/services/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    console.log('🗑️ Deleting service ID:', id);
-    
     const deleted = await Service.findByIdAndDelete(id);
     if (!deleted) {
       return res.status(404).json({ error: 'Service not found' });
     }
-    
-    console.log('✅ Deleted service:', deleted.title);
     res.json({ success: true });
   } catch (error) {
-    console.error('❌ Delete error:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// ========== Image Upload ==========
+// ========== Image Upload Endpoints ==========
 
 app.post('/api/upload-image', upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  res.json({ success: true, url: `${SERVER_URL}/uploads/${req.file.filename}` });
+  const imageUrl = `${SERVER_URL}/api/image/${req.file.filename}`;
+  console.log('✅ Image uploaded to MongoDB:', imageUrl);
+  res.json({ success: true, url: imageUrl });
 });
 
 app.post('/api/upload-multiple', upload.array('images', 50), (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: 'No files uploaded' });
   }
-  const urls = req.files.map(file => `${SERVER_URL}/uploads/${file.filename}`);
+  const urls = req.files.map(file => `${SERVER_URL}/api/image/${file.filename}`);
   res.json({ success: true, urls });
 });
 
-app.delete('/api/delete-image', (req, res) => {
+app.delete('/api/delete-image', async (req, res) => {
   const { filename } = req.body;
-  const filePath = path.join(uploadsDir, filename);
-  if (fs.existsSync(filePath)) {
-    fs.unlinkSync(filePath);
+  
+  try {
+    const bucket = new mongoose.mongo.GridFSBucket(conn.db, { bucketName: 'uploads' });
+    const files = await conn.db.collection('uploads.files').find({ filename }).toArray();
+    
+    if (!files || files.length === 0) {
+      return res.status(404).json({ error: 'Image not found' });
+    }
+    
+    await bucket.delete(files[0]._id);
     res.json({ success: true });
-  } else {
-    res.status(404).json({ error: 'Image not found' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -404,8 +439,7 @@ mongoose.connection.once('open', async () => {
   
   app.listen(PORT, () => {
     console.log(`\n🚀 Server running on ${SERVER_URL}`);
-    console.log(`🗄️ MongoDB Atlas connected`);
-    console.log(`📁 Uploads: ${uploadsDir}`);
+    console.log(`🗄️ MongoDB Atlas connected (Images stored in GridFS)`);
     console.log(`✅ Ready to accept requests!\n`);
   });
 });

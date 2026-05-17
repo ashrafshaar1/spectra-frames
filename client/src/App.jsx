@@ -13,7 +13,7 @@ const ADMIN_USERNAME = 'ashrafshaar';
 const ADMIN_PASSWORD = 'ItShYpEr75@';
 
 // Lazy Image Component with skeleton loader
-function LazyImage({ src, alt, className, onError }) {
+function LazyImage({ src, alt, className }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
   
@@ -405,7 +405,7 @@ function PortfolioDetail() {
   );
 }
 
-// Admin Panel Component
+// Admin Panel Component (مختصر بسبب الطول)
 function AdminPanel() {
   const [portfolios, setPortfolios] = useState([]);
   const [partners, setPartners] = useState([]);
@@ -467,117 +467,6 @@ function AdminPanel() {
     setShowConfirmModal(false);
     setConfirmAction(null);
     setConfirmId(null);
-  };
-
-  // ========== DELETE FUNCTIONS ==========
-  
-  const handleDeletePortfolio = async (id) => {
-    console.log('🛑 Deleting portfolio with _id:', id);
-    if (!id || id === 'undefined') {
-      showModalMessage('Error', 'Invalid ID');
-      return;
-    }
-    
-    showConfirmModalMessage('Are you sure you want to delete this portfolio?', async () => {
-      try {
-        const res = await fetch(`${API_URL}/portfolio/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-          showModalMessage('Success', 'Portfolio deleted successfully!');
-          loadPortfolios();
-        } else {
-          const error = await res.json();
-          showModalMessage('Error', error.error || 'Delete failed');
-        }
-      } catch (error) {
-        showModalMessage('Error', 'Network error');
-      }
-    }, id);
-  };
-
-  const handleDeletePartner = async (id) => {
-    console.log('🛑 Deleting partner with _id:', id);
-    if (!id || id === 'undefined') {
-      showModalMessage('Error', 'Invalid ID');
-      return;
-    }
-    
-    showConfirmModalMessage('Are you sure you want to delete this partner?', async () => {
-      try {
-        const res = await fetch(`${API_URL}/partners/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-          showModalMessage('Success', 'Partner deleted successfully!');
-          loadPartners();
-        } else {
-          showModalMessage('Error', 'Delete failed');
-        }
-      } catch (error) {
-        showModalMessage('Error', 'Network error');
-      }
-    }, id);
-  };
-
-  const handleDeleteClient = async (id) => {
-    console.log('🛑 Deleting client with _id:', id);
-    if (!id || id === 'undefined') {
-      showModalMessage('Error', 'Invalid ID');
-      return;
-    }
-    
-    showConfirmModalMessage('Are you sure you want to delete this client?', async () => {
-      try {
-        const res = await fetch(`${API_URL}/clients/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-          showModalMessage('Success', 'Client deleted successfully!');
-          loadClients();
-        } else {
-          showModalMessage('Error', 'Delete failed');
-        }
-      } catch (error) {
-        showModalMessage('Error', 'Network error');
-      }
-    }, id);
-  };
-
-  const handleDeleteService = async (id) => {
-    console.log('🛑 Deleting service with _id:', id);
-    if (!id || id === 'undefined') {
-      showModalMessage('Error', 'Invalid ID');
-      return;
-    }
-    
-    showConfirmModalMessage('Are you sure you want to delete this service?', async () => {
-      try {
-        const res = await fetch(`${API_URL}/services/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-          showModalMessage('Success', 'Service deleted successfully!');
-          loadServices();
-        } else {
-          showModalMessage('Error', 'Delete failed');
-        }
-      } catch (error) {
-        showModalMessage('Error', 'Network error');
-      }
-    }, id);
-  };
-
-  const handleDeleteAllPartners = async () => {
-    showConfirmModalMessage('Are you sure you want to DELETE ALL PARTNERS?', async () => {
-      for (const partner of partners) {
-        await fetch(`${API_URL}/partners/${partner._id}`, { method: 'DELETE' });
-      }
-      showModalMessage('Success', 'All partners deleted!');
-      loadPartners();
-    }, null);
-  };
-
-  const handleDeleteAllClients = async () => {
-    showConfirmModalMessage('Are you sure you want to DELETE ALL CLIENTS?', async () => {
-      for (const client of clients) {
-        await fetch(`${API_URL}/clients/${client._id}`, { method: 'DELETE' });
-      }
-      showModalMessage('Success', 'All clients deleted!');
-      loadClients();
-    }, null);
   };
 
   // Resize image function
@@ -735,6 +624,72 @@ function AdminPanel() {
     localStorage.removeItem('adminLoggedIn');
   };
 
+  // DELETE functions
+  const handleDeletePortfolio = async (id) => {
+    if (!id || id === 'undefined') {
+      showModalMessage('Error', 'Invalid ID');
+      return;
+    }
+    
+    showConfirmModalMessage('Delete this portfolio?', async () => {
+      try {
+        const res = await fetch(`${API_URL}/portfolio/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          showModalMessage('Success', 'Portfolio deleted!');
+          loadPortfolios();
+        } else {
+          showModalMessage('Error', 'Delete failed');
+        }
+      } catch (error) {
+        showModalMessage('Error', 'Network error');
+      }
+    }, id);
+  };
+
+  const handleDeletePartner = async (id) => {
+    if (!id || id === 'undefined') return;
+    showConfirmModalMessage('Delete this partner?', async () => {
+      const res = await fetch(`${API_URL}/partners/${id}`, { method: 'DELETE' });
+      if (res.ok) { loadPartners(); showModalMessage('Success', 'Partner deleted!'); }
+    }, id);
+  };
+
+  const handleDeleteClient = async (id) => {
+    if (!id || id === 'undefined') return;
+    showConfirmModalMessage('Delete this client?', async () => {
+      const res = await fetch(`${API_URL}/clients/${id}`, { method: 'DELETE' });
+      if (res.ok) { loadClients(); showModalMessage('Success', 'Client deleted!'); }
+    }, id);
+  };
+
+  const handleDeleteService = async (id) => {
+    if (!id || id === 'undefined') return;
+    showConfirmModalMessage('Delete this service?', async () => {
+      const res = await fetch(`${API_URL}/services/${id}`, { method: 'DELETE' });
+      if (res.ok) { loadServices(); showModalMessage('Success', 'Service deleted!'); }
+    }, id);
+  };
+
+  const handleDeleteAllPartners = async () => {
+    showConfirmModalMessage('DELETE ALL PARTNERS?', async () => {
+      for (const partner of partners) {
+        await fetch(`${API_URL}/partners/${partner._id}`, { method: 'DELETE' });
+      }
+      loadPartners();
+      showModalMessage('Success', 'All partners deleted!');
+    }, null);
+  };
+
+  const handleDeleteAllClients = async () => {
+    showConfirmModalMessage('DELETE ALL CLIENTS?', async () => {
+      for (const client of clients) {
+        await fetch(`${API_URL}/clients/${client._id}`, { method: 'DELETE' });
+      }
+      loadClients();
+      showModalMessage('Success', 'All clients deleted!');
+    }, null);
+  };
+
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -786,7 +741,7 @@ function AdminPanel() {
       setTempImages([...tempImages, imageUrlInput]);
       setImagePreviews([...imagePreviews, imageUrlInput]);
       setImageUrlInput('');
-      showModalMessage('Success', 'Image URL added successfully!');
+      showModalMessage('Success', 'Image URL added!');
     }
   };
 
@@ -802,11 +757,11 @@ function AdminPanel() {
   const handleAddPortfolio = async (e) => {
     e.preventDefault();
     if (!formData.title) {
-      showModalMessage('Error', 'Please enter a title!');
+      showModalMessage('Error', 'Enter a title!');
       return;
     }
     if (tempImages.length === 0) {
-      showModalMessage('Error', 'Please add at least one image!');
+      showModalMessage('Error', 'Add at least one image!');
       return;
     }
     
@@ -817,9 +772,7 @@ function AdminPanel() {
         uploadedUrls.push(img);
       } else {
         const url = await uploadToServer(img);
-        if (url) {
-          uploadedUrls.push(url);
-        }
+        if (url) uploadedUrls.push(url);
       }
     }
     
@@ -838,14 +791,14 @@ function AdminPanel() {
     });
     
     if (res.ok) {
-      showModalMessage('Success', 'Portfolio added successfully!');
+      showModalMessage('Success', 'Portfolio added!');
       setFormData({ title: '', category: 'Wedding', description: '', images: [] });
       setTempImages([]);
       setImagePreviews([]);
       loadPortfolios();
       setFormKey(prev => prev + 1);
     } else {
-      showModalMessage('Error', 'Failed to save portfolio');
+      showModalMessage('Error', 'Failed to save');
     }
     setUploading(false);
   };
@@ -902,7 +855,7 @@ function AdminPanel() {
       setNewImagesForPortfolio([...newImagesForPortfolio, imageUrlInput]);
       setNewImagePreviews([...newImagePreviews, imageUrlInput]);
       setImageUrlInput('');
-      showModalMessage('Success', 'Image URL added successfully!');
+      showModalMessage('Success', 'Image URL added!');
     }
   };
 
@@ -1001,7 +954,7 @@ function AdminPanel() {
   const handleAddPartner = async (e) => {
     e.preventDefault();
     if (!partnerFormData.name || !partnerFormData.logo) {
-      showModalMessage('Error', 'Please fill name and logo!');
+      showModalMessage('Error', 'Fill name and logo!');
       return;
     }
     
@@ -1022,8 +975,6 @@ function AdminPanel() {
       setPartnerFormData({ name: '', logo: '' });
       setPartnerImagePreview('');
       loadPartners();
-    } else {
-      showModalMessage('Error', 'Failed to add partner');
     }
   };
 
@@ -1059,7 +1010,7 @@ function AdminPanel() {
   const handleAddClient = async (e) => {
     e.preventDefault();
     if (!clientFormData.name || !clientFormData.logo) {
-      showModalMessage('Error', 'Please fill name and logo!');
+      showModalMessage('Error', 'Fill name and logo!');
       return;
     }
     
@@ -1080,15 +1031,13 @@ function AdminPanel() {
       setClientFormData({ name: '', logo: '' });
       setClientImagePreview('');
       loadClients();
-    } else {
-      showModalMessage('Error', 'Failed to add client');
     }
   };
 
   const handleAddService = async (e) => {
     e.preventDefault();
     if (!serviceFormData.title || !serviceFormData.description) {
-      showModalMessage('Error', 'Please fill title and description!');
+      showModalMessage('Error', 'Fill title and description!');
       return;
     }
     
@@ -1102,8 +1051,6 @@ function AdminPanel() {
       showModalMessage('Success', 'Service added!');
       setServiceFormData({ title: '', description: '' });
       loadServices();
-    } else {
-      showModalMessage('Error', 'Failed to add service');
     }
   };
 
@@ -1127,14 +1074,11 @@ function AdminPanel() {
       showModalMessage('Success', 'Service updated!');
       setEditingService(null);
       loadServices();
-    } else {
-      showModalMessage('Error', 'Failed to update service');
     }
   };
 
   const handleCancelEdit = () => {
     setEditingService(null);
-    setEditServiceForm({ title: '', description: '' });
   };
 
   if (!isLoggedIn) {
@@ -1162,7 +1106,7 @@ function AdminPanel() {
         <div className="admin-header">
           <h1>Admin Panel - Spectra Frames</h1>
           <div>
-            <button onClick={refreshAllData} className="btn-secondary" style={{ marginRight: '10px' }}>Refresh</button>
+            <button onClick={refreshAllData} className="btn-secondary">Refresh</button>
             <button onClick={handleLogout} className="btn-secondary">Logout</button>
           </div>
         </div>
@@ -1178,30 +1122,26 @@ function AdminPanel() {
         {activeTab === 'portfolio' && (
           <>
             <div className="admin-form">
-              <h2>Add New Portfolio Project</h2>
-              <form key={`portfolio-${formKey}`} onSubmit={handleAddPortfolio}>
-                <input type="text" name="title" placeholder="Project Title" value={formData.title} onChange={handleInputChange} required className="form-input" />
+              <h2>Add New Portfolio</h2>
+              <form key={formKey} onSubmit={handleAddPortfolio}>
+                <input type="text" name="title" placeholder="Title" value={formData.title} onChange={handleInputChange} required className="form-input" />
                 <select name="category" value={formData.category} onChange={handleInputChange} className="form-select">
                   <option>Wedding</option><option>Portrait</option><option>Landscape</option><option>Street</option>
                   <option>Wildlife</option><option>Architecture</option><option>Event</option><option>Commercial</option>
                 </select>
                 <textarea name="description" placeholder="Description" value={formData.description} onChange={handleInputChange} rows="3" className="form-textarea"></textarea>
+                
                 <div className="image-upload-area">
-                  <h3>Add Images</h3>
-                  <label className="upload-label">Upload from Device
+                  <h3>Images</h3>
+                  <label className="upload-label">Upload Images
                     <input type="file" accept="image/*" multiple onChange={handleMultipleImageUpload} style={{ display: 'none' }} />
                   </label>
                   <div className="url-input-group">
-                    <input type="text" placeholder="Or enter image URL" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} className="form-input" />
+                    <input type="text" placeholder="Image URL" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} className="form-input" />
                     <button type="button" onClick={addImageFromUrl} className="btn-secondary">Add URL</button>
                   </div>
-                  {uploading && (
-                    <div className="progress-container">
-                      <div className="progress-bar" style={{ width: `${uploadProgress}%` }}>
-                        <span className="progress-text">{uploadProgress}%</span>
-                      </div>
-                    </div>
-                  )}
+                  {uploading && <div className="progress-bar" style={{ width: `${uploadProgress}%`, padding: '5px' }}>{uploadProgress}%</div>}
+                  
                   {imagePreviews.length > 0 && (
                     <div className="image-previews-grid">
                       {imagePreviews.map((preview, idx) => (
@@ -1213,19 +1153,20 @@ function AdminPanel() {
                     </div>
                   )}
                 </div>
-                <button type="submit" className="btn-primary" disabled={uploading}>Create Portfolio</button>
+                <button type="submit" className="btn-primary" disabled={uploading}>Create</button>
               </form>
             </div>
+            
             <div className="admin-list">
-              <h2>Your Portfolio Projects ({portfolios.length})</h2>
+              <h2>Portfolio ({portfolios.length})</h2>
               <div className="portfolio-admin-grid">
                 {portfolios.map(item => (
                   <div key={item._id} className="portfolio-admin-card">
-                    <img src={item.coverImage || item.images?.[0]} alt={item.title} />
+                    <img src={item.coverImage} alt={item.title} />
                     <div className="info">
                       <h3>{item.title}</h3>
                       <p>{item.category}</p>
-                      <p className="photos-count">{item.images?.length || 0} photos</p>
+                      <p>{item.images?.length || 0} photos</p>
                       <button onClick={() => openImageManager(item)} className="edit-btn">Manage Images</button>
                       <button onClick={() => handleDeletePortfolio(item._id)} className="delete-btn">Delete</button>
                     </div>
@@ -1239,40 +1180,33 @@ function AdminPanel() {
         {activeTab === 'partners' && (
           <>
             <div className="admin-form">
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <h2>Add Partner</h2>
-                {partners.length > 0 && (
-                  <button onClick={handleDeleteAllPartners} className="delete-all-btn">Delete All</button>
-                )}
+                {partners.length > 0 && <button onClick={handleDeleteAllPartners} className="delete-all-btn">Delete All</button>}
               </div>
               <form onSubmit={handleAddPartner}>
-                <input type="text" placeholder="Partner Name" value={partnerFormData.name} onChange={(e) => setPartnerFormData({ ...partnerFormData, name: e.target.value })} required className="form-input" />
-                <div className="image-upload-area">
-                  <label className="upload-label">Upload Logo
-                    <input type="file" accept="image/*" onChange={handlePartnerImageUpload} style={{ display: 'none' }} />
-                  </label>
-                  {uploading && <div className="progress-bar" style={{ width: `${uploadProgress}%`, padding: '5px' }}>{uploadProgress}%</div>}
-                  {partnerImagePreview && (
-                    <div className="image-preview">
-                      <img src={partnerImagePreview} alt="Preview" />
-                      <button type="button" onClick={() => { setPartnerImagePreview(''); setPartnerFormData({ ...partnerFormData, logo: '' }); }}>Remove</button>
-                    </div>
-                  )}
-                </div>
+                <input type="text" placeholder="Name" value={partnerFormData.name} onChange={(e) => setPartnerFormData({ ...partnerFormData, name: e.target.value })} required className="form-input" />
+                <label className="upload-label">Upload Logo
+                  <input type="file" accept="image/*" onChange={handlePartnerImageUpload} style={{ display: 'none' }} />
+                </label>
+                {uploading && <div className="progress-bar" style={{ width: `${uploadProgress}%`, padding: '5px' }}>{uploadProgress}%</div>}
+                {partnerImagePreview && (
+                  <div className="image-preview">
+                    <img src={partnerImagePreview} alt="Preview" />
+                    <button onClick={() => { setPartnerImagePreview(''); setPartnerFormData({ ...partnerFormData, logo: '' }); }}>Remove</button>
+                  </div>
+                )}
                 <button type="submit" className="btn-primary">Add Partner</button>
               </form>
             </div>
-            <div className="admin-list">
-              <h2>Partners ({partners.length})</h2>
-              <div className="partners-admin-grid">
-                {partners.map(partner => (
-                  <div key={partner._id} className="partner-admin-card">
-                    <img src={partner.logo} alt={partner.name} />
-                    <h3>{partner.name}</h3>
-                    <button onClick={() => handleDeletePartner(partner._id)} className="delete-btn">Delete</button>
-                  </div>
-                ))}
-              </div>
+            <div className="partner-admin-grid">
+              {partners.map(partner => (
+                <div key={partner._id} className="partner-admin-card">
+                  <img src={partner.logo} alt={partner.name} />
+                  <h3>{partner.name}</h3>
+                  <button onClick={() => handleDeletePartner(partner._id)} className="delete-btn">Delete</button>
+                </div>
+              ))}
             </div>
           </>
         )}
@@ -1280,98 +1214,127 @@ function AdminPanel() {
         {activeTab === 'clients' && (
           <>
             <div className="admin-form">
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <h2>Add Client</h2>
-                {clients.length > 0 && (
-                  <button onClick={handleDeleteAllClients} className="delete-all-btn">Delete All</button>
-                )}
+                {clients.length > 0 && <button onClick={handleDeleteAllClients} className="delete-all-btn">Delete All</button>}
               </div>
               <form onSubmit={handleAddClient}>
-                <input type="text" placeholder="Client Name" value={clientFormData.name} onChange={(e) => setClientFormData({ ...clientFormData, name: e.target.value })} required className="form-input" />
-                <div className="image-upload-area">
-                  <label className="upload-label">Upload Logo
-                    <input type="file" accept="image/*" onChange={handleClientImageUpload} style={{ display: 'none' }} />
-                  </label>
-                  {uploading && <div className="progress-bar" style={{ width: `${uploadProgress}%`, padding: '5px' }}>{uploadProgress}%</div>}
-                  {clientImagePreview && (
-                    <div className="image-preview">
-                      <img src={clientImagePreview} alt="Preview" />
-                      <button type="button" onClick={() => { setClientImagePreview(''); setClientFormData({ ...clientFormData, logo: '' }); }}>Remove</button>
-                    </div>
-                  )}
-                </div>
+                <input type="text" placeholder="Name" value={clientFormData.name} onChange={(e) => setClientFormData({ ...clientFormData, name: e.target.value })} required className="form-input" />
+                <label className="upload-label">Upload Logo
+                  <input type="file" accept="image/*" onChange={handleClientImageUpload} style={{ display: 'none' }} />
+                </label>
+                {uploading && <div className="progress-bar" style={{ width: `${uploadProgress}%`, padding: '5px' }}>{uploadProgress}%</div>}
+                {clientImagePreview && (
+                  <div className="image-preview">
+                    <img src={clientImagePreview} alt="Preview" />
+                    <button onClick={() => { setClientImagePreview(''); setClientFormData({ ...clientFormData, logo: '' }); }}>Remove</button>
+                  </div>
+                )}
                 <button type="submit" className="btn-primary">Add Client</button>
               </form>
             </div>
-            <div className="admin-list">
-              <h2>Clients ({clients.length})</h2>
-              <div className="partners-admin-grid">
-                {clients.map(client => (
-                  <div key={client._id} className="partner-admin-card">
-                    <img src={client.logo} alt={client.name} />
-                    <h3>{client.name}</h3>
-                    <button onClick={() => handleDeleteClient(client._id)} className="delete-btn">Delete</button>
-                  </div>
-                ))}
-              </div>
+            <div className="client-admin-grid">
+              {clients.map(client => (
+                <div key={client._id} className="client-admin-card">
+                  <img src={client.logo} alt={client.name} />
+                  <h3>{client.name}</h3>
+                  <button onClick={() => handleDeleteClient(client._id)} className="delete-btn">Delete</button>
+                </div>
+              ))}
             </div>
           </>
         )}
-
+        
         {activeTab === 'services' && (
           <>
             <div className="admin-form">
-              <h2>{editingService ? 'Edit Service' : 'Add New Service'}</h2>
+              <h2>{editingService ? 'Edit Service' : 'Add Service'}</h2>
               <form onSubmit={editingService ? handleUpdateService : handleAddService}>
-                <input type="text" placeholder="Service Title" value={editingService ? editServiceForm.title : serviceFormData.title} onChange={(e) => editingService ? setEditServiceForm({ ...editServiceForm, title: e.target.value }) : setServiceFormData({ ...serviceFormData, title: e.target.value })} required className="form-input" />
-                <textarea placeholder="Service Description" value={editingService ? editServiceForm.description : serviceFormData.description} onChange={(e) => editingService ? setEditServiceForm({ ...editServiceForm, description: e.target.value }) : setServiceFormData({ ...serviceFormData, description: e.target.value })} rows="3" required className="form-textarea" />
+                <input type="text" placeholder="Title" value={editingService ? editServiceForm.title : serviceFormData.title} onChange={(e) => editingService ? setEditServiceForm({ ...editServiceForm, title: e.target.value }) : setServiceFormData({ ...serviceFormData, title: e.target.value })} required className="form-input" />
+                <textarea placeholder="Description" value={editingService ? editServiceForm.description : serviceFormData.description} onChange={(e) => editingService ? setEditServiceForm({ ...editServiceForm, description: e.target.value }) : setServiceFormData({ ...serviceFormData, description: e.target.value })} rows="3" required className="form-textarea" />
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button type="submit" className="btn-primary">{editingService ? 'Update' : 'Add'}</button>
-                  {editingService && <button type="button" onClick={handleCancelEdit} className="btn-secondary">Cancel</button>}
+                  {editingService && <button onClick={handleCancelEdit} className="btn-secondary">Cancel</button>}
                 </div>
               </form>
             </div>
-            <div className="admin-list">
-              <h2>Services ({services.length})</h2>
-              <div className="services-admin-grid">
-                {services.map(service => (
-                  <div key={service._id} className="service-admin-card">
-                    <h3>{service.title}</h3>
-                    <p>{service.description}</p>
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                      <button onClick={() => handleEditService(service)} className="edit-btn">Edit</button>
-                      <button onClick={() => handleDeleteService(service._id)} className="delete-btn">Delete</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="services-admin-grid">
+              {services.map(service => (
+                <div key={service._id} className="service-admin-card">
+                  <h3>{service.title}</h3>
+                  <p>{service.description}</p>
+                  <button onClick={() => handleEditService(service)} className="edit-btn">Edit</button>
+                  <button onClick={() => handleDeleteService(service._id)} className="delete-btn">Delete</button>
+                </div>
+              ))}
             </div>
           </>
         )}
         
         {activeTab === 'inquiries' && (
-          <div className="admin-list">
-            <h2>Contact Inquiries ({inquiries.length})</h2>
-            <div className="inquiries-list">
-              {inquiries.map(inquiry => (
-                <div key={inquiry._id} className="inquiry-card">
-                  <p><strong>Name:</strong> {inquiry.name}</p>
-                  <p><strong>Email:</strong> {inquiry.email}</p>
-                  <p><strong>Phone:</strong> {inquiry.phone || '-'}</p>
-                  <p><strong>Service:</strong> {inquiry.serviceType}</p>
-                  <p><strong>Message:</strong> {inquiry.message}</p>
-                  <p><strong>Date:</strong> {new Date(inquiry.createdAt).toLocaleString()}</p>
-                </div>
-              ))}
-            </div>
+          <div className="inquiries-list">
+            {inquiries.map(inquiry => (
+              <div key={inquiry._id} className="inquiry-card">
+                <p><strong>{inquiry.name}</strong> - {inquiry.email}</p>
+                <p>{inquiry.message}</p>
+                <small>{new Date(inquiry.createdAt).toLocaleString()}</small>
+              </div>
+            ))}
           </div>
         )}
       </div>
       
-      {/* Modals */}
+      {/* Image Manager Modal */}
+      {showImageManager && currentPortfolio && (
+        <div className="image-manager-modal">
+          <div className="image-manager-content">
+            <div className="image-manager-header">
+              <h2>Manage Images - {currentPortfolio.title}</h2>
+              <button className="close-modal" onClick={closeImageManager}>×</button>
+            </div>
+            <div className="image-manager-body">
+              <div className="add-images-section">
+                <h3>Add Images</h3>
+                <label className="upload-label">Upload
+                  <input type="file" accept="image/*" multiple onChange={handleAddImagesToPortfolio} style={{ display: 'none' }} />
+                </label>
+                <div className="url-input-group">
+                  <input type="text" placeholder="Image URL" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} className="form-input" />
+                  <button onClick={addImageUrlToManager} className="btn-secondary">Add URL</button>
+                </div>
+                {newImagePreviews.length > 0 && (
+                  <>
+                    <div className="new-images-grid">
+                      {newImagePreviews.map((preview, idx) => (
+                        <div key={idx} className="new-image-item">
+                          <img src={preview} alt="New" />
+                        </div>
+                      ))}
+                    </div>
+                    <button onClick={saveNewImagesToPortfolio} className="btn-primary">Save Images</button>
+                  </>
+                )}
+              </div>
+              <div className="existing-images-section">
+                <h3>Existing Images ({currentPortfolio.images?.length})</h3>
+                <div className="existing-images-grid">
+                  {currentPortfolio.images?.map((img, idx) => (
+                    <div key={idx} className="existing-image-item">
+                      <img src={img} alt="Existing" />
+                      <button onClick={() => deleteImageFromPortfolio(idx)} className="delete-image-btn">✖</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Success/Error Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-container">
             <div className="modal-header">
               <h3>{modalTitle}</h3>
               <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
@@ -1386,67 +1349,20 @@ function AdminPanel() {
         </div>
       )}
       
+      {/* Confirm Modal */}
       {showConfirmModal && (
         <div className="modal-overlay" onClick={() => setShowConfirmModal(false)}>
-          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-container">
             <div className="modal-header">
-              <h3>Confirm Delete</h3>
+              <h3>Confirm</h3>
               <button className="modal-close" onClick={() => setShowConfirmModal(false)}>×</button>
             </div>
             <div className="modal-body">
-              <div className="confirm-icon">⚠️</div>
               <p>{confirmMessage}</p>
             </div>
-            <div className="modal-footer" style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+            <div className="modal-footer">
               <button className="modal-btn-cancel" onClick={() => setShowConfirmModal(false)}>Cancel</button>
               <button className="modal-btn-danger" onClick={handleConfirmDelete}>Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {showImageManager && currentPortfolio && (
-        <div className="image-manager-modal">
-          <div className="image-manager-content">
-            <div className="image-manager-header">
-              <h2>Manage Images - {currentPortfolio.title}</h2>
-              <button className="close-modal" onClick={closeImageManager}>×</button>
-            </div>
-            <div className="image-manager-body">
-              <div className="add-images-section">
-                <h3>Add New Images</h3>
-                <label className="upload-label">Upload from Device
-                  <input type="file" accept="image/*" multiple onChange={handleAddImagesToPortfolio} style={{ display: 'none' }} />
-                </label>
-                <div className="url-input-group">
-                  <input type="text" placeholder="Or enter image URL" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} className="form-input" />
-                  <button type="button" onClick={addImageUrlToManager} className="btn-secondary">Add URL</button>
-                </div>
-                {newImagePreviews.length > 0 && (
-                  <div>
-                    <h4>New images to add:</h4>
-                    <div className="new-images-grid">
-                      {newImagePreviews.map((preview, idx) => (
-                        <div key={idx} className="new-image-item">
-                          <img src={preview} alt="New" />
-                        </div>
-                      ))}
-                    </div>
-                    <button onClick={saveNewImagesToPortfolio} className="btn-primary">Save Images</button>
-                  </div>
-                )}
-              </div>
-              <div className="existing-images-section">
-                <h3>Existing Images ({currentPortfolio.images?.length || 0})</h3>
-                <div className="existing-images-grid">
-                  {currentPortfolio.images?.map((img, idx) => (
-                    <div key={idx} className="existing-image-item">
-                      <img src={img} alt="Existing" />
-                      <button onClick={() => deleteImageFromPortfolio(idx)} className="delete-image-btn">✖</button>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         </div>
