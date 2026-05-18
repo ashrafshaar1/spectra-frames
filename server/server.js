@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { createClient } from '@supabase/supabase-js';
+import ws from 'ws';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -30,7 +31,16 @@ if (!supabaseUrl || !supabaseAnonKey) {
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Create Supabase client with WebSocket support for Node.js
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
+  },
+  transport: ws  // مهم لـ Node.js 20
+});
+
 console.log('✅ Supabase client initialized');
 
 function generateId() {
