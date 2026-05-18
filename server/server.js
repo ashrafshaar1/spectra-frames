@@ -1,10 +1,9 @@
 import express from 'express';
 import cors from 'cors';
-import multer from 'multer';
-import mongoose from 'mongoose';
-import { GridFsStorage } from 'multer-gridfs-storage';
+import mysql from 'mysql2/promise';
 import crypto from 'crypto';
 import path from 'path';
+import fs from 'fs';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 
@@ -21,178 +20,190 @@ app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
-// ========== MongoDB Connection ==========
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/spectraframes';
-
-let gridFsBucket;
-let conn = mongoose.connection;
-
-conn.once('open', () => {
-  gridFsBucket = new mongoose.mongo.GridFSBucket(conn.db, {
-    bucketName: 'uploads'
-  });
-  console.log('✅ GridFS Bucket initialized');
+// ========== MySQL Connection (XAMPP) ==========
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'spectraframes',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
-
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('✅ MongoDB Connected'))
-  .catch(err => console.error('❌ MongoDB Error:', err));
 
 const SERVER_URL = process.env.NODE_ENV === 'production'
   ? 'https://spectra-frames-api.onrender.com'
   : `http://localhost:${PORT}`;
 
-// ========== Multer GridFS Storage ==========
-const storage = new GridFsStorage({
-  url: MONGODB_URI,
-  file: (req, file) => {
-    return new Promise((resolve, reject) => {
-      crypto.randomBytes(16, (err, buf) => {
-        if (err) return reject(err);
-        const filename = buf.toString('hex') + path.extname(file.originalname);
-        const fileInfo = {
-          filename: filename,
-          bucketName: 'uploads',
-          metadata: {
-            originalName: file.originalname,
-            uploadDate: Date.now()
-          }
-        };
-        resolve(fileInfo);
-      });
-    });
-  }
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 50 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    if (allowedTypes.test(path.extname(file.originalname).toLowerCase()) && allowedTypes.test(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed'));
-    }
-  }
-});
-
-// ========== Serve Images from MongoDB ==========
-app.get('/api/image/:filename', async (req, res) => {
-  try {
-    const { filename } = req.params;
-    const bucket = new mongoose.mongo.GridFSBucket(conn.db, { bucketName: 'uploads' });
-    
-    const files = await conn.db.collection('uploads.files').find({ filename }).toArray();
-    if (!files || files.length === 0) {
-      return res.status(404).json({ error: 'Image not found' });
-    }
-    
-    res.set('Content-Type', files[0].contentType || 'image/jpeg');
-    const downloadStream = bucket.openDownloadStreamByName(filename);
-    downloadStream.pipe(res);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ========== Mongoose Schemas ==========
-const portfolioSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  category: { type: String, required: true },
-  description: { type: String, default: '' },
-  coverImage: { type: String, required: true },
-  images: { type: [String], default: [] },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const clientSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  logo: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const partnerSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  logo: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const serviceSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  description: { type: String, required: true },
-  order: { type: Number, default: 0 },
-  icon: { type: String, default: '📷' }
-});
-
-const inquirySchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true },
-  phone: { type: String, default: '' },
-  serviceType: { type: String, default: '' },
-  message: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now }
-});
-
-// Models
-const Portfolio = mongoose.model('Portfolio', portfolioSchema);
-const Client = mongoose.model('Client', clientSchema);
-const Partner = mongoose.model('Partner', partnerSchema);
-const Service = mongoose.model('Service', serviceSchema);
-const Inquiry = mongoose.model('Inquiry', inquirySchema);
-
-// ========== Seed Default Data - معطل تماماً ==========
-async function seedDefaultData() {
-  console.log('🚫 Auto-seed is DISABLED. Database will remain empty.');
-  console.log('💡 You can add data manually from Admin Panel.');
-  
-  const portfolioCount = await Portfolio.countDocuments();
-  const clientsCount = await Client.countDocuments();
-  const partnersCount = await Partner.countDocuments();
-  const servicesCount = await Service.countDocuments();
-  const inquiriesCount = await Inquiry.countDocuments();
-  
-  console.log(`📊 Current data counts:`);
-  console.log(`   Portfolio: ${portfolioCount} items`);
-  console.log(`   Clients: ${clientsCount} items`);
-  console.log(`   Partners: ${partnersCount} items`);
-  console.log(`   Services: ${servicesCount} items`);
-  console.log(`   Inquiries: ${inquiriesCount} items`);
+// ========== Helper Functions ==========
+function generateId() {
+  return Date.now().toString() + '-' + crypto.randomBytes(4).toString('hex');
 }
 
-// ========== DELETE ALL DATA ==========
-app.delete('/api/delete-all-data', async (req, res) => {
+// ========== Init Database ==========
+async function initDatabase() {
   try {
-    const { secret } = req.query;
-    if (secret !== 'DELETE_ALL_SPECTRA') {
-      return res.status(401).json({ error: 'Unauthorized' });
+    const connection = await pool.getConnection();
+    console.log('✅ MySQL Connected (XAMPP)');
+    
+    await connection.query(`CREATE DATABASE IF NOT EXISTS spectraframes`);
+    await connection.query(`USE spectraframes`);
+    
+    // Drop old tables (clean start)
+    await connection.query(`DROP TABLE IF EXISTS inquiries`);
+    await connection.query(`DROP TABLE IF EXISTS services`);
+    await connection.query(`DROP TABLE IF EXISTS partners`);
+    await connection.query(`DROP TABLE IF EXISTS clients`);
+    await connection.query(`DROP TABLE IF EXISTS portfolios`);
+    
+    // Create tables
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS portfolios (
+        id VARCHAR(50) PRIMARY KEY,
+        title VARCHAR(200) NOT NULL,
+        category VARCHAR(100) NOT NULL,
+        description TEXT,
+        coverImage LONGTEXT NOT NULL,
+        images LONGTEXT,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS clients (
+        id VARCHAR(50) PRIMARY KEY,
+        name VARCHAR(200) NOT NULL,
+        logo LONGTEXT NOT NULL,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS partners (
+        id VARCHAR(50) PRIMARY KEY,
+        name VARCHAR(200) NOT NULL,
+        logo LONGTEXT NOT NULL,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS services (
+        id VARCHAR(50) PRIMARY KEY,
+        title VARCHAR(200) NOT NULL,
+        description TEXT NOT NULL,
+        \`order\` INT DEFAULT 0,
+        icon VARCHAR(50) DEFAULT NULL,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS inquiries (
+        id VARCHAR(50) PRIMARY KEY,
+        name VARCHAR(200) NOT NULL,
+        email VARCHAR(200) NOT NULL,
+        phone VARCHAR(50),
+        serviceType VARCHAR(200),
+        message TEXT NOT NULL,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    console.log('✅ Tables created');
+    
+    await seedDefaultData(connection);
+    connection.release();
+  } catch (error) {
+    console.error('❌ MySQL Error:', error.message);
+    console.log('💡 Make sure XAMPP is running (Apache + MySQL)');
+  }
+}
+
+// ========== Seed Default Data ==========
+async function seedDefaultData(connection) {
+  const [rows] = await connection.query('SELECT COUNT(*) as count FROM portfolios');
+  if (rows[0].count === 0) {
+    console.log('🌱 Seeding default data...');
+    
+    await connection.query(`
+      INSERT INTO portfolios (id, title, category, coverImage, images) VALUES 
+      ('1', 'Wedding Elegance', 'Wedding', 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600', '["https://images.unsplash.com/photo-1519741497674-611481863552?w=600"]'),
+      ('2', 'Urban Stories', 'Street', 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600', '["https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600"]'),
+      ('3', 'Natural Beauty', 'Landscape', 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600', '["https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600"]')
+    `);
+    
+    await connection.query(`
+      INSERT INTO clients (id, name, logo) VALUES 
+      ('1', 'Luxury Hotel', 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Luxury+Hotel'),
+      ('2', 'Fashion Brand', 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Fashion+Brand'),
+      ('3', 'Wedding Planner', 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Wedding+Planner')
+    `);
+    
+    await connection.query(`
+      INSERT INTO partners (id, name, logo) VALUES 
+      ('1', 'Canon', 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Canon'),
+      ('2', 'Sony', 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Sony'),
+      ('3', 'Adobe', 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Adobe'),
+      ('4', 'Nikon', 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Nikon')
+    `);
+    
+    await connection.query(`
+      INSERT INTO services (id, title, description, \`order\`) VALUES 
+      ('1', 'Wedding Photography', 'Capturing your special day with elegance and emotion', 1),
+      ('2', 'Portrait Sessions', 'Professional portraits and personal branding', 2),
+      ('3', 'Commercial', 'High-end product and corporate photography', 3),
+      ('4', 'Fine Art', 'Artistic and conceptual visual stories', 4),
+      ('5', 'Event Coverage', 'Corporate events and special occasions', 5),
+      ('6', 'Content Creation', 'Social media and marketing content', 6)
+    `);
+    
+    console.log('✅ Default data seeded');
+  }
+}
+
+// ========== Upload Image (Base64 to MySQL) ==========
+app.post('/api/upload-image', async (req, res) => {
+  try {
+    const { image } = req.body;
+    if (!image) return res.status(400).json({ error: 'No image provided' });
+    
+    // الصورة بتتنحفظ كـ Base64 مباشرة
+    // هنرجع نفس الصورة عشان تستخدم في frontend
+    res.json({ success: true, url: image });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/upload-multiple', async (req, res) => {
+  try {
+    const { images } = req.body;
+    if (!images || !images.length) {
+      return res.status(400).json({ error: 'No images provided' });
     }
-    
-    // Delete all data from collections
-    await Portfolio.deleteMany({});
-    await Client.deleteMany({});
-    await Partner.deleteMany({});
-    await Service.deleteMany({});
-    await Inquiry.deleteMany({});
-    
-    // Delete all images from GridFS
-    const files = await conn.db.collection('uploads.files').find({}).toArray();
-    for (const file of files) {
-      await gridFsBucket.delete(file._id);
-    }
-    
-    console.log('🗑️ ALL DATA AND IMAGES DELETED!');
-    res.json({ success: true, message: 'All data and images deleted successfully' });
+    res.json({ success: true, urls: images });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// ========== GET Endpoints ==========
+app.delete('/api/delete-image', (req, res) => {
+  // مع Base64 ما في داعي لحذف الصور من السيرفر
+  res.json({ success: true });
+});
 
+// ========== API Endpoints ==========
+
+// Portfolio
 app.get('/api/portfolio', async (req, res) => {
   try {
-    const portfolios = await Portfolio.find().sort({ createdAt: -1 });
+    const [rows] = await pool.query('SELECT * FROM portfolios ORDER BY createdAt DESC');
+    const portfolios = rows.map(p => ({
+      ...p,
+      images: p.images ? JSON.parse(p.images) : []
+    }));
     res.json(portfolios);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -201,57 +212,59 @@ app.get('/api/portfolio', async (req, res) => {
 
 app.get('/api/portfolio/:id', async (req, res) => {
   try {
-    const portfolio = await Portfolio.findById(req.params.id);
-    if (!portfolio) return res.status(404).json({ error: 'Not found' });
+    const [rows] = await pool.query('SELECT * FROM portfolios WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
+    const portfolio = {
+      ...rows[0],
+      images: rows[0].images ? JSON.parse(rows[0].images) : []
+    };
     res.json(portfolio);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.get('/api/clients', async (req, res) => {
-  try {
-    const clients = await Client.find().sort({ createdAt: -1 });
-    res.json(clients);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.get('/api/partners', async (req, res) => {
-  try {
-    const partners = await Partner.find().sort({ createdAt: -1 });
-    res.json(partners);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.get('/api/services', async (req, res) => {
-  try {
-    const services = await Service.find().sort({ order: 1 });
-    res.json(services);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.get('/api/inquiries', async (req, res) => {
-  try {
-    const inquiries = await Inquiry.find().sort({ createdAt: -1 });
-    res.json(inquiries);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ========== POST Endpoints ==========
-
 app.post('/api/portfolio', async (req, res) => {
   try {
-    const newItem = new Portfolio(req.body);
-    await newItem.save();
-    res.json({ success: true, portfolio: newItem });
+    const { title, category, description, coverImage, images } = req.body;
+    const id = generateId();
+    await pool.query(
+      'INSERT INTO portfolios (id, title, category, description, coverImage, images) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, title, category, description || '', coverImage, JSON.stringify(images || [])]
+    );
+    res.json({ success: true, portfolio: { id, title, category, description, coverImage, images } });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/portfolio/:id', async (req, res) => {
+  try {
+    const { title, category, description, coverImage, images } = req.body;
+    await pool.query(
+      'UPDATE portfolios SET title = ?, category = ?, description = ?, coverImage = ?, images = ? WHERE id = ?',
+      [title, category, description || '', coverImage, JSON.stringify(images || []), req.params.id]
+    );
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/portfolio/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM portfolios WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Clients
+app.get('/api/clients', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM clients ORDER BY createdAt DESC');
+    res.json(rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -259,9 +272,29 @@ app.post('/api/portfolio', async (req, res) => {
 
 app.post('/api/clients', async (req, res) => {
   try {
-    const newClient = new Client(req.body);
-    await newClient.save();
-    res.json({ success: true, client: newClient });
+    const { name, logo } = req.body;
+    const id = generateId();
+    await pool.query('INSERT INTO clients (id, name, logo) VALUES (?, ?, ?)', [id, name, logo]);
+    res.json({ success: true, client: { id, name, logo } });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/clients/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM clients WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Partners
+app.get('/api/partners', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM partners ORDER BY createdAt DESC');
+    res.json(rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -269,92 +302,10 @@ app.post('/api/clients', async (req, res) => {
 
 app.post('/api/partners', async (req, res) => {
   try {
-    const newPartner = new Partner(req.body);
-    await newPartner.save();
-    res.json({ success: true, partner: newPartner });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/api/services', async (req, res) => {
-  try {
-    const newService = new Service(req.body);
-    await newService.save();
-    res.json({ success: true, service: newService });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/api/inquiries', async (req, res) => {
-  try {
-    const newInquiry = new Inquiry({
-      name: req.body.name,
-      email: req.body.email,
-      phone: req.body.phone || '',
-      serviceType: req.body.service || req.body.serviceType,
-      message: req.body.message
-    });
-    await newInquiry.save();
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ========== PUT Endpoints ==========
-
-app.put('/api/portfolio/:id', async (req, res) => {
-  try {
-    const updated = await Portfolio.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    res.json({ success: true, portfolio: updated });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.put('/api/services/:id', async (req, res) => {
-  try {
-    const updated = await Service.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    res.json({ success: true, service: updated });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ========== DELETE Endpoints ==========
-
-app.delete('/api/portfolio/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    console.log('🗑️ Deleting portfolio ID:', id);
-    
-    if (!id || id === 'undefined') {
-      return res.status(400).json({ error: 'Invalid ID' });
-    }
-    
-    const deleted = await Portfolio.findByIdAndDelete(id);
-    if (!deleted) {
-      return res.status(404).json({ error: 'Item not found' });
-    }
-    
-    console.log('✅ Deleted portfolio:', deleted.title);
-    res.json({ success: true });
-  } catch (error) {
-    console.error('❌ Delete error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.delete('/api/clients/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deleted = await Client.findByIdAndDelete(id);
-    if (!deleted) {
-      return res.status(404).json({ error: 'Client not found' });
-    }
-    res.json({ success: true });
+    const { name, logo } = req.body;
+    const id = generateId();
+    await pool.query('INSERT INTO partners (id, name, logo) VALUES (?, ?, ?)', [id, name, logo]);
+    res.json({ success: true, partner: { id, name, logo } });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -362,11 +313,44 @@ app.delete('/api/clients/:id', async (req, res) => {
 
 app.delete('/api/partners/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    const deleted = await Partner.findByIdAndDelete(id);
-    if (!deleted) {
-      return res.status(404).json({ error: 'Partner not found' });
-    }
+    await pool.query('DELETE FROM partners WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Services
+app.get('/api/services', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM services ORDER BY `order` ASC');
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/services', async (req, res) => {
+  try {
+    const { title, description, order, icon } = req.body;
+    const id = generateId();
+    await pool.query(
+      'INSERT INTO services (id, title, description, `order`, icon) VALUES (?, ?, ?, ?, ?)',
+      [id, title, description, order || 0, icon || null]
+    );
+    res.json({ success: true, service: { id, title, description, order, icon } });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/services/:id', async (req, res) => {
+  try {
+    const { title, description, order, icon } = req.body;
+    await pool.query(
+      'UPDATE services SET title = ?, description = ?, `order` = ?, icon = ? WHERE id = ?',
+      [title, description, order || 0, icon || null, req.params.id]
+    );
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -375,75 +359,68 @@ app.delete('/api/partners/:id', async (req, res) => {
 
 app.delete('/api/services/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    const deleted = await Service.findByIdAndDelete(id);
-    if (!deleted) {
-      return res.status(404).json({ error: 'Service not found' });
-    }
+    await pool.query('DELETE FROM services WHERE id = ?', [req.params.id]);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// ========== Image Upload Endpoints ==========
-
-app.post('/api/upload-image', upload.single('image'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  const imageUrl = `${SERVER_URL}/api/image/${req.file.filename}`;
-  console.log('✅ Image uploaded to MongoDB:', imageUrl);
-  res.json({ success: true, url: imageUrl });
-});
-
-app.post('/api/upload-multiple', upload.array('images', 50), (req, res) => {
-  if (!req.files || req.files.length === 0) {
-    return res.status(400).json({ error: 'No files uploaded' });
-  }
-  const urls = req.files.map(file => `${SERVER_URL}/api/image/${file.filename}`);
-  res.json({ success: true, urls });
-});
-
-app.delete('/api/delete-image', async (req, res) => {
-  const { filename } = req.body;
-  
+// Inquiries
+app.get('/api/inquiries', async (req, res) => {
   try {
-    const bucket = new mongoose.mongo.GridFSBucket(conn.db, { bucketName: 'uploads' });
-    const files = await conn.db.collection('uploads.files').find({ filename }).toArray();
-    
-    if (!files || files.length === 0) {
-      return res.status(404).json({ error: 'Image not found' });
-    }
-    
-    await bucket.delete(files[0]._id);
+    const [rows] = await pool.query('SELECT * FROM inquiries ORDER BY createdAt DESC');
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/inquiries', async (req, res) => {
+  try {
+    const { name, email, phone, service, message } = req.body;
+    const id = generateId();
+    await pool.query(
+      'INSERT INTO inquiries (id, name, email, phone, serviceType, message) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, name, email, phone || '', service || '', message]
+    );
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// ========== Health Check ==========
+// Delete all data
+app.delete('/api/delete-all-data', async (req, res) => {
+  try {
+    const { secret } = req.query;
+    if (secret !== 'DELETE_ALL_SPECTRA') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    await pool.query('DELETE FROM portfolios');
+    await pool.query('DELETE FROM clients');
+    await pool.query('DELETE FROM partners');
+    await pool.query('DELETE FROM services');
+    await pool.query('DELETE FROM inquiries');
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
+// Health check
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-    timestamp: new Date().toISOString() 
-  });
+  res.json({ status: 'ok', database: 'mysql', timestamp: new Date().toISOString() });
 });
 
 // ========== Start Server ==========
-
-mongoose.connection.once('open', async () => {
-  console.log('✅ MongoDB Connection Ready');
-  await seedDefaultData();
-  
+async function startServer() {
+  await initDatabase();
   app.listen(PORT, () => {
     console.log(`\n🚀 Server running on ${SERVER_URL}`);
-    console.log(`🗄️ MongoDB Atlas connected (Images stored in GridFS)`);
-    console.log(`✅ Ready to accept requests!\n`);
+    console.log(`🗄️ MySQL (XAMPP) - All data stored in database`);
+    console.log(`✅ Ready!\n`);
   });
-});
+}
 
-mongoose.connection.on('error', (err) => {
-  console.error('❌ MongoDB connection error:', err);
-});
+startServer();

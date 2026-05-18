@@ -220,7 +220,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
             <div className="clients-slider">
               <div className="clients-track">
                 {clients.map((client) => (
-                  <div key={client._id} className="client-card">
+                  <div key={client._id || client.id} className="client-card">
                     <div className="client-logo-img">
                       <LazyImage src={client.logo} alt={client.name} className="client-logo-img" />
                     </div>
@@ -243,7 +243,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
             <div className="partners-slider">
               <div className="partners-track">
                 {partners.map((partner) => (
-                  <div key={partner._id} className="partner-card">
+                  <div key={partner._id || partner.id} className="partner-card">
                     <div className="partner-logo-img">
                       <LazyImage src={partner.logo} alt={partner.name} className="partner-logo-img" />
                     </div>
@@ -264,7 +264,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
           </div>
           <div className="portfolio-grid">
             {portfolios.map((item) => (
-              <Link to={`/portfolio/${item._id}`} key={item._id} className="portfolio-card-link">
+              <Link to={`/portfolio/${item._id || item.id}`} key={item._id || item.id} className="portfolio-card-link">
                 <div className="portfolio-card">
                   <div className="portfolio-img">
                     <LazyImage 
@@ -295,7 +295,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
           </div>
           <div className="services-grid">
             {services.map((service) => (
-              <div key={service._id} className="service-card">
+              <div key={service._id || service.id} className="service-card">
                 <h3 className="service-title">{service.title}</h3>
                 <p className="service-desc">{service.description}</p>
               </div>
@@ -320,7 +320,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
               <input type="tel" name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleChange} className="form-input" />
               <select name="service" value={formData.service} onChange={handleChange} className="form-select">
                 {services.map((service) => (
-                  <option key={service._id} value={service.title}>{service.title}</option>
+                  <option key={service._id || service.id} value={service.title}>{service.title}</option>
                 ))}
               </select>
               <textarea name="message" rows="4" placeholder="Tell us about your vision..." value={formData.message} onChange={handleChange} required className="form-textarea"></textarea>
@@ -405,7 +405,7 @@ function PortfolioDetail() {
   );
 }
 
-// Admin Panel Component (مختصر بسبب الطول)
+// Admin Panel Component
 function AdminPanel() {
   const [portfolios, setPortfolios] = useState([]);
   const [partners, setPartners] = useState([]);
@@ -469,43 +469,12 @@ function AdminPanel() {
     setConfirmId(null);
   };
 
-  // Resize image function
-  const resizeImage = (base64Image, maxWidth = 1200, maxHeight = 1200) => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.src = base64Image;
-      img.onload = () => {
-        let width = img.width;
-        let height = img.height;
-        
-        if (width > height) {
-          if (width > maxWidth) {
-            height = (height * maxWidth) / width;
-            width = maxWidth;
-          }
-        } else {
-          if (height > maxHeight) {
-            width = (width * maxHeight) / height;
-            height = maxHeight;
-          }
-        }
-        
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        resolve(canvas.toDataURL('image/jpeg', 0.8));
-      };
-    });
-  };
-
-  const uploadToServer = async (base64Image, onProgress) => {
+  // ========== UPLOAD FUNCTIONS (FIXED - Direct FormData) ==========
+  
+  const uploadToServer = async (file, onProgress) => {
     try {
-      const blob = await fetch(base64Image).then(r => r.blob());
       const formData = new FormData();
-      formData.append('image', blob, 'image.jpg');
+      formData.append('image', file);
       
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -535,6 +504,159 @@ function AdminPanel() {
       console.error('Upload error:', error);
       return null;
     }
+  };
+
+  const handleMultipleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    const newImages = [];
+    const newPreviews = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.size > 50 * 1024 * 1024) {
+        showModalMessage('Error', `Image ${file.name} too large! Max 50MB`);
+        continue;
+      }
+      
+      setUploading(true);
+      setUploadProgress(0);
+      
+      try {
+        const url = await uploadToServer(file, (progress) => {
+          setUploadProgress(progress);
+        });
+        
+        if (url) {
+          newImages.push(url);
+          newPreviews.push(url);
+        }
+      } catch (err) {
+        console.error('Error uploading:', file.name, err);
+      }
+    }
+    
+    if (newImages.length) {
+      setTempImages([...tempImages, ...newImages]);
+      setImagePreviews([...imagePreviews, ...newPreviews]);
+      showModalMessage('Success', `${newImages.length} image(s) uploaded!`);
+    }
+    
+    setUploading(false);
+    setUploadProgress(0);
+  };
+
+  const addImageFromUrl = () => {
+    if (imageUrlInput && imageUrlInput.trim() !== '') {
+      setTempImages([...tempImages, imageUrlInput]);
+      setImagePreviews([...imagePreviews, imageUrlInput]);
+      setImageUrlInput('');
+      showModalMessage('Success', 'Image URL added!');
+    }
+  };
+
+  const removeTempImage = (index) => {
+    const newTemp = [...tempImages];
+    const newPreviews = [...imagePreviews];
+    newTemp.splice(index, 1);
+    newPreviews.splice(index, 1);
+    setTempImages(newTemp);
+    setImagePreviews(newPreviews);
+  };
+
+  const handleAddImagesToPortfolio = async (e) => {
+    const files = Array.from(e.target.files);
+    const newImages = [];
+    const newPreviews = [];
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.size > 50 * 1024 * 1024) continue;
+      
+      setUploading(true);
+      setUploadProgress(0);
+      
+      try {
+        const url = await uploadToServer(file, (progress) => setUploadProgress(progress));
+        if (url) {
+          newImages.push(url);
+          newPreviews.push(url);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    
+    if (newImages.length) {
+      setNewImagesForPortfolio([...newImagesForPortfolio, ...newImages]);
+      setNewImagePreviews([...newImagePreviews, ...newPreviews]);
+      showModalMessage('Success', `${newImages.length} image(s) ready to add!`);
+    }
+    
+    setUploading(false);
+    setUploadProgress(0);
+  };
+
+  const addImageUrlToManager = () => {
+    if (imageUrlInput && imageUrlInput.trim() !== '') {
+      setNewImagesForPortfolio([...newImagesForPortfolio, imageUrlInput]);
+      setNewImagePreviews([...newImagePreviews, imageUrlInput]);
+      setImageUrlInput('');
+      showModalMessage('Success', 'Image URL added!');
+    }
+  };
+
+  const handlePartnerImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 50 * 1024 * 1024) {
+      showModalMessage('Error', 'Logo too large! Max 50MB');
+      return;
+    }
+    
+    setUploading(true);
+    setUploadProgress(0);
+    
+    try {
+      const url = await uploadToServer(file, (progress) => setUploadProgress(progress));
+      if (url) {
+        setPartnerImagePreview(url);
+        setPartnerFormData({ ...partnerFormData, logo: url });
+        showModalMessage('Success', 'Logo uploaded!');
+      }
+    } catch (err) {
+      showModalMessage('Error', 'Upload failed');
+    }
+    
+    setUploading(false);
+    setUploadProgress(0);
+  };
+
+  const handleClientImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 50 * 1024 * 1024) {
+      showModalMessage('Error', 'Logo too large! Max 50MB');
+      return;
+    }
+    
+    setUploading(true);
+    setUploadProgress(0);
+    
+    try {
+      const url = await uploadToServer(file, (progress) => setUploadProgress(progress));
+      if (url) {
+        setClientImagePreview(url);
+        setClientFormData({ ...clientFormData, logo: url });
+        showModalMessage('Success', 'Logo uploaded!');
+      }
+    } catch (err) {
+      showModalMessage('Error', 'Upload failed');
+    }
+    
+    setUploading(false);
+    setUploadProgress(0);
   };
 
   // Load functions
@@ -624,134 +746,8 @@ function AdminPanel() {
     localStorage.removeItem('adminLoggedIn');
   };
 
-  // DELETE functions
-  const handleDeletePortfolio = async (id) => {
-    if (!id || id === 'undefined') {
-      showModalMessage('Error', 'Invalid ID');
-      return;
-    }
-    
-    showConfirmModalMessage('Delete this portfolio?', async () => {
-      try {
-        const res = await fetch(`${API_URL}/portfolio/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-          showModalMessage('Success', 'Portfolio deleted!');
-          loadPortfolios();
-        } else {
-          showModalMessage('Error', 'Delete failed');
-        }
-      } catch (error) {
-        showModalMessage('Error', 'Network error');
-      }
-    }, id);
-  };
-
-  const handleDeletePartner = async (id) => {
-    if (!id || id === 'undefined') return;
-    showConfirmModalMessage('Delete this partner?', async () => {
-      const res = await fetch(`${API_URL}/partners/${id}`, { method: 'DELETE' });
-      if (res.ok) { loadPartners(); showModalMessage('Success', 'Partner deleted!'); }
-    }, id);
-  };
-
-  const handleDeleteClient = async (id) => {
-    if (!id || id === 'undefined') return;
-    showConfirmModalMessage('Delete this client?', async () => {
-      const res = await fetch(`${API_URL}/clients/${id}`, { method: 'DELETE' });
-      if (res.ok) { loadClients(); showModalMessage('Success', 'Client deleted!'); }
-    }, id);
-  };
-
-  const handleDeleteService = async (id) => {
-    if (!id || id === 'undefined') return;
-    showConfirmModalMessage('Delete this service?', async () => {
-      const res = await fetch(`${API_URL}/services/${id}`, { method: 'DELETE' });
-      if (res.ok) { loadServices(); showModalMessage('Success', 'Service deleted!'); }
-    }, id);
-  };
-
-  const handleDeleteAllPartners = async () => {
-    showConfirmModalMessage('DELETE ALL PARTNERS?', async () => {
-      for (const partner of partners) {
-        await fetch(`${API_URL}/partners/${partner._id}`, { method: 'DELETE' });
-      }
-      loadPartners();
-      showModalMessage('Success', 'All partners deleted!');
-    }, null);
-  };
-
-  const handleDeleteAllClients = async () => {
-    showConfirmModalMessage('DELETE ALL CLIENTS?', async () => {
-      for (const client of clients) {
-        await fetch(`${API_URL}/clients/${client._id}`, { method: 'DELETE' });
-      }
-      loadClients();
-      showModalMessage('Success', 'All clients deleted!');
-    }, null);
-  };
-
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleMultipleImageUpload = async (e) => {
-    const files = Array.from(e.target.files);
-    const newImages = [];
-    const newPreviews = [];
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      if (file.size > 50 * 1024 * 1024) {
-        showModalMessage('Error', `Image ${file.name} too large!`);
-        continue;
-      }
-      
-      setUploading(true);
-      setUploadProgress(0);
-      
-      const reader = new FileReader();
-      const uploadPromise = new Promise((resolve) => {
-        reader.onloadend = async () => {
-          let base64Image = reader.result;
-          const resizedImage = await resizeImage(base64Image);
-          const url = await uploadToServer(resizedImage, (progress) => {
-            setUploadProgress(progress);
-          });
-          resolve(url);
-        };
-      });
-      
-      reader.readAsDataURL(file);
-      const url = await uploadPromise;
-      
-      if (url) {
-        newImages.push(url);
-        newPreviews.push(url);
-      }
-    }
-    
-    setTempImages([...tempImages, ...newImages]);
-    setImagePreviews([...imagePreviews, ...newPreviews]);
-    setUploading(false);
-    setTimeout(() => setUploadProgress(0), 1000);
-  };
-
-  const addImageFromUrl = () => {
-    if (imageUrlInput && imageUrlInput.trim() !== '') {
-      setTempImages([...tempImages, imageUrlInput]);
-      setImagePreviews([...imagePreviews, imageUrlInput]);
-      setImageUrlInput('');
-      showModalMessage('Success', 'Image URL added!');
-    }
-  };
-
-  const removeTempImage = (index) => {
-    const newTemp = [...tempImages];
-    const newPreviews = [...imagePreviews];
-    newTemp.splice(index, 1);
-    newPreviews.splice(index, 1);
-    setTempImages(newTemp);
-    setImagePreviews(newPreviews);
   };
 
   const handleAddPortfolio = async (e) => {
@@ -803,60 +799,78 @@ function AdminPanel() {
     setUploading(false);
   };
 
+  // DELETE functions
+  const handleDeletePortfolio = async (id) => {
+    if (!id || id === 'undefined') {
+      showModalMessage('Error', 'Invalid ID');
+      return;
+    }
+    
+    showConfirmModalMessage('Delete this portfolio?', async () => {
+      try {
+        const res = await fetch(`${API_URL}/portfolio/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          showModalMessage('Success', 'Portfolio deleted!');
+          loadPortfolios();
+        } else {
+          showModalMessage('Error', 'Delete failed');
+        }
+      } catch (error) {
+        showModalMessage('Error', 'Network error');
+      }
+    }, id);
+  };
+
+  const handleDeletePartner = async (id) => {
+    if (!id || id === 'undefined') return;
+    showConfirmModalMessage('Delete this partner?', async () => {
+      const res = await fetch(`${API_URL}/partners/${id}`, { method: 'DELETE' });
+      if (res.ok) { loadPartners(); showModalMessage('Success', 'Partner deleted!'); }
+    }, id);
+  };
+
+  const handleDeleteClient = async (id) => {
+    if (!id || id === 'undefined') return;
+    showConfirmModalMessage('Delete this client?', async () => {
+      const res = await fetch(`${API_URL}/clients/${id}`, { method: 'DELETE' });
+      if (res.ok) { loadClients(); showModalMessage('Success', 'Client deleted!'); }
+    }, id);
+  };
+
+  const handleDeleteService = async (id) => {
+    if (!id || id === 'undefined') return;
+    showConfirmModalMessage('Delete this service?', async () => {
+      const res = await fetch(`${API_URL}/services/${id}`, { method: 'DELETE' });
+      if (res.ok) { loadServices(); showModalMessage('Success', 'Service deleted!'); }
+    }, id);
+  };
+
+  const handleDeleteAllPartners = async () => {
+    showConfirmModalMessage('DELETE ALL PARTNERS?', async () => {
+      for (const partner of partners) {
+        await fetch(`${API_URL}/partners/${partner._id || partner.id}`, { method: 'DELETE' });
+      }
+      loadPartners();
+      showModalMessage('Success', 'All partners deleted!');
+    }, null);
+  };
+
+  const handleDeleteAllClients = async () => {
+    showConfirmModalMessage('DELETE ALL CLIENTS?', async () => {
+      for (const client of clients) {
+        await fetch(`${API_URL}/clients/${client._id || client.id}`, { method: 'DELETE' });
+      }
+      loadClients();
+      showModalMessage('Success', 'All clients deleted!');
+    }, null);
+  };
+
   const openImageManager = (portfolio) => {
     setCurrentPortfolio(portfolio);
     setNewImagesForPortfolio([]);
     setNewImagePreviews([]);
     setImageUrlInput('');
     setShowImageManager(true);
-  };
-
-  const handleAddImagesToPortfolio = async (e) => {
-    const files = Array.from(e.target.files);
-    const newImages = [];
-    const newPreviews = [];
-    
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      if (file.size > 50 * 1024 * 1024) continue;
-      
-      setUploading(true);
-      setUploadProgress(0);
-      
-      const reader = new FileReader();
-      const uploadPromise = new Promise((resolve) => {
-        reader.onloadend = async () => {
-          let base64Image = reader.result;
-          const resizedImage = await resizeImage(base64Image);
-          const url = await uploadToServer(resizedImage, (progress) => {
-            setUploadProgress(progress);
-          });
-          resolve(url);
-        };
-      });
-      
-      reader.readAsDataURL(file);
-      const url = await uploadPromise;
-      
-      if (url) {
-        newImages.push(url);
-        newPreviews.push(url);
-      }
-    }
-    
-    setNewImagesForPortfolio([...newImagesForPortfolio, ...newImages]);
-    setNewImagePreviews([...newImagePreviews, ...newPreviews]);
-    setUploading(false);
-    setTimeout(() => setUploadProgress(0), 1000);
-  };
-
-  const addImageUrlToManager = () => {
-    if (imageUrlInput && imageUrlInput.trim() !== '') {
-      setNewImagesForPortfolio([...newImagesForPortfolio, imageUrlInput]);
-      setNewImagePreviews([...newImagePreviews, imageUrlInput]);
-      setImageUrlInput('');
-      showModalMessage('Success', 'Image URL added!');
-    }
   };
 
   const saveNewImagesToPortfolio = async () => {
@@ -882,7 +896,7 @@ function AdminPanel() {
       coverImage: currentPortfolio.coverImage || uploadedUrls[0]
     };
     
-    const res = await fetch(`${API_URL}/portfolio/${currentPortfolio._id}`, {
+    const res = await fetch(`${API_URL}/portfolio/${currentPortfolio._id || currentPortfolio.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updatedPortfolio)
@@ -902,7 +916,7 @@ function AdminPanel() {
     showConfirmModalMessage('Delete this image?', async () => {
       const updatedImages = [...currentPortfolio.images];
       updatedImages.splice(imageIndex, 1);
-      const res = await fetch(`${API_URL}/portfolio/${currentPortfolio._id}`, {
+      const res = await fetch(`${API_URL}/portfolio/${currentPortfolio._id || currentPortfolio.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...currentPortfolio, images: updatedImages, coverImage: updatedImages[0] || '' })
@@ -920,35 +934,6 @@ function AdminPanel() {
     setCurrentPortfolio(null);
     setNewImagesForPortfolio([]);
     setNewImagePreviews([]);
-  };
-
-  const handlePartnerImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 50 * 1024 * 1024) {
-        showModalMessage('Error', 'Logo too large!');
-        return;
-      }
-      
-      setUploading(true);
-      setUploadProgress(0);
-      
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        let base64Image = reader.result;
-        const resizedImage = await resizeImage(base64Image, 500, 500);
-        const uploadedUrl = await uploadToServer(resizedImage, (progress) => {
-          setUploadProgress(progress);
-        });
-        if (uploadedUrl) {
-          setPartnerImagePreview(uploadedUrl);
-          setPartnerFormData({ ...partnerFormData, logo: uploadedUrl });
-        }
-        setUploading(false);
-        setTimeout(() => setUploadProgress(0), 1000);
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   const handleAddPartner = async (e) => {
@@ -975,35 +960,6 @@ function AdminPanel() {
       setPartnerFormData({ name: '', logo: '' });
       setPartnerImagePreview('');
       loadPartners();
-    }
-  };
-
-  const handleClientImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 50 * 1024 * 1024) {
-        showModalMessage('Error', 'Logo too large!');
-        return;
-      }
-      
-      setUploading(true);
-      setUploadProgress(0);
-      
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        let base64Image = reader.result;
-        const resizedImage = await resizeImage(base64Image, 500, 500);
-        const uploadedUrl = await uploadToServer(resizedImage, (progress) => {
-          setUploadProgress(progress);
-        });
-        if (uploadedUrl) {
-          setClientImagePreview(uploadedUrl);
-          setClientFormData({ ...clientFormData, logo: uploadedUrl });
-        }
-        setUploading(false);
-        setTimeout(() => setUploadProgress(0), 1000);
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -1064,7 +1020,7 @@ function AdminPanel() {
 
   const handleUpdateService = async (e) => {
     e.preventDefault();
-    const res = await fetch(`${API_URL}/services/${editingService._id}`, {
+    const res = await fetch(`${API_URL}/services/${editingService._id || editingService.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(editServiceForm)
@@ -1161,14 +1117,14 @@ function AdminPanel() {
               <h2>Portfolio ({portfolios.length})</h2>
               <div className="portfolio-admin-grid">
                 {portfolios.map(item => (
-                  <div key={item._id} className="portfolio-admin-card">
+                  <div key={item._id || item.id} className="portfolio-admin-card">
                     <img src={item.coverImage} alt={item.title} />
                     <div className="info">
                       <h3>{item.title}</h3>
                       <p>{item.category}</p>
                       <p>{item.images?.length || 0} photos</p>
                       <button onClick={() => openImageManager(item)} className="edit-btn">Manage Images</button>
-                      <button onClick={() => handleDeletePortfolio(item._id)} className="delete-btn">Delete</button>
+                      <button onClick={() => handleDeletePortfolio(item._id || item.id)} className="delete-btn">Delete</button>
                     </div>
                   </div>
                 ))}
@@ -1201,10 +1157,10 @@ function AdminPanel() {
             </div>
             <div className="partner-admin-grid">
               {partners.map(partner => (
-                <div key={partner._id} className="partner-admin-card">
+                <div key={partner._id || partner.id} className="partner-admin-card">
                   <img src={partner.logo} alt={partner.name} />
                   <h3>{partner.name}</h3>
-                  <button onClick={() => handleDeletePartner(partner._id)} className="delete-btn">Delete</button>
+                  <button onClick={() => handleDeletePartner(partner._id || partner.id)} className="delete-btn">Delete</button>
                 </div>
               ))}
             </div>
@@ -1235,10 +1191,10 @@ function AdminPanel() {
             </div>
             <div className="client-admin-grid">
               {clients.map(client => (
-                <div key={client._id} className="client-admin-card">
+                <div key={client._id || client.id} className="client-admin-card">
                   <img src={client.logo} alt={client.name} />
                   <h3>{client.name}</h3>
-                  <button onClick={() => handleDeleteClient(client._id)} className="delete-btn">Delete</button>
+                  <button onClick={() => handleDeleteClient(client._id || client.id)} className="delete-btn">Delete</button>
                 </div>
               ))}
             </div>
@@ -1260,11 +1216,11 @@ function AdminPanel() {
             </div>
             <div className="services-admin-grid">
               {services.map(service => (
-                <div key={service._id} className="service-admin-card">
+                <div key={service._id || service.id} className="service-admin-card">
                   <h3>{service.title}</h3>
                   <p>{service.description}</p>
                   <button onClick={() => handleEditService(service)} className="edit-btn">Edit</button>
-                  <button onClick={() => handleDeleteService(service._id)} className="delete-btn">Delete</button>
+                  <button onClick={() => handleDeleteService(service._id || service.id)} className="delete-btn">Delete</button>
                 </div>
               ))}
             </div>
@@ -1274,7 +1230,7 @@ function AdminPanel() {
         {activeTab === 'inquiries' && (
           <div className="inquiries-list">
             {inquiries.map(inquiry => (
-              <div key={inquiry._id} className="inquiry-card">
+              <div key={inquiry._id || inquiry.id} className="inquiry-card">
                 <p><strong>{inquiry.name}</strong> - {inquiry.email}</p>
                 <p>{inquiry.message}</p>
                 <small>{new Date(inquiry.createdAt).toLocaleString()}</small>
