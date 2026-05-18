@@ -1,10 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import mysql from 'mysql2/promise';
+import multer from 'multer';
 import crypto from 'crypto';
 import path from 'path';
 import fs from 'fs';
 import dotenv from 'dotenv';
+import os from 'os';
 import { fileURLToPath } from 'url';
 
 dotenv.config();
@@ -15,10 +17,56 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Get local IP address
+function getLocalIp() {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return 'localhost';
+}
+
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
+
+// ========== Upload Directory ==========
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsDir));
+
+// ========== Multer Setup for File Upload ==========
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + crypto.randomBytes(6).toString('hex');
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    if (extname && mimetype) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
 
 // ========== MySQL Connection (XAMPP) ==========
 const pool = mysql.createPool({
@@ -33,7 +81,7 @@ const pool = mysql.createPool({
 
 const SERVER_URL = process.env.NODE_ENV === 'production'
   ? 'https://spectra-frames-api.onrender.com'
-  : `http://localhost:${PORT}`;
+  : `http://${getLocalIp()}:${PORT}`;
 
 // ========== Helper Functions ==========
 function generateId() {
@@ -49,13 +97,6 @@ async function initDatabase() {
     await connection.query(`CREATE DATABASE IF NOT EXISTS spectraframes`);
     await connection.query(`USE spectraframes`);
     
-    // Drop old tables (clean start)
-    await connection.query(`DROP TABLE IF EXISTS inquiries`);
-    await connection.query(`DROP TABLE IF EXISTS services`);
-    await connection.query(`DROP TABLE IF EXISTS partners`);
-    await connection.query(`DROP TABLE IF EXISTS clients`);
-    await connection.query(`DROP TABLE IF EXISTS portfolios`);
-    
     // Create tables
     await connection.query(`
       CREATE TABLE IF NOT EXISTS portfolios (
@@ -63,7 +104,7 @@ async function initDatabase() {
         title VARCHAR(200) NOT NULL,
         category VARCHAR(100) NOT NULL,
         description TEXT,
-        coverImage LONGTEXT NOT NULL,
+        coverImage TEXT NOT NULL,
         images LONGTEXT,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
       )
@@ -73,7 +114,7 @@ async function initDatabase() {
       CREATE TABLE IF NOT EXISTS clients (
         id VARCHAR(50) PRIMARY KEY,
         name VARCHAR(200) NOT NULL,
-        logo LONGTEXT NOT NULL,
+        logo TEXT NOT NULL,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -82,7 +123,7 @@ async function initDatabase() {
       CREATE TABLE IF NOT EXISTS partners (
         id VARCHAR(50) PRIMARY KEY,
         name VARCHAR(200) NOT NULL,
-        logo LONGTEXT NOT NULL,
+        logo TEXT NOT NULL,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -162,36 +203,37 @@ async function seedDefaultData(connection) {
   }
 }
 
-// ========== Upload Image (Base64 to MySQL) ==========
-app.post('/api/upload-image', async (req, res) => {
-  try {
-    const { image } = req.body;
-    if (!image) return res.status(400).json({ error: 'No image provided' });
-    
-    // الصورة بتتنحفظ كـ Base64 مباشرة
-    // هنرجع نفس الصورة عشان تستخدم في frontend
-    res.json({ success: true, url: image });
-  } catch (error) {
-    console.error('Upload error:', error);
-    res.status(500).json({ error: error.message });
+// ========== Upload Endpoints ==========
+
+app.post('/api/upload-image', upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
   }
+  const imageUrl = `${SERVER_URL}/uploads/${req.file.filename}`;
+  console.log('✅ Image uploaded:', imageUrl);
+  res.json({ success: true, url: imageUrl });
 });
 
-app.post('/api/upload-multiple', async (req, res) => {
-  try {
-    const { images } = req.body;
-    if (!images || !images.length) {
-      return res.status(400).json({ error: 'No images provided' });
-    }
-    res.json({ success: true, urls: images });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+app.post('/api/upload-multiple', upload.array('images', 50), (req, res) => {
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ error: 'No files uploaded' });
   }
+  const urls = req.files.map(file => `${SERVER_URL}/uploads/${file.filename}`);
+  res.json({ success: true, urls });
 });
 
 app.delete('/api/delete-image', (req, res) => {
-  // مع Base64 ما في داعي لحذف الصور من السيرفر
-  res.json({ success: true });
+  const { filename } = req.body;
+  if (!filename) {
+    return res.status(400).json({ error: 'No filename provided' });
+  }
+  const filePath = path.join(uploadsDir, filename);
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+    res.json({ success: true });
+  } else {
+    res.status(404).json({ error: 'Image not found' });
+  }
 });
 
 // ========== API Endpoints ==========
@@ -206,6 +248,7 @@ app.get('/api/portfolio', async (req, res) => {
     }));
     res.json(portfolios);
   } catch (error) {
+    console.error('Error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -416,9 +459,13 @@ app.get('/api/health', (req, res) => {
 // ========== Start Server ==========
 async function startServer() {
   await initDatabase();
-  app.listen(PORT, () => {
-    console.log(`\n🚀 Server running on ${SERVER_URL}`);
+  app.listen(PORT, '0.0.0.0', () => {
+    const localIp = getLocalIp();
+    console.log(`\n🚀 Server running on:`);
+    console.log(`   Local: http://localhost:${PORT}`);
+    console.log(`   Network: http://${localIp}:${PORT}`);
     console.log(`🗄️ MySQL (XAMPP) - All data stored in database`);
+    console.log(`📁 Uploads folder: ${uploadsDir}`);
     console.log(`✅ Ready!\n`);
   });
 }

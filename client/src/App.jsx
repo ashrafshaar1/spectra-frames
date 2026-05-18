@@ -1,73 +1,100 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
 import './App.css';
 import { FaFacebookF, FaInstagram, FaTiktok, FaWhatsapp, FaUserLock } from 'react-icons/fa';
 
-// API URL
-const API_URL = 'https://spectra-frames-api.onrender.com/api';
-// للـ local development استخدم:
-// const API_URL = 'http://localhost:3001/api';
+// API URL - يشتغل على كل الأجهزة في الشبكة
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:3001/api'
+  : `http://${window.location.hostname}:3001/api`;
 
 // Admin credentials
 const ADMIN_USERNAME = 'ashrafshaar';
 const ADMIN_PASSWORD = 'ItShYpEr75@';
 
-// Lazy Image Component with skeleton loader
-function LazyImage({ src, alt, className }) {
+// LogoImage component for fast preload (clients & partners)
+function LogoImage({ src, alt, className }) {
   const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState(false);
-  
-  if (error) {
-    return (
-      <div className={`${className} image-error`} style={{
-        background: '#2a2a2a',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#D4AF37',
-        fontSize: '14px'
-      }}>
-        📷
-      </div>
-    );
-  }
   
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       {!loaded && (
-        <div 
-          className="image-skeleton"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%)',
-            backgroundSize: '200% 100%',
-            animation: 'skeleton-loading 1.5s infinite',
-            borderRadius: 'inherit',
-            zIndex: 1
-          }}
-        />
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: '#2a2a2a',
+          borderRadius: '8px'
+        }} />
       )}
       <img
         src={src}
         alt={alt}
         className={className}
-        loading="lazy"
         onLoad={() => setLoaded(true)}
-        onError={() => setError(true)}
         style={{
-          opacity: loaded ? 1 : 0,
-          transition: 'opacity 0.3s ease',
           width: '100%',
           height: '100%',
           objectFit: 'contain',
-          position: 'relative',
-          zIndex: 2
+          opacity: loaded ? 1 : 0,
+          transition: 'opacity 0.2s ease'
         }}
       />
+    </div>
+  );
+}
+
+// PortfolioImage component with Intersection Observer for heavy images
+function PortfolioImage({ src, alt, className }) {
+  const [imageSrc, setImageSrc] = useState(null);
+  const imgRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setImageSrc(src);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { rootMargin: '200px', threshold: 0.1 });
+
+    if (imgRef.current) {
+      observer.observe(imgRef.current);
+    }
+
+    return () => {
+      if (imgRef.current) {
+        observer.unobserve(imgRef.current);
+      }
+    };
+  }, [src]);
+
+  return (
+    <div ref={imgRef} className={className} style={{ width: '100%', height: '100%' }}>
+      {imageSrc ? (
+        <img 
+          src={imageSrc} 
+          alt={alt} 
+          style={{ 
+            width: '100%', 
+            height: '100%', 
+            objectFit: 'cover',
+            transition: 'transform 0.6s ease'
+          }}
+          loading="lazy"
+        />
+      ) : (
+        <div style={{
+          background: 'linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%)',
+          backgroundSize: '200% 100%',
+          animation: 'skeleton-loading 1.5s infinite',
+          width: '100%',
+          height: '100%'
+        }} />
+      )}
     </div>
   );
 }
@@ -220,9 +247,9 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
             <div className="clients-slider">
               <div className="clients-track">
                 {clients.map((client) => (
-                  <div key={client._id || client.id} className="client-card">
+                  <div key={client.id || client._id} className="client-card">
                     <div className="client-logo-img">
-                      <LazyImage src={client.logo} alt={client.name} className="client-logo-img" />
+                      <LogoImage src={client.logo} alt={client.name} className="client-logo-img" />
                     </div>
                     <p className="client-name">{client.name}</p>
                   </div>
@@ -243,9 +270,9 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
             <div className="partners-slider">
               <div className="partners-track">
                 {partners.map((partner) => (
-                  <div key={partner._id || partner.id} className="partner-card">
+                  <div key={partner.id || partner._id} className="partner-card">
                     <div className="partner-logo-img">
-                      <LazyImage src={partner.logo} alt={partner.name} className="partner-logo-img" />
+                      <LogoImage src={partner.logo} alt={partner.name} className="partner-logo-img" />
                     </div>
                     <p className="partner-name">{partner.name}</p>
                   </div>
@@ -264,10 +291,10 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
           </div>
           <div className="portfolio-grid">
             {portfolios.map((item) => (
-              <Link to={`/portfolio/${item._id || item.id}`} key={item._id || item.id} className="portfolio-card-link">
+              <Link to={`/portfolio/${item.id || item._id}`} key={item.id || item._id} className="portfolio-card-link">
                 <div className="portfolio-card">
                   <div className="portfolio-img">
-                    <LazyImage 
+                    <PortfolioImage 
                       src={item.coverImage || item.images?.[0]} 
                       alt={item.title} 
                       className="portfolio-img-img"
@@ -295,7 +322,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
           </div>
           <div className="services-grid">
             {services.map((service) => (
-              <div key={service._id || service.id} className="service-card">
+              <div key={service.id || service._id} className="service-card">
                 <h3 className="service-title">{service.title}</h3>
                 <p className="service-desc">{service.description}</p>
               </div>
@@ -320,7 +347,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
               <input type="tel" name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleChange} className="form-input" />
               <select name="service" value={formData.service} onChange={handleChange} className="form-select">
                 {services.map((service) => (
-                  <option key={service._id || service.id} value={service.title}>{service.title}</option>
+                  <option key={service.id || service._id} value={service.title}>{service.title}</option>
                 ))}
               </select>
               <textarea name="message" rows="4" placeholder="Tell us about your vision..." value={formData.message} onChange={handleChange} required className="form-textarea"></textarea>
@@ -386,7 +413,12 @@ function PortfolioDetail() {
         <div className="gallery-grid">
           {images.map((img, idx) => (
             <div key={idx} className="gallery-item" onClick={() => openGallery(idx)}>
-              <LazyImage src={img} alt={`${item.title} ${idx + 1}`} className="" />
+              <img 
+                src={img} 
+                alt={`${item.title} ${idx + 1}`} 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                loading="lazy"
+              />
               {idx === 0 && images.length > 1 && <div className="gallery-overlay"><span>+{images.length - 1}</span></div>}
             </div>
           ))}
@@ -469,7 +501,7 @@ function AdminPanel() {
     setConfirmId(null);
   };
 
-  // ========== UPLOAD FUNCTIONS (FIXED - Direct FormData) ==========
+  // ========== UPLOAD FUNCTIONS ==========
   
   const uploadToServer = async (file, onProgress) => {
     try {
@@ -822,18 +854,42 @@ function AdminPanel() {
   };
 
   const handleDeletePartner = async (id) => {
-    if (!id || id === 'undefined') return;
+    if (!id || id === 'undefined') {
+      showModalMessage('Error', 'Invalid ID');
+      return;
+    }
     showConfirmModalMessage('Delete this partner?', async () => {
-      const res = await fetch(`${API_URL}/partners/${id}`, { method: 'DELETE' });
-      if (res.ok) { loadPartners(); showModalMessage('Success', 'Partner deleted!'); }
+      try {
+        const res = await fetch(`${API_URL}/partners/${id}`, { method: 'DELETE' });
+        if (res.ok) { 
+          loadPartners(); 
+          showModalMessage('Success', 'Partner deleted!'); 
+        } else {
+          showModalMessage('Error', 'Delete failed');
+        }
+      } catch (error) {
+        showModalMessage('Error', 'Network error');
+      }
     }, id);
   };
 
   const handleDeleteClient = async (id) => {
-    if (!id || id === 'undefined') return;
+    if (!id || id === 'undefined') {
+      showModalMessage('Error', 'Invalid ID');
+      return;
+    }
     showConfirmModalMessage('Delete this client?', async () => {
-      const res = await fetch(`${API_URL}/clients/${id}`, { method: 'DELETE' });
-      if (res.ok) { loadClients(); showModalMessage('Success', 'Client deleted!'); }
+      try {
+        const res = await fetch(`${API_URL}/clients/${id}`, { method: 'DELETE' });
+        if (res.ok) { 
+          loadClients(); 
+          showModalMessage('Success', 'Client deleted!'); 
+        } else {
+          showModalMessage('Error', 'Delete failed');
+        }
+      } catch (error) {
+        showModalMessage('Error', 'Network error');
+      }
     }, id);
   };
 
@@ -846,9 +902,10 @@ function AdminPanel() {
   };
 
   const handleDeleteAllPartners = async () => {
-    showConfirmModalMessage('DELETE ALL PARTNERS?', async () => {
+    if (partners.length === 0) return;
+    showConfirmModalMessage('Are you sure you want to DELETE ALL PARTNERS?', async () => {
       for (const partner of partners) {
-        await fetch(`${API_URL}/partners/${partner._id || partner.id}`, { method: 'DELETE' });
+        await fetch(`${API_URL}/partners/${partner.id || partner._id}`, { method: 'DELETE' });
       }
       loadPartners();
       showModalMessage('Success', 'All partners deleted!');
@@ -856,13 +913,130 @@ function AdminPanel() {
   };
 
   const handleDeleteAllClients = async () => {
-    showConfirmModalMessage('DELETE ALL CLIENTS?', async () => {
+    if (clients.length === 0) return;
+    showConfirmModalMessage('Are you sure you want to DELETE ALL CLIENTS?', async () => {
       for (const client of clients) {
-        await fetch(`${API_URL}/clients/${client._id || client.id}`, { method: 'DELETE' });
+        await fetch(`${API_URL}/clients/${client.id || client._id}`, { method: 'DELETE' });
       }
       loadClients();
       showModalMessage('Success', 'All clients deleted!');
     }, null);
+  };
+
+  // ========== FIXED: Add Client ==========
+  const handleAddClient = async (e) => {
+    e.preventDefault();
+    if (!clientFormData.name || !clientFormData.logo) {
+      showModalMessage('Error', 'Please fill name and logo!');
+      return;
+    }
+  
+    let logoUrl = clientFormData.logo;
+  
+    if (logoUrl && logoUrl.startsWith('data:image')) {
+      try {
+        const blob = await fetch(logoUrl).then(r => r.blob());
+        const file = new File([blob], 'logo.png', { type: 'image/png' });
+        const uploadedUrl = await uploadToServer(file);
+        if (uploadedUrl) {
+          logoUrl = uploadedUrl;
+        } else {
+          showModalMessage('Error', 'Failed to upload logo image');
+          return;
+        }
+      } catch (err) {
+        console.error('Upload error:', err);
+        showModalMessage('Error', 'Failed to upload logo image');
+        return;
+      }
+    }
+  
+    try {
+      const res = await fetch(`${API_URL}/clients`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: clientFormData.name, logo: logoUrl })
+      });
+    
+      const data = await res.json();
+      if (res.ok) {
+        // إضافة العميل الجديد مباشرة
+        const newClient = { 
+          id: data.client?.id || Date.now().toString(), 
+          name: clientFormData.name, 
+          logo: logoUrl,
+          _id: data.client?._id || Date.now().toString()
+        };
+        setClients(prev => [newClient, ...prev]);
+      
+        showModalMessage('Success', 'Client added successfully!');
+        setClientFormData({ name: '', logo: '' });
+        setClientImagePreview('');
+      } else {
+        showModalMessage('Error', data.error || 'Failed to add client');
+      }
+    } catch (error) {
+      console.error('Add client error:', error);
+      showModalMessage('Error', 'Network error. Please try again.');
+    }
+  };
+
+  // ========== FIXED: Add Partner ==========
+  const handleAddPartner = async (e) => {
+    e.preventDefault();
+    if (!partnerFormData.name || !partnerFormData.logo) {
+      showModalMessage('Error', 'Please fill name and logo!');
+      return;
+    }
+  
+    let logoUrl = partnerFormData.logo;
+  
+    if (logoUrl && logoUrl.startsWith('data:image')) {
+      try {
+        const blob = await fetch(logoUrl).then(r => r.blob());
+        const file = new File([blob], 'logo.png', { type: 'image/png' });
+        const uploadedUrl = await uploadToServer(file);
+        if (uploadedUrl) {
+          logoUrl = uploadedUrl;
+        } else {
+          showModalMessage('Error', 'Failed to upload logo image');
+          return;
+        }
+      } catch (err) {
+        console.error('Upload error:', err);
+        showModalMessage('Error', 'Failed to upload logo image');
+        return;
+      }
+    }
+  
+    try {
+      const res = await fetch(`${API_URL}/partners`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: partnerFormData.name, logo: logoUrl })
+      });
+    
+      const data = await res.json();
+      if (res.ok) {
+        // إضافة الشريك الجديد مباشرة
+        const newPartner = { 
+          id: data.partner?.id || Date.now().toString(), 
+          name: partnerFormData.name, 
+          logo: logoUrl,
+          _id: data.partner?._id || Date.now().toString()
+        };
+        setPartners(prev => [newPartner, ...prev]);
+      
+        showModalMessage('Success', 'Partner added successfully!');
+        setPartnerFormData({ name: '', logo: '' });
+        setPartnerImagePreview('');
+      } else {
+        showModalMessage('Error', data.error || 'Failed to add partner');
+      }
+    } catch (error) {
+      console.error('Add partner error:', error);
+      showModalMessage('Error', 'Network error. Please try again.');
+    }
   };
 
   const openImageManager = (portfolio) => {
@@ -896,7 +1070,7 @@ function AdminPanel() {
       coverImage: currentPortfolio.coverImage || uploadedUrls[0]
     };
     
-    const res = await fetch(`${API_URL}/portfolio/${currentPortfolio._id || currentPortfolio.id}`, {
+    const res = await fetch(`${API_URL}/portfolio/${currentPortfolio.id || currentPortfolio._id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updatedPortfolio)
@@ -916,7 +1090,7 @@ function AdminPanel() {
     showConfirmModalMessage('Delete this image?', async () => {
       const updatedImages = [...currentPortfolio.images];
       updatedImages.splice(imageIndex, 1);
-      const res = await fetch(`${API_URL}/portfolio/${currentPortfolio._id || currentPortfolio.id}`, {
+      const res = await fetch(`${API_URL}/portfolio/${currentPortfolio.id || currentPortfolio._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...currentPortfolio, images: updatedImages, coverImage: updatedImages[0] || '' })
@@ -936,60 +1110,6 @@ function AdminPanel() {
     setNewImagePreviews([]);
   };
 
-  const handleAddPartner = async (e) => {
-    e.preventDefault();
-    if (!partnerFormData.name || !partnerFormData.logo) {
-      showModalMessage('Error', 'Fill name and logo!');
-      return;
-    }
-    
-    let logoUrl = partnerFormData.logo;
-    if (!logoUrl.startsWith('http')) {
-      const uploadedUrl = await uploadToServer(logoUrl);
-      if (uploadedUrl) logoUrl = uploadedUrl;
-    }
-    
-    const res = await fetch(`${API_URL}/partners`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: partnerFormData.name, logo: logoUrl })
-    });
-    
-    if (res.ok) {
-      showModalMessage('Success', 'Partner added!');
-      setPartnerFormData({ name: '', logo: '' });
-      setPartnerImagePreview('');
-      loadPartners();
-    }
-  };
-
-  const handleAddClient = async (e) => {
-    e.preventDefault();
-    if (!clientFormData.name || !clientFormData.logo) {
-      showModalMessage('Error', 'Fill name and logo!');
-      return;
-    }
-    
-    let logoUrl = clientFormData.logo;
-    if (!logoUrl.startsWith('http')) {
-      const uploadedUrl = await uploadToServer(logoUrl);
-      if (uploadedUrl) logoUrl = uploadedUrl;
-    }
-    
-    const res = await fetch(`${API_URL}/clients`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: clientFormData.name, logo: logoUrl })
-    });
-    
-    if (res.ok) {
-      showModalMessage('Success', 'Client added!');
-      setClientFormData({ name: '', logo: '' });
-      setClientImagePreview('');
-      loadClients();
-    }
-  };
-
   const handleAddService = async (e) => {
     e.preventDefault();
     if (!serviceFormData.title || !serviceFormData.description) {
@@ -1007,6 +1127,8 @@ function AdminPanel() {
       showModalMessage('Success', 'Service added!');
       setServiceFormData({ title: '', description: '' });
       loadServices();
+    } else {
+      showModalMessage('Error', 'Failed to add service');
     }
   };
 
@@ -1020,7 +1142,7 @@ function AdminPanel() {
 
   const handleUpdateService = async (e) => {
     e.preventDefault();
-    const res = await fetch(`${API_URL}/services/${editingService._id || editingService.id}`, {
+    const res = await fetch(`${API_URL}/services/${editingService.id || editingService._id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(editServiceForm)
@@ -1030,6 +1152,8 @@ function AdminPanel() {
       showModalMessage('Success', 'Service updated!');
       setEditingService(null);
       loadServices();
+    } else {
+      showModalMessage('Error', 'Failed to update service');
     }
   };
 
@@ -1117,14 +1241,14 @@ function AdminPanel() {
               <h2>Portfolio ({portfolios.length})</h2>
               <div className="portfolio-admin-grid">
                 {portfolios.map(item => (
-                  <div key={item._id || item.id} className="portfolio-admin-card">
+                  <div key={item.id || item._id} className="portfolio-admin-card">
                     <img src={item.coverImage} alt={item.title} />
                     <div className="info">
                       <h3>{item.title}</h3>
                       <p>{item.category}</p>
                       <p>{item.images?.length || 0} photos</p>
                       <button onClick={() => openImageManager(item)} className="edit-btn">Manage Images</button>
-                      <button onClick={() => handleDeletePortfolio(item._id || item.id)} className="delete-btn">Delete</button>
+                      <button onClick={() => handleDeletePortfolio(item.id || item._id)} className="delete-btn">Delete</button>
                     </div>
                   </div>
                 ))}
@@ -1157,10 +1281,10 @@ function AdminPanel() {
             </div>
             <div className="partner-admin-grid">
               {partners.map(partner => (
-                <div key={partner._id || partner.id} className="partner-admin-card">
+                <div key={partner.id || partner._id} className="partner-admin-card">
                   <img src={partner.logo} alt={partner.name} />
                   <h3>{partner.name}</h3>
-                  <button onClick={() => handleDeletePartner(partner._id || partner.id)} className="delete-btn">Delete</button>
+                  <button onClick={() => handleDeletePartner(partner.id || partner._id)} className="delete-btn">Delete</button>
                 </div>
               ))}
             </div>
@@ -1191,10 +1315,10 @@ function AdminPanel() {
             </div>
             <div className="client-admin-grid">
               {clients.map(client => (
-                <div key={client._id || client.id} className="client-admin-card">
+                <div key={client.id || client._id} className="client-admin-card">
                   <img src={client.logo} alt={client.name} />
                   <h3>{client.name}</h3>
-                  <button onClick={() => handleDeleteClient(client._id || client.id)} className="delete-btn">Delete</button>
+                  <button onClick={() => handleDeleteClient(client.id || client._id)} className="delete-btn">Delete</button>
                 </div>
               ))}
             </div>
@@ -1216,11 +1340,11 @@ function AdminPanel() {
             </div>
             <div className="services-admin-grid">
               {services.map(service => (
-                <div key={service._id || service.id} className="service-admin-card">
+                <div key={service.id || service._id} className="service-admin-card">
                   <h3>{service.title}</h3>
                   <p>{service.description}</p>
                   <button onClick={() => handleEditService(service)} className="edit-btn">Edit</button>
-                  <button onClick={() => handleDeleteService(service._id || service.id)} className="delete-btn">Delete</button>
+                  <button onClick={() => handleDeleteService(service.id || service._id)} className="delete-btn">Delete</button>
                 </div>
               ))}
             </div>
@@ -1230,7 +1354,7 @@ function AdminPanel() {
         {activeTab === 'inquiries' && (
           <div className="inquiries-list">
             {inquiries.map(inquiry => (
-              <div key={inquiry._id || inquiry.id} className="inquiry-card">
+              <div key={inquiry.id || inquiry._id} className="inquiry-card">
                 <p><strong>{inquiry.name}</strong> - {inquiry.email}</p>
                 <p>{inquiry.message}</p>
                 <small>{new Date(inquiry.createdAt).toLocaleString()}</small>
@@ -1354,7 +1478,12 @@ function App() {
   const refreshPortfolios = () => loadPortfolios();
 
   return (
-    <Router>
+    <Router
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <div className="app">
         {showScrollTop && <button onClick={scrollToTop} className="floating-scroll">↑</button>}
         
