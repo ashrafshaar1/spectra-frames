@@ -1,10 +1,18 @@
 import express from 'express';
 import cors from 'cors';
-import mysql from 'mysql2/promise';
-import crypto from 'crypto';
+import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+// تحميل الـ .env من المسار الصحيح
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '.env') });
+
+console.log('🔍 Checking env variables:');
+console.log('SUPABASE_URL:', process.env.SUPABASE_URL ? '✅ Loaded' : '❌ Missing');
+console.log('SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? '✅ Loaded' : '❌ Missing');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -13,27 +21,49 @@ app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
-// MySQL Connection
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'spectraframes',
-  waitForConnections: true,
-  connectionLimit: 10,
-});
+// ========== Supabase Client ==========
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
-function generateId() {
-  return Date.now().toString() + '-' + crypto.randomBytes(4).toString('hex');
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('❌ Missing Supabase credentials! Check your .env file');
+  process.exit(1);
 }
 
-// ========== Upload Image (Base64) ==========
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+console.log('✅ Supabase client initialized');
+
+function generateId() {
+  return Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
+}
+
+// ========== Upload Image to Supabase Storage ==========
 app.post('/api/upload-image', async (req, res) => {
   try {
     const { image } = req.body;
     if (!image) return res.status(400).json({ error: 'No image provided' });
-    res.json({ success: true, url: image });
+    
+    const base64Data = image.split(';base64,').pop();
+    const buffer = Buffer.from(base64Data, 'base64');
+    const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.png`;
+    
+    const { error } = await supabase.storage
+      .from('images')
+      .upload(`public/${fileName}`, buffer, {
+        contentType: 'image/png',
+        cacheControl: '3600'
+      });
+    
+    if (error) throw error;
+    
+    const { data: { publicUrl } } = supabase.storage
+      .from('images')
+      .getPublicUrl(`public/${fileName}`);
+    
+    console.log('✅ Image uploaded:', publicUrl);
+    res.json({ success: true, url: publicUrl });
   } catch (error) {
+    console.error('Upload error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -44,14 +74,49 @@ app.post('/api/upload-multiple', async (req, res) => {
     if (!images || !images.length) {
       return res.status(400).json({ error: 'No images provided' });
     }
-    res.json({ success: true, urls: images });
+    
+    const urls = [];
+    for (const image of images) {
+      const base64Data = image.split(';base64,').pop();
+      const buffer = Buffer.from(base64Data, 'base64');
+      const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.png`;
+      
+      const { error } = await supabase.storage
+        .from('images')
+        .upload(`public/${fileName}`, buffer, {
+          contentType: 'image/png',
+          cacheControl: '3600'
+        });
+      
+      if (!error) {
+        const { data: { publicUrl } } = supabase.storage
+          .from('images')
+          .getPublicUrl(`public/${fileName}`);
+        urls.push(publicUrl);
+      }
+    }
+    
+    res.json({ success: true, urls });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.delete('/api/delete-image', (req, res) => {
-  res.json({ success: true });
+app.delete('/api/delete-image', async (req, res) => {
+  const { url } = req.body;
+  if (!url) return res.status(400).json({ error: 'No URL provided' });
+  
+  try {
+    const path = url.split('/').pop();
+    const { error } = await supabase.storage
+      .from('images')
+      .remove([`public/${path}`]);
+    
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // ========== API Endpoints ==========
@@ -59,12 +124,13 @@ app.delete('/api/delete-image', (req, res) => {
 // Portfolio
 app.get('/api/portfolio', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM portfolios ORDER BY createdAt DESC');
-    const portfolios = rows.map(p => ({
-      ...p,
-      images: p.images ? JSON.parse(p.images) : []
-    }));
-    res.json(portfolios);
+    const { data, error } = await supabase
+      .from('portfolios')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    res.json(data.map(p => ({ ...p, images: p.images || [] })));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -72,9 +138,14 @@ app.get('/api/portfolio', async (req, res) => {
 
 app.get('/api/portfolio/:id', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM portfolios WHERE id = ?', [req.params.id]);
-    if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
-    res.json({ ...rows[0], images: rows[0].images ? JSON.parse(rows[0].images) : [] });
+    const { data, error } = await supabase
+      .from('portfolios')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
+    
+    if (error) throw error;
+    res.json({ ...data, images: data.images || [] });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -84,11 +155,15 @@ app.post('/api/portfolio', async (req, res) => {
   try {
     const { title, category, description, coverImage, images } = req.body;
     const id = generateId();
-    await pool.query(
-      'INSERT INTO portfolios (id, title, category, description, coverImage, images) VALUES (?, ?, ?, ?, ?, ?)',
-      [id, title, category, description || '', coverImage, JSON.stringify(images || [])]
-    );
-    res.json({ success: true, portfolio: { id, title, category, description, coverImage, images } });
+    
+    const { data, error } = await supabase
+      .from('portfolios')
+      .insert([{ id, title, category, description, coverImage, images }])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    res.json({ success: true, portfolio: data });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -97,11 +172,16 @@ app.post('/api/portfolio', async (req, res) => {
 app.put('/api/portfolio/:id', async (req, res) => {
   try {
     const { title, category, description, coverImage, images } = req.body;
-    await pool.query(
-      'UPDATE portfolios SET title = ?, category = ?, description = ?, coverImage = ?, images = ? WHERE id = ?',
-      [title, category, description || '', coverImage, JSON.stringify(images || []), req.params.id]
-    );
-    res.json({ success: true });
+    
+    const { data, error } = await supabase
+      .from('portfolios')
+      .update({ title, category, description, coverImage, images })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    res.json({ success: true, portfolio: data });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -109,7 +189,12 @@ app.put('/api/portfolio/:id', async (req, res) => {
 
 app.delete('/api/portfolio/:id', async (req, res) => {
   try {
-    await pool.query('DELETE FROM portfolios WHERE id = ?', [req.params.id]);
+    const { error } = await supabase
+      .from('portfolios')
+      .delete()
+      .eq('id', req.params.id);
+    
+    if (error) throw error;
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -119,8 +204,13 @@ app.delete('/api/portfolio/:id', async (req, res) => {
 // Clients
 app.get('/api/clients', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM clients ORDER BY createdAt DESC');
-    res.json(rows);
+    const { data, error } = await supabase
+      .from('clients')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -130,9 +220,15 @@ app.post('/api/clients', async (req, res) => {
   try {
     const { name, logo } = req.body;
     const id = generateId();
-    await pool.query('INSERT INTO clients (id, name, logo) VALUES (?, ?, ?)', [id, name, logo]);
-    const newClient = { id, name, logo };
-    res.json({ success: true, client: newClient });
+    
+    const { data, error } = await supabase
+      .from('clients')
+      .insert([{ id, name, logo }])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    res.json({ success: true, client: data });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -140,7 +236,12 @@ app.post('/api/clients', async (req, res) => {
 
 app.delete('/api/clients/:id', async (req, res) => {
   try {
-    await pool.query('DELETE FROM clients WHERE id = ?', [req.params.id]);
+    const { error } = await supabase
+      .from('clients')
+      .delete()
+      .eq('id', req.params.id);
+    
+    if (error) throw error;
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -150,8 +251,13 @@ app.delete('/api/clients/:id', async (req, res) => {
 // Partners
 app.get('/api/partners', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM partners ORDER BY createdAt DESC');
-    res.json(rows);
+    const { data, error } = await supabase
+      .from('partners')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -161,9 +267,15 @@ app.post('/api/partners', async (req, res) => {
   try {
     const { name, logo } = req.body;
     const id = generateId();
-    await pool.query('INSERT INTO partners (id, name, logo) VALUES (?, ?, ?)', [id, name, logo]);
-    const newPartner = { id, name, logo };
-    res.json({ success: true, partner: newPartner });
+    
+    const { data, error } = await supabase
+      .from('partners')
+      .insert([{ id, name, logo }])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    res.json({ success: true, partner: data });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -171,7 +283,12 @@ app.post('/api/partners', async (req, res) => {
 
 app.delete('/api/partners/:id', async (req, res) => {
   try {
-    await pool.query('DELETE FROM partners WHERE id = ?', [req.params.id]);
+    const { error } = await supabase
+      .from('partners')
+      .delete()
+      .eq('id', req.params.id);
+    
+    if (error) throw error;
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -181,8 +298,13 @@ app.delete('/api/partners/:id', async (req, res) => {
 // Services
 app.get('/api/services', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM services ORDER BY `order` ASC');
-    res.json(rows);
+    const { data, error } = await supabase
+      .from('services')
+      .select('*')
+      .order('order', { ascending: true });
+    
+    if (error) throw error;
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -192,11 +314,15 @@ app.post('/api/services', async (req, res) => {
   try {
     const { title, description, order, icon } = req.body;
     const id = generateId();
-    await pool.query(
-      'INSERT INTO services (id, title, description, `order`, icon) VALUES (?, ?, ?, ?, ?)',
-      [id, title, description, order || 0, icon || null]
-    );
-    res.json({ success: true, service: { id, title, description, order, icon } });
+    
+    const { data, error } = await supabase
+      .from('services')
+      .insert([{ id, title, description, order, icon }])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    res.json({ success: true, service: data });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -205,11 +331,16 @@ app.post('/api/services', async (req, res) => {
 app.put('/api/services/:id', async (req, res) => {
   try {
     const { title, description, order, icon } = req.body;
-    await pool.query(
-      'UPDATE services SET title = ?, description = ?, `order` = ?, icon = ? WHERE id = ?',
-      [title, description, order || 0, icon || null, req.params.id]
-    );
-    res.json({ success: true });
+    
+    const { data, error } = await supabase
+      .from('services')
+      .update({ title, description, order, icon })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    res.json({ success: true, service: data });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -217,7 +348,12 @@ app.put('/api/services/:id', async (req, res) => {
 
 app.delete('/api/services/:id', async (req, res) => {
   try {
-    await pool.query('DELETE FROM services WHERE id = ?', [req.params.id]);
+    const { error } = await supabase
+      .from('services')
+      .delete()
+      .eq('id', req.params.id);
+    
+    if (error) throw error;
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -227,8 +363,13 @@ app.delete('/api/services/:id', async (req, res) => {
 // Inquiries
 app.get('/api/inquiries', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM inquiries ORDER BY createdAt DESC');
-    res.json(rows);
+    const { data, error } = await supabase
+      .from('inquiries')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -238,10 +379,14 @@ app.post('/api/inquiries', async (req, res) => {
   try {
     const { name, email, phone, service, message } = req.body;
     const id = generateId();
-    await pool.query(
-      'INSERT INTO inquiries (id, name, email, phone, serviceType, message) VALUES (?, ?, ?, ?, ?, ?)',
-      [id, name, email, phone || '', service || '', message]
-    );
+    
+    const { data, error } = await supabase
+      .from('inquiries')
+      .insert([{ id, name, email, phone, serviceType: service, message }])
+      .select()
+      .single();
+    
+    if (error) throw error;
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -255,135 +400,76 @@ app.delete('/api/delete-all-data', async (req, res) => {
     if (secret !== 'DELETE_ALL_SPECTRA') {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    await pool.query('DELETE FROM portfolios');
-    await pool.query('DELETE FROM clients');
-    await pool.query('DELETE FROM partners');
-    await pool.query('DELETE FROM services');
-    await pool.query('DELETE FROM inquiries');
+    
+    await supabase.from('portfolios').delete().neq('id', '0');
+    await supabase.from('clients').delete().neq('id', '0');
+    await supabase.from('partners').delete().neq('id', '0');
+    await supabase.from('services').delete().neq('id', '0');
+    await supabase.from('inquiries').delete().neq('id', '0');
+    
+    const { data: files } = await supabase.storage.from('images').list('public');
+    if (files && files.length > 0) {
+      await supabase.storage.from('images').remove(files.map(f => `public/${f.name}`));
+    }
+    
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', database: 'mysql', timestamp: new Date().toISOString() });
-});
-
-// Initialize database
-async function initDatabase() {
-  try {
-    const connection = await pool.getConnection();
-    console.log('✅ MySQL Connected');
+// Seed default data
+async function seedDefaultData() {
+  const { data: existing, error } = await supabase.from('portfolios').select('*', { count: 'exact', head: true });
+  
+  if (!existing || existing.length === 0) {
+    console.log('🌱 Seeding default data...');
     
-    await connection.query(`CREATE DATABASE IF NOT EXISTS spectraframes`);
-    await connection.query(`USE spectraframes`);
+    await supabase.from('portfolios').insert([
+      { id: '1', title: 'Wedding Elegance', category: 'Wedding', coverImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600', images: ['https://images.unsplash.com/photo-1519741497674-611481863552?w=600'] },
+      { id: '2', title: 'Urban Stories', category: 'Street', coverImage: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600', images: ['https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600'] },
+      { id: '3', title: 'Natural Beauty', category: 'Landscape', coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600', images: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600'] }
+    ]);
     
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS portfolios (
-        id VARCHAR(50) PRIMARY KEY,
-        title VARCHAR(200) NOT NULL,
-        category VARCHAR(100) NOT NULL,
-        description TEXT,
-        coverImage LONGTEXT NOT NULL,
-        images LONGTEXT,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+    await supabase.from('clients').insert([
+      { id: '1', name: 'Luxury Hotel', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Luxury+Hotel' },
+      { id: '2', name: 'Fashion Brand', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Fashion+Brand' },
+      { id: '3', name: 'Wedding Planner', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Wedding+Planner' }
+    ]);
     
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS clients (
-        id VARCHAR(50) PRIMARY KEY,
-        name VARCHAR(200) NOT NULL,
-        logo LONGTEXT NOT NULL,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+    await supabase.from('partners').insert([
+      { id: '1', name: 'Canon', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Canon' },
+      { id: '2', name: 'Sony', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Sony' },
+      { id: '3', name: 'Adobe', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Adobe' },
+      { id: '4', name: 'Nikon', logo: 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Nikon' }
+    ]);
     
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS partners (
-        id VARCHAR(50) PRIMARY KEY,
-        name VARCHAR(200) NOT NULL,
-        logo LONGTEXT NOT NULL,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+    await supabase.from('services').insert([
+      { id: '1', title: 'Wedding Photography', description: 'Capturing your special day with elegance and emotion', order: 1 },
+      { id: '2', title: 'Portrait Sessions', description: 'Professional portraits and personal branding', order: 2 },
+      { id: '3', title: 'Commercial', description: 'High-end product and corporate photography', order: 3 },
+      { id: '4', title: 'Fine Art', description: 'Artistic and conceptual visual stories', order: 4 },
+      { id: '5', title: 'Event Coverage', description: 'Corporate events and special occasions', order: 5 },
+      { id: '6', title: 'Content Creation', description: 'Social media and marketing content', order: 6 }
+    ]);
     
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS services (
-        id VARCHAR(50) PRIMARY KEY,
-        title VARCHAR(200) NOT NULL,
-        description TEXT NOT NULL,
-        \`order\` INT DEFAULT 0,
-        icon VARCHAR(50) DEFAULT NULL,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS inquiries (
-        id VARCHAR(50) PRIMARY KEY,
-        name VARCHAR(200) NOT NULL,
-        email VARCHAR(200) NOT NULL,
-        phone VARCHAR(50),
-        serviceType VARCHAR(200),
-        message TEXT NOT NULL,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    console.log('✅ Tables created');
-    
-    // Seed default data
-    const [rows] = await connection.query('SELECT COUNT(*) as count FROM portfolios');
-    if (rows[0].count === 0) {
-      console.log('🌱 Seeding default data...');
-      
-      await connection.query(`
-        INSERT INTO portfolios (id, title, category, coverImage, images) VALUES 
-        ('1', 'Wedding Elegance', 'Wedding', 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600', '["https://images.unsplash.com/photo-1519741497674-611481863552?w=600"]'),
-        ('2', 'Urban Stories', 'Street', 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600', '["https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600"]'),
-        ('3', 'Natural Beauty', 'Landscape', 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600', '["https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600"]')
-      `);
-      
-      await connection.query(`
-        INSERT INTO clients (id, name, logo) VALUES 
-        ('1', 'Luxury Hotel', 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Luxury+Hotel'),
-        ('2', 'Fashion Brand', 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Fashion+Brand'),
-        ('3', 'Wedding Planner', 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Wedding+Planner')
-      `);
-      
-      await connection.query(`
-        INSERT INTO partners (id, name, logo) VALUES 
-        ('1', 'Canon', 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Canon'),
-        ('2', 'Sony', 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Sony'),
-        ('3', 'Adobe', 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Adobe'),
-        ('4', 'Nikon', 'https://placehold.co/150x80/D4AF37/1A1A1A?text=Nikon')
-      `);
-      
-      await connection.query(`
-        INSERT INTO services (id, title, description, \`order\`) VALUES 
-        ('1', 'Wedding Photography', 'Capturing your special day with elegance and emotion', 1),
-        ('2', 'Portrait Sessions', 'Professional portraits and personal branding', 2),
-        ('3', 'Commercial', 'High-end product and corporate photography', 3),
-        ('4', 'Fine Art', 'Artistic and conceptual visual stories', 4),
-        ('5', 'Event Coverage', 'Corporate events and special occasions', 5),
-        ('6', 'Content Creation', 'Social media and marketing content', 6)
-      `);
-    }
-    
-    connection.release();
-  } catch (error) {
-    console.error('❌ MySQL Error:', error.message);
-    console.log('💡 Make sure XAMPP is running (Apache + MySQL)');
+    console.log('✅ Default data seeded');
   }
 }
 
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', database: 'supabase', timestamp: new Date().toISOString() });
+});
+
 // Start server
-initDatabase().then(() => {
+async function startServer() {
+  await seedDefaultData();
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 Server running on http://localhost:${PORT}`);
+    console.log(`🗄️ Supabase (PostgreSQL + Storage)`);
     console.log(`✅ Ready!\n`);
   });
-});
+}
+
+startServer();
