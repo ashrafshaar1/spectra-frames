@@ -3,8 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } 
 import './App.css';
 import { FaFacebookF, FaInstagram, FaTiktok, FaWhatsapp, FaUserLock } from 'react-icons/fa';
 
-// API URL - يشتغل على كل الأجهزة في الشبكة
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// API URL - استخدم هذا بدلاً من الشرطية
+const API_URL = 'https://spectra-frames-api.onrender.com/api';
 
 // Admin credentials
 const ADMIN_USERNAME = 'ashrafshaar';
@@ -499,7 +499,7 @@ function AdminPanel() {
     setConfirmId(null);
   };
 
-  // ========== UPLOAD FUNCTIONS (مع Progress Bar) ==========
+  // ========== UPLOAD FUNCTIONS ==========
 
   const uploadToServer = async (file, onProgress) => {
     return new Promise((resolve, reject) => {
@@ -1534,4 +1534,4 @@ function App() {
   );
 }
 
-export default App;x
+export default App;
