@@ -31,46 +31,55 @@ if (!supabaseUrl || !supabaseAnonKey) {
   process.exit(1);
 }
 
-// ✅ الكود الصحيح مع WebSocket للإصدارات الجديدة
 const supabase = createClient(
   supabaseUrl,
   supabaseAnonKey,
   {
-    global: {
-      WebSocket: ws
-    },
-    realtime: {
-      params: {
-        eventsPerSecond: 10
-      }
-    }
+    global: { WebSocket: ws },
+    realtime: { params: { eventsPerSecond: 10 } }
   }
 );
 
 console.log('✅ Supabase client initialized');
 
+// ========== Helper Functions ==========
 function generateId() {
   return Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
 }
 
-// ========== Upload Image to Supabase Storage ==========
+// ========== UPLOAD IMAGE TO SUPABASE STORAGE ==========
 app.post('/api/upload-image', async (req, res) => {
   try {
     const { image } = req.body;
-    if (!image) return res.status(400).json({ error: 'No image provided' });
     
-    const base64Data = image.split(';base64,').pop();
+    if (!image) {
+      console.log('❌ No image provided');
+      return res.status(400).json({ error: 'No image provided' });
+    }
+    
+    console.log('📸 Received image, length:', image.length);
+    
+    let base64Data = image;
+    if (image.includes(';base64,')) {
+      base64Data = image.split(';base64,').pop();
+    }
+    
     const buffer = Buffer.from(base64Data, 'base64');
     const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.png`;
     
-    const { error } = await supabase.storage
+    console.log('📤 Uploading to Supabase Storage:', fileName);
+    
+    const { error: uploadError } = await supabase.storage
       .from('images')
       .upload(`public/${fileName}`, buffer, {
         contentType: 'image/png',
         cacheControl: '3600'
       });
     
-    if (error) throw error;
+    if (uploadError) {
+      console.error('❌ Supabase upload error:', uploadError);
+      return res.status(500).json({ error: uploadError.message });
+    }
     
     const { data: { publicUrl } } = supabase.storage
       .from('images')
@@ -79,7 +88,7 @@ app.post('/api/upload-image', async (req, res) => {
     console.log('✅ Image uploaded:', publicUrl);
     res.json({ success: true, url: publicUrl });
   } catch (error) {
-    console.error('Upload error:', error);
+    console.error('❌ Upload error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -93,7 +102,11 @@ app.post('/api/upload-multiple', async (req, res) => {
     
     const urls = [];
     for (const image of images) {
-      const base64Data = image.split(';base64,').pop();
+      let base64Data = image;
+      if (image.includes(';base64,')) {
+        base64Data = image.split(';base64,').pop();
+      }
+      
       const buffer = Buffer.from(base64Data, 'base64');
       const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.png`;
       
@@ -137,7 +150,7 @@ app.delete('/api/delete-image', async (req, res) => {
 
 // ========== API Endpoints ==========
 
-// Portfolio
+// ===== PORTFOLIO =====
 app.get('/api/portfolio', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -148,6 +161,7 @@ app.get('/api/portfolio', async (req, res) => {
     if (error) throw error;
     res.json(data.map(p => ({ ...p, images: p.images || [] })));
   } catch (error) {
+    console.error('Error fetching portfolios:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -172,15 +186,26 @@ app.post('/api/portfolio', async (req, res) => {
     const { title, category, description, coverImage, images } = req.body;
     const id = generateId();
     
+    console.log('📝 Creating portfolio with ID:', id);
+    
     const { data, error } = await supabase
       .from('portfolios')
-      .insert([{ id, title, category, description, coverImage, images }])
+      .insert([{ 
+        id, 
+        title, 
+        category, 
+        description, 
+        coverimage: coverImage,  // اسم العمود الصحيح في Supabase
+        images 
+      }])
       .select()
       .single();
     
     if (error) throw error;
+    console.log('✅ Portfolio created:', data);
     res.json({ success: true, portfolio: data });
   } catch (error) {
+    console.error('Error creating portfolio:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -191,7 +216,13 @@ app.put('/api/portfolio/:id', async (req, res) => {
     
     const { data, error } = await supabase
       .from('portfolios')
-      .update({ title, category, description, coverImage, images })
+      .update({ 
+        title, 
+        category, 
+        description, 
+        coverimage: coverImage,
+        images 
+      })
       .eq('id', req.params.id)
       .select()
       .single();
@@ -217,7 +248,7 @@ app.delete('/api/portfolio/:id', async (req, res) => {
   }
 });
 
-// Clients
+// ===== CLIENTS =====
 app.get('/api/clients', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -228,6 +259,7 @@ app.get('/api/clients', async (req, res) => {
     if (error) throw error;
     res.json(data);
   } catch (error) {
+    console.error('Error fetching clients:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -237,6 +269,8 @@ app.post('/api/clients', async (req, res) => {
     const { name, logo } = req.body;
     const id = generateId();
     
+    console.log('📝 Creating client:', { id, name });
+    
     const { data, error } = await supabase
       .from('clients')
       .insert([{ id, name, logo }])
@@ -244,8 +278,10 @@ app.post('/api/clients', async (req, res) => {
       .single();
     
     if (error) throw error;
+    console.log('✅ Client created:', data);
     res.json({ success: true, client: data });
   } catch (error) {
+    console.error('Error creating client:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -264,7 +300,7 @@ app.delete('/api/clients/:id', async (req, res) => {
   }
 });
 
-// Partners
+// ===== PARTNERS =====
 app.get('/api/partners', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -275,6 +311,7 @@ app.get('/api/partners', async (req, res) => {
     if (error) throw error;
     res.json(data);
   } catch (error) {
+    console.error('Error fetching partners:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -284,6 +321,8 @@ app.post('/api/partners', async (req, res) => {
     const { name, logo } = req.body;
     const id = generateId();
     
+    console.log('📝 Creating partner:', { id, name });
+    
     const { data, error } = await supabase
       .from('partners')
       .insert([{ id, name, logo }])
@@ -291,8 +330,10 @@ app.post('/api/partners', async (req, res) => {
       .single();
     
     if (error) throw error;
+    console.log('✅ Partner created:', data);
     res.json({ success: true, partner: data });
   } catch (error) {
+    console.error('Error creating partner:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -311,7 +352,7 @@ app.delete('/api/partners/:id', async (req, res) => {
   }
 });
 
-// Services
+// ===== SERVICES =====
 app.get('/api/services', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -322,6 +363,7 @@ app.get('/api/services', async (req, res) => {
     if (error) throw error;
     res.json(data);
   } catch (error) {
+    console.error('Error fetching services:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -331,6 +373,8 @@ app.post('/api/services', async (req, res) => {
     const { title, description, order, icon } = req.body;
     const id = generateId();
     
+    console.log('📝 Creating service:', { id, title });
+    
     const { data, error } = await supabase
       .from('services')
       .insert([{ id, title, description, order, icon }])
@@ -338,8 +382,10 @@ app.post('/api/services', async (req, res) => {
       .single();
     
     if (error) throw error;
+    console.log('✅ Service created:', data);
     res.json({ success: true, service: data });
   } catch (error) {
+    console.error('Error creating service:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -376,7 +422,7 @@ app.delete('/api/services/:id', async (req, res) => {
   }
 });
 
-// Inquiries
+// ===== INQUIRIES =====
 app.get('/api/inquiries', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -387,6 +433,7 @@ app.get('/api/inquiries', async (req, res) => {
     if (error) throw error;
     res.json(data);
   } catch (error) {
+    console.error('Error fetching inquiries:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -405,11 +452,12 @@ app.post('/api/inquiries', async (req, res) => {
     if (error) throw error;
     res.json({ success: true });
   } catch (error) {
+    console.error('Error creating inquiry:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Delete all data
+// ===== DELETE ALL DATA =====
 app.delete('/api/delete-all-data', async (req, res) => {
   try {
     const { secret } = req.query;
@@ -428,23 +476,25 @@ app.delete('/api/delete-all-data', async (req, res) => {
       await supabase.storage.from('images').remove(files.map(f => `public/${f.name}`));
     }
     
+    console.log('🗑️ All data deleted');
     res.json({ success: true });
   } catch (error) {
+    console.error('Error deleting all data:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Seed default data
+// ===== SEED DEFAULT DATA =====
 async function seedDefaultData() {
-  const { data: existing, error } = await supabase.from('portfolios').select('*', { count: 'exact', head: true });
+  const { data: existing } = await supabase.from('portfolios').select('*', { count: 'exact', head: true });
   
   if (!existing || existing.length === 0) {
     console.log('🌱 Seeding default data...');
     
     await supabase.from('portfolios').insert([
-      { id: '1', title: 'Wedding Elegance', category: 'Wedding', coverImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600', images: ['https://images.unsplash.com/photo-1519741497674-611481863552?w=600'] },
-      { id: '2', title: 'Urban Stories', category: 'Street', coverImage: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600', images: ['https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600'] },
-      { id: '3', title: 'Natural Beauty', category: 'Landscape', coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600', images: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600'] }
+      { id: '1', title: 'Wedding Elegance', category: 'Wedding', coverimage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600', images: ['https://images.unsplash.com/photo-1519741497674-611481863552?w=600'] },
+      { id: '2', title: 'Urban Stories', category: 'Street', coverimage: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600', images: ['https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600'] },
+      { id: '3', title: 'Natural Beauty', category: 'Landscape', coverimage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600', images: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600'] }
     ]);
     
     await supabase.from('clients').insert([
@@ -461,24 +511,24 @@ async function seedDefaultData() {
     ]);
     
     await supabase.from('services').insert([
-      { id: '1', title: 'Wedding Photography', description: 'Capturing your special day with elegance and emotion', order: 1 },
-      { id: '2', title: 'Portrait Sessions', description: 'Professional portraits and personal branding', order: 2 },
-      { id: '3', title: 'Commercial', description: 'High-end product and corporate photography', order: 3 },
-      { id: '4', title: 'Fine Art', description: 'Artistic and conceptual visual stories', order: 4 },
-      { id: '5', title: 'Event Coverage', description: 'Corporate events and special occasions', order: 5 },
-      { id: '6', title: 'Content Creation', description: 'Social media and marketing content', order: 6 }
+      { id: '1', title: 'Wedding Photography', description: 'Capturing your special day', order: 1 },
+      { id: '2', title: 'Portrait Sessions', description: 'Professional portraits', order: 2 },
+      { id: '3', title: 'Commercial', description: 'High-end product photography', order: 3 },
+      { id: '4', title: 'Fine Art', description: 'Artistic visual stories', order: 4 },
+      { id: '5', title: 'Event Coverage', description: 'Corporate events', order: 5 },
+      { id: '6', title: 'Content Creation', description: 'Social media content', order: 6 }
     ]);
     
     console.log('✅ Default data seeded');
   }
 }
 
-// Health check
+// ===== HEALTH CHECK =====
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', database: 'supabase', timestamp: new Date().toISOString() });
 });
 
-// Start server
+// ===== START SERVER =====
 async function startServer() {
   await seedDefaultData();
   app.listen(PORT, '0.0.0.0', () => {
