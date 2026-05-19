@@ -295,7 +295,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
                 <div className="portfolio-card">
                   <div className="portfolio-img">
                     <PortfolioImage 
-                      src={item.coverImage || item.images?.[0]} 
+                      src={item.coverimage || item.coverImage || item.images?.[0]} 
                       alt={item.title} 
                       className="portfolio-img-img"
                     />
@@ -398,7 +398,7 @@ function PortfolioDetail() {
   if (error) return <div className="loading">Error: {error}</div>;
   if (!item) return <div className="loading">Not found</div>;
 
-  const images = item.images || (item.coverImage ? [item.coverImage] : []);
+  const images = item.images || (item.coverimage || item.coverImage ? [item.coverimage || item.coverImage] : []);
 
   return (
     <div className="portfolio-detail">
@@ -501,21 +501,24 @@ function AdminPanel() {
     setConfirmId(null);
   };
 
-  // ========== UPLOAD FUNCTIONS ==========
-  
+  // ========== UPLOAD FUNCTIONS (مع Progress Bar) ==========
+
   const uploadToServer = async (file, onProgress) => {
-    try {
-      const formData = new FormData();
-      formData.append('image', file);
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
       
-      return new Promise((resolve, reject) => {
+      reader.onloadend = async () => {
+        const base64Image = reader.result;
+        
         const xhr = new XMLHttpRequest();
         xhr.open('POST', `${API_URL}/upload-image`);
+        xhr.setRequestHeader('Content-Type', 'application/json');
         
         if (onProgress) {
           xhr.upload.addEventListener('progress', (e) => {
             if (e.lengthComputable) {
-              onProgress(Math.round((e.loaded / e.total) * 100));
+              const percentComplete = Math.round((e.loaded / e.total) * 100);
+              onProgress(percentComplete);
             }
           });
         }
@@ -530,12 +533,12 @@ function AdminPanel() {
         };
         
         xhr.onerror = () => reject(new Error('Network error'));
-        xhr.send(formData);
-      });
-    } catch (error) {
-      console.error('Upload error:', error);
-      return null;
-    }
+        xhr.send(JSON.stringify({ image: base64Image }));
+      };
+      
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleMultipleImageUpload = async (e) => {
@@ -564,6 +567,7 @@ function AdminPanel() {
         }
       } catch (err) {
         console.error('Error uploading:', file.name, err);
+        showModalMessage('Error', `Failed to upload ${file.name}`);
       }
     }
     
@@ -608,7 +612,9 @@ function AdminPanel() {
       setUploadProgress(0);
       
       try {
-        const url = await uploadToServer(file, (progress) => setUploadProgress(progress));
+        const url = await uploadToServer(file, (progress) => {
+          setUploadProgress(progress);
+        });
         if (url) {
           newImages.push(url);
           newPreviews.push(url);
@@ -650,7 +656,9 @@ function AdminPanel() {
     setUploadProgress(0);
     
     try {
-      const url = await uploadToServer(file, (progress) => setUploadProgress(progress));
+      const url = await uploadToServer(file, (progress) => {
+        setUploadProgress(progress);
+      });
       if (url) {
         setPartnerImagePreview(url);
         setPartnerFormData({ ...partnerFormData, logo: url });
@@ -677,7 +685,9 @@ function AdminPanel() {
     setUploadProgress(0);
     
     try {
-      const url = await uploadToServer(file, (progress) => setUploadProgress(progress));
+      const url = await uploadToServer(file, (progress) => {
+        setUploadProgress(progress);
+      });
       if (url) {
         setClientImagePreview(url);
         setClientFormData({ ...clientFormData, logo: url });
@@ -923,17 +933,18 @@ function AdminPanel() {
     }, null);
   };
 
-  // ========== FIXED: Add Client ==========
+  // Add Client and Partner functions
   const handleAddClient = async (e) => {
     e.preventDefault();
     if (!clientFormData.name || !clientFormData.logo) {
       showModalMessage('Error', 'Please fill name and logo!');
       return;
     }
-  
+    
     let logoUrl = clientFormData.logo;
-  
+    
     if (logoUrl && logoUrl.startsWith('data:image')) {
+      setUploading(true);
       try {
         const blob = await fetch(logoUrl).then(r => r.blob());
         const file = new File([blob], 'logo.png', { type: 'image/png' });
@@ -942,25 +953,27 @@ function AdminPanel() {
           logoUrl = uploadedUrl;
         } else {
           showModalMessage('Error', 'Failed to upload logo image');
+          setUploading(false);
           return;
         }
       } catch (err) {
         console.error('Upload error:', err);
         showModalMessage('Error', 'Failed to upload logo image');
+        setUploading(false);
         return;
       }
+      setUploading(false);
     }
-  
+    
     try {
       const res = await fetch(`${API_URL}/clients`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: clientFormData.name, logo: logoUrl })
       });
-    
+      
       const data = await res.json();
       if (res.ok) {
-        // إضافة العميل الجديد مباشرة
         const newClient = { 
           id: data.client?.id || Date.now().toString(), 
           name: clientFormData.name, 
@@ -968,7 +981,7 @@ function AdminPanel() {
           _id: data.client?._id || Date.now().toString()
         };
         setClients(prev => [newClient, ...prev]);
-      
+        
         showModalMessage('Success', 'Client added successfully!');
         setClientFormData({ name: '', logo: '' });
         setClientImagePreview('');
@@ -981,17 +994,17 @@ function AdminPanel() {
     }
   };
 
-  // ========== FIXED: Add Partner ==========
   const handleAddPartner = async (e) => {
     e.preventDefault();
     if (!partnerFormData.name || !partnerFormData.logo) {
       showModalMessage('Error', 'Please fill name and logo!');
       return;
     }
-  
+    
     let logoUrl = partnerFormData.logo;
-  
+    
     if (logoUrl && logoUrl.startsWith('data:image')) {
+      setUploading(true);
       try {
         const blob = await fetch(logoUrl).then(r => r.blob());
         const file = new File([blob], 'logo.png', { type: 'image/png' });
@@ -1000,25 +1013,27 @@ function AdminPanel() {
           logoUrl = uploadedUrl;
         } else {
           showModalMessage('Error', 'Failed to upload logo image');
+          setUploading(false);
           return;
         }
       } catch (err) {
         console.error('Upload error:', err);
         showModalMessage('Error', 'Failed to upload logo image');
+        setUploading(false);
         return;
       }
+      setUploading(false);
     }
-  
+    
     try {
       const res = await fetch(`${API_URL}/partners`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: partnerFormData.name, logo: logoUrl })
       });
-    
+      
       const data = await res.json();
       if (res.ok) {
-        // إضافة الشريك الجديد مباشرة
         const newPartner = { 
           id: data.partner?.id || Date.now().toString(), 
           name: partnerFormData.name, 
@@ -1026,7 +1041,7 @@ function AdminPanel() {
           _id: data.partner?._id || Date.now().toString()
         };
         setPartners(prev => [newPartner, ...prev]);
-      
+        
         showModalMessage('Success', 'Partner added successfully!');
         setPartnerFormData({ name: '', logo: '' });
         setPartnerImagePreview('');
@@ -1067,7 +1082,7 @@ function AdminPanel() {
     const updatedPortfolio = {
       ...currentPortfolio,
       images: [...currentPortfolio.images, ...uploadedUrls],
-      coverImage: currentPortfolio.coverImage || uploadedUrls[0]
+      coverImage: currentPortfolio.coverimage || currentPortfolio.coverImage || uploadedUrls[0]
     };
     
     const res = await fetch(`${API_URL}/portfolio/${currentPortfolio.id || currentPortfolio._id}`, {
@@ -1242,7 +1257,7 @@ function AdminPanel() {
               <div className="portfolio-admin-grid">
                 {portfolios.map(item => (
                   <div key={item.id || item._id} className="portfolio-admin-card">
-                    <img src={item.coverImage} alt={item.title} />
+                    <img src={item.coverimage || item.coverImage} alt={item.title} />
                     <div className="info">
                       <h3>{item.title}</h3>
                       <p>{item.category}</p>
