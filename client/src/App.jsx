@@ -244,7 +244,6 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
             </div>
             <div className="clients-slider">
               <div className="clients-track">
-                {/* Double the content for infinite smooth loop */}
                 {[...clients, ...clients].map((client, idx) => (
                   <div key={`${client.id || client._id}-${idx}`} className="client-card">
                     <div className="client-logo-img">
@@ -268,7 +267,6 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
             </div>
             <div className="partners-slider">
               <div className="partners-track">
-                {/* Double the content for infinite smooth loop */}
                 {[...partners, ...partners].map((partner, idx) => (
                   <div key={`${partner.id || partner._id}-${idx}`} className="partner-card">
                     <div className="partner-logo-img">
@@ -933,7 +931,6 @@ function AdminPanel() {
     }, null);
   };
 
-  // Add Client and Partner functions
   const handleAddClient = async (e) => {
     e.preventDefault();
     if (!clientFormData.name || !clientFormData.logo) {
