@@ -262,7 +262,7 @@ html {
 }
 
 /* ============================================
-   CLIENTS & PARTNERS - SQUARE BOXES
+   CLIENTS & PARTNERS - SCROLL RIGHT TO LEFT
    ============================================ */
 .clients-section,
 .partners-section {
@@ -284,7 +284,7 @@ html {
   display: flex;
   gap: 30px;
   width: fit-content;
-  animation: scrollAuto 11s linear infinite;
+  animation: scrollRightToLeft 11s linear infinite;
   align-items: center;
 }
 
@@ -300,9 +300,13 @@ html {
   border: none;
 }
 
-@keyframes scrollAuto {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+@keyframes scrollRightToLeft {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 .clients-section:hover .clients-track,
@@ -369,14 +373,14 @@ html {
   .client-card, .partner-card { min-width: 140px; width: 140px; }
   .client-logo-img, .partner-logo-img { width: 80px; height: 80px; }
   .client-name, .partner-name { font-size: 11px; }
-  .clients-track, .partners-track { animation: scrollAuto 7s linear infinite; gap: 20px; }
+  .clients-track, .partners-track { animation: scrollRightToLeft 7s linear infinite; gap: 20px; }
 }
 
 @media (max-width: 576px) {
   .client-card, .partner-card { min-width: 120px; width: 120px; }
   .client-logo-img, .partner-logo-img { width: 70px; height: 70px; }
   .client-name, .partner-name { font-size: 10px; }
-  .clients-track, .partners-track { animation: scrollAuto 5s linear infinite; gap: 15px; }
+  .clients-track, .partners-track { animation: scrollRightToLeft 5s linear infinite; gap: 15px; }
 }
 
 @media (max-width: 480px) {
@@ -1000,7 +1004,6 @@ html {
 /* ============================================
    ADMIN LOGIN - FULL PAGE CENTERED
    ============================================ */
-
 .admin-login {
   min-height: 100vh;
   width: 100%;
@@ -1176,7 +1179,6 @@ html {
 }
 
 .tab-btn:hover { color: #D4AF37; }
-
 .tab-btn.active {
   background: rgba(212, 175, 55, 0.2);
   color: #D4AF37;
@@ -1250,7 +1252,6 @@ html {
 }
 
 .url-input-group .form-input { flex: 1; }
-
 .url-input-group .btn-secondary {
   padding: 12px 20px;
   background: rgba(212, 175, 55, 0.15);
@@ -1428,7 +1429,6 @@ html {
   margin: 10px 0;
 }
 
-/* Buttons inside portfolio card */
 .edit-btn {
   background: rgba(212, 175, 55, 0.85);
   color: #1A1A1A;
@@ -1463,7 +1463,7 @@ html {
   transform: translateY(-2px);
 }
 
-/* Clients & Partners Admin Grids - Modern Cards */
+/* Clients & Partners Admin Grids */
 .client-admin-grid,
 .partner-admin-grid {
   display: grid;
@@ -1537,7 +1537,7 @@ html {
   transform: translateY(-2px);
 }
 
-/* Delete All Button - Same size as delete button */
+/* Delete All Button */
 .admin-form > div:first-child {
   display: flex;
   justify-content: space-between;
