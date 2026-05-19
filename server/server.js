@@ -31,15 +31,21 @@ if (!supabaseUrl || !supabaseAnonKey) {
   process.exit(1);
 }
 
-// Create Supabase client with WebSocket support for Node.js
-const supabase = createClient(supabase_Url, supabase_Anon_Key, {
-  realtime: {
-    params: {
-      eventsPerSecond: 10
+// ✅ الكود الصحيح مع WebSocket للإصدارات الجديدة
+const supabase = createClient(
+  supabaseUrl,
+  supabaseAnonKey,
+  {
+    global: {
+      WebSocket: ws
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 10
+      }
     }
-  },
-  transport: ws  // مهم لـ Node.js 20
-});
+  }
+);
 
 console.log('✅ Supabase client initialized');
 
