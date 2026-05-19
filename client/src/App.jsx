@@ -4,9 +4,7 @@ import './App.css';
 import { FaFacebookF, FaInstagram, FaTiktok, FaWhatsapp, FaUserLock } from 'react-icons/fa';
 
 // API URL - يشتغل على كل الأجهزة في الشبكة
-const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:3001/api'
-  : `http://${window.location.hostname}:3001/api`;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 // Admin credentials
 const ADMIN_USERNAME = 'ashrafshaar';
@@ -1536,4 +1534,4 @@ function App() {
   );
 }
 
-export default App;
+export default App;x
