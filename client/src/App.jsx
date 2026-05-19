@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } 
 import './App.css';
 import { FaFacebookF, FaInstagram, FaTiktok, FaWhatsapp, FaUserLock } from 'react-icons/fa';
 
-// API URL - استخدم هذا بدلاً من الشرطية
+// API URL - Production
 const API_URL = 'https://spectra-frames-api.onrender.com/api';
 
 // Admin credentials
@@ -244,8 +244,9 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
             </div>
             <div className="clients-slider">
               <div className="clients-track">
-                {clients.map((client) => (
-                  <div key={client.id || client._id} className="client-card">
+                {/* Double the content for infinite smooth loop */}
+                {[...clients, ...clients].map((client, idx) => (
+                  <div key={`${client.id || client._id}-${idx}`} className="client-card">
                     <div className="client-logo-img">
                       <LogoImage src={client.logo} alt={client.name} className="client-logo-img" />
                     </div>
@@ -267,8 +268,9 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
             </div>
             <div className="partners-slider">
               <div className="partners-track">
-                {partners.map((partner) => (
-                  <div key={partner.id || partner._id} className="partner-card">
+                {/* Double the content for infinite smooth loop */}
+                {[...partners, ...partners].map((partner, idx) => (
+                  <div key={`${partner.id || partner._id}-${idx}`} className="partner-card">
                     <div className="partner-logo-img">
                       <LogoImage src={partner.logo} alt={partner.name} className="partner-logo-img" />
                     </div>
