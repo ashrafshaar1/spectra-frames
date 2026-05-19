@@ -32,7 +32,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Create Supabase client with WebSocket support for Node.js
-const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+const supabase = createClient(supabase_Url, supabase_Anon_Key, {
   realtime: {
     params: {
       eventsPerSecond: 10
