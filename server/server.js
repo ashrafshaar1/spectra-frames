@@ -195,7 +195,7 @@ app.post('/api/portfolio', async (req, res) => {
         title, 
         category, 
         description, 
-        coverimage: coverImage,  // اسم العمود الصحيح في Supabase
+        coverimage: coverImage,
         images 
       }])
       .select()
