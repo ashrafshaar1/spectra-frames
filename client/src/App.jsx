@@ -2,6 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
 import './App.css';
 import { FaFacebookF, FaInstagram, FaTiktok, FaWhatsapp, FaUserLock } from 'react-icons/fa';
+import emailjs from '@emailjs/browser';
+
+// EmailJS configuration
+const EMAILJS_SERVICE_ID = 'service_qhrwy34';
+const EMAILJS_TEMPLATE_ID = 'template_0yx6nqj';
+const EMAILJS_PUBLIC_KEY = 'rbiW7auqOWJEo7b20';
 
 // API URL - Production
 const API_URL = 'https://spectra-frames-api.onrender.com/api';
@@ -197,13 +203,24 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
     setFormStatus('sending');
     
     try {
-      const response = await fetch(`${API_URL}/inquiries`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
+      // Send email via EmailJS
+      const templateParams = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        service: formData.service,
+        message: formData.message,
+        to_email: 'spectraframes.00@gmail.com'
+      };
       
-      if (response.ok) {
+      const result = await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        templateParams,
+        EMAILJS_PUBLIC_KEY
+      );
+      
+      if (result.status === 200) {
         setFormStatus('success');
         setFormData({ name: '', email: '', phone: '', service: 'Wedding Photography', message: '' });
         setTimeout(() => setFormStatus(''), 5000);
@@ -212,6 +229,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
         setTimeout(() => setFormStatus(''), 5000);
       }
     } catch (error) {
+      console.error('EmailJS error:', error);
       setFormStatus('error');
       setTimeout(() => setFormStatus(''), 5000);
     }
@@ -337,8 +355,8 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
           </div>
           <div className="contact-wrapper">
             <form className="contact-form" onSubmit={handleSubmit}>
-              {formStatus === 'success' && <div className="form-success">Message sent successfully!</div>}
-              {formStatus === 'error' && <div className="form-error">Something went wrong.</div>}
+              {formStatus === 'success' && <div className="form-success">Message sent successfully! We'll contact you soon.</div>}
+              {formStatus === 'error' && <div className="form-error">Something went wrong. Please try again later.</div>}
               {formStatus === 'sending' && <div className="form-sending">Sending...</div>}
               <input type="text" name="name" placeholder="Your Name" value={formData.name} onChange={handleChange} required className="form-input" />
               <input type="email" name="email" placeholder="Your Email" value={formData.email} onChange={handleChange} required className="form-input" />
@@ -1467,6 +1485,11 @@ function AdminPanel() {
 function App() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [portfolios, setPortfolios] = useState([]);
+
+  // Initialize EmailJS
+  useEffect(() => {
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+  }, []);
 
   const loadPortfolios = async () => {
     try {
