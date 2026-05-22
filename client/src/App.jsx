@@ -104,8 +104,8 @@ function GalleryModal({ images, currentIndex, onClose, onNext, onPrev }) {
   );
 }
 
-// Loading Screen Component (without spinner)
-function LoadingScreen({ onComplete }) {
+// Loading Screen Component
+function LoadingScreen({ onComplete, logoSrc }) {
   useEffect(() => {
     const timer = setTimeout(() => { onComplete(); }, 2000);
     return () => clearTimeout(timer);
@@ -113,7 +113,7 @@ function LoadingScreen({ onComplete }) {
   return (
     <div className="loading-screen">
       <div className="loader">
-        <img src="/logo.png" alt="Spectra Frames" className="loader-logo-img" />
+        <img src={logoSrc} alt="Spectra Frames" className="loader-logo-img" />
       </div>
     </div>
   );
@@ -201,7 +201,7 @@ function PackagesPage({ packagesData, t }) {
 }
 
 // Home Page Component
-function HomePage({ scrollToSection, portfolios, refreshPortfolios, t, packagesData }) {
+function HomePage({ scrollToSection, portfolios, refreshPortfolios, t, packagesData, logoSrc }) {
   const [services, setServices] = useState([]);
   const [clients, setClients] = useState([]);
   const [partners, setPartners] = useState([]);
@@ -274,7 +274,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios, t, packagesD
         <div className="container">
           <div className="hero-content-centered">
             <div className="logo-centered">
-              <img src="/logo.png" alt="Spectra Frames Logo" className="logo-centered-img"
+              <img src={logoSrc} alt="Spectra Frames Logo" className="logo-centered-img"
                 onError={(e) => { e.target.style.display = 'none'; if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; }} />
               <div className="logo-centered-fallback">SF</div>
             </div>
@@ -517,7 +517,7 @@ function PortfolioDetail() {
 }
 
 // Admin Panel Component
-function AdminPanel({ packagesData, setPackagesData, t }) {
+function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
   const [portfolios, setPortfolios] = useState([]);
   const [partners, setPartners] = useState([]);
   const [clients, setClients] = useState([]);
@@ -1311,10 +1311,11 @@ function AdminPanel({ packagesData, setPackagesData, t }) {
 
   if (!isLoggedIn) {
     return (
-      <div className="admin-login">
-        <div className="container">
+      <div className="admin-login-page">
+        <div className="admin-login-container">
           <div className="login-box">
             <button className="back-to-home" onClick={() => navigate('/')}>← {t.pricing.backToHome}</button>
+            <img src={logoSrc} alt="Logo" className="login-logo" />
             <h2>{t.admin.loginTitle}</h2>
             <form onSubmit={handleLogin}>
               <input type="text" placeholder={t.admin.username} value={username} onChange={(e) => setUsername(e.target.value)} className="form-input" required />
@@ -1723,6 +1724,9 @@ function App() {
     photo: []
   });
   const t = translations[lang];
+  
+  // Logo based on theme
+  const logoSrc = darkMode ? '/logo-dark.png' : '/logo-light.png';
 
   useEffect(() => {
     emailjs.init(EMAILJS_PUBLIC_KEY);
@@ -1774,7 +1778,7 @@ function App() {
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <div className="app">
-        {loading && <LoadingScreen onComplete={() => setLoading(false)} />}
+        {loading && <LoadingScreen onComplete={() => setLoading(false)} logoSrc={logoSrc} />}
         
         <button className={`floating-scroll ${showScrollTop ? 'visible' : ''}`} onClick={scrollToTop}>↑</button>
         
@@ -1804,10 +1808,10 @@ function App() {
         </div>
         
         <Routes>
-          <Route path="/" element={<HomePage scrollToSection={scrollToSection} portfolios={portfolios} refreshPortfolios={refreshPortfolios} t={t} packagesData={packagesData} />} />
+          <Route path="/" element={<HomePage scrollToSection={scrollToSection} portfolios={portfolios} refreshPortfolios={refreshPortfolios} t={t} packagesData={packagesData} logoSrc={logoSrc} />} />
           <Route path="/portfolio/:id" element={<PortfolioDetail />} />
           <Route path="/packages" element={<PackagesPage packagesData={packagesData} t={t} />} />
-          <Route path="/admin" element={<AdminPanel packagesData={packagesData} setPackagesData={setPackagesData} t={t} />} />
+          <Route path="/admin" element={<AdminPanel packagesData={packagesData} setPackagesData={setPackagesData} t={t} logoSrc={logoSrc} />} />
         </Routes>
         
         <footer className="footer">

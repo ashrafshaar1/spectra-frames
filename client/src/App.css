@@ -3299,3 +3299,130 @@ body.light-mode .image-preview img {
   border-color: #D4AF37;
   background: #E8DED0;
 }
+
+/* ============================================
+   ADMIN LOGIN PAGE - FULLSCREEN
+   ============================================ */
+.admin-login-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100vh;
+  background: radial-gradient(ellipse at center, #1A1A1A 0%, #0a0a0a 100%);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.light-mode .admin-login-page {
+  background: radial-gradient(ellipse at center, #F5F0E8 0%, #E8DED0 100%);
+}
+
+.admin-login-container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.login-logo {
+  width: 120px;
+  height: auto;
+  margin-bottom: 25px;
+}
+
+.login-box {
+  background: rgba(37, 37, 37, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 35px 30px;
+  border-radius: 20px;
+  text-align: center;
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+body.light-mode .login-box {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(212, 175, 55, 0.4);
+}
+
+.login-box h2 {
+  color: #D4AF37;
+  margin-bottom: 25px;
+  font-family: 'Cinzel', serif;
+  font-size: 24px;
+  letter-spacing: 2px;
+}
+
+body.light-mode .login-box h2 {
+  color: #B8860B;
+}
+
+.login-box .form-input {
+  width: 100%;
+  margin-bottom: 15px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: rgba(26, 26, 26, 0.8);
+  color: #F2F2F2;
+  font-size: 14px;
+}
+
+body.light-mode .login-box .form-input {
+  background: #F5F0E8;
+  color: #1C1C1C;
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
+.login-box .btn-primary {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  background: linear-gradient(135deg, #D4AF37, #B8860B);
+  border: none;
+  border-radius: 10px;
+  color: #1A1A1A;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+}
+
+.login-box .form-error {
+  margin-bottom: 15px;
+  font-size: 13px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .login-box {
+    padding: 25px 20px;
+    max-width: 320px;
+  }
+  .login-logo {
+    width: 100px;
+    margin-bottom: 20px;
+  }
+  .login-box h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+  .login-box .form-input {
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    font-size: 13px;
+  }
+  .login-box .btn-primary {
+    padding: 8px;
+    font-size: 14px;
+  }
+}
