@@ -1,4 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
 * {
   margin: 0;
@@ -9,7 +11,7 @@
 body {
   background-color: #1A1A1A;
   color: #F2F2F2;
-  font-family: 'Cinzel', 'Segoe UI', serif;
+  font-family: 'Inter', 'Segoe UI', sans-serif;  /* الخط الأساسي للصفحة كلها */
   overflow-x: hidden;
 }
 
@@ -26,6 +28,37 @@ html {
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 24px;
+}
+
+/* ============================================
+   SECTION TITLES - CINZEL فقط
+   ============================================ */
+.section-title {
+  font-size: 48px;
+  background: linear-gradient(135deg, #D4AF37 0%, #FFF5C4 50%, #D4AF37 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 15px;
+  font-family: 'Cinzel', serif;  /* فقط للعناوين */
+  letter-spacing: 3px;
+  position: relative;
+  display: inline-block;
+}
+
+.section-subtitle {
+  color: #D4AF37;
+  font-size: 18px;
+  opacity: 0.8;
+  letter-spacing: 1px;
+  font-family: 'Inter', sans-serif;  /* Inter للتوضيح */
+}
+
+/* ============================================
+   HEADINGS (غير العناوين الرئيسية)
+   ============================================ */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', sans-serif;
 }
 
 /* ============================================
@@ -214,7 +247,7 @@ html {
   cursor: pointer;
   border-radius: 50px;
   transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-  font-family: 'Cinzel', serif;
+  font-family: 'Inter', sans-serif;
   color: #1A1A1A;
   position: relative;
   overflow: hidden;
@@ -251,7 +284,7 @@ html {
   cursor: pointer;
   border-radius: 50px;
   transition: all 0.4s ease;
-  font-family: 'Cinzel', serif;
+  font-family: 'Inter', sans-serif;
 }
 
 .btn-secondary:hover {
@@ -385,6 +418,7 @@ html {
   letter-spacing: 1px;
   text-align: center;
   word-break: break-word;
+  font-family: 'Inter', sans-serif;
 }
 
 /* Responsive */
@@ -521,6 +555,7 @@ html {
   font-size: 18px;
   opacity: 0.8;
   letter-spacing: 1px;
+  font-family: 'Inter', sans-serif;
 }
 
 @media (max-width: 768px) {
@@ -614,13 +649,15 @@ html {
   margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 2px;
+  font-family: 'Inter', sans-serif;
 }
 
 .portfolio-title {
   color: #F2F2F2;
   font-size: 22px;
   margin-bottom: 10px;
-  font-family: 'Cinzel', serif;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
 }
 
 .portfolio-photos-count {
@@ -632,6 +669,7 @@ html {
   font-size: 11px;
   font-weight: bold;
   letter-spacing: 1px;
+  font-family: 'Inter', sans-serif;
 }
 
 @media (max-width: 768px) {
@@ -661,7 +699,7 @@ html {
   border-radius: 30px;
   cursor: pointer;
   margin-bottom: 40px;
-  font-family: 'Cinzel', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: bold;
   transition: all 0.3s;
@@ -694,6 +732,7 @@ html {
   color: #D4AF37;
   margin-bottom: 20px;
   letter-spacing: 1px;
+  font-family: 'Inter', sans-serif;
 }
 
 .detail-description {
@@ -701,12 +740,14 @@ html {
   max-width: 700px;
   margin: 20px auto;
   line-height: 1.6;
+  font-family: 'Inter', sans-serif;
 }
 
 .detail-photos-count {
   color: #D4AF37;
   font-size: 14px;
   margin-top: 15px;
+  font-family: 'Inter', sans-serif;
 }
 
 .gallery-grid {
@@ -760,6 +801,7 @@ html {
   border-radius: 20px;
   font-size: 12px;
   font-weight: bold;
+  font-family: 'Inter', sans-serif;
 }
 
 /* Gallery Modal */
@@ -847,6 +889,7 @@ html {
   color: #B8B0A8;
   font-size: 14px;
   letter-spacing: 1px;
+  font-family: 'Inter', sans-serif;
 }
 
 @media (max-width: 768px) {
@@ -921,6 +964,7 @@ html {
   color: #B8B0A8;
   line-height: 1.6;
   font-size: 14px;
+  font-family: 'Inter', sans-serif;
 }
 
 @media (max-width: 768px) {
@@ -959,7 +1003,7 @@ html {
   backdrop-filter: blur(8px);
   color: #F2F2F2;
   font-size: 14px;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
   transition: all 0.3s;
 }
 
@@ -985,7 +1029,7 @@ html {
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s;
-  font-family: 'Cinzel', serif;
+  font-family: 'Inter', sans-serif;
   letter-spacing: 1px;
 }
 
@@ -995,7 +1039,7 @@ html {
 }
 
 /* ============================================
-   FOOTER
+   FOOTER - MONTESSERAT ONLY
    ============================================ */
 .footer {
   background: #0a0a0a;
@@ -1011,7 +1055,7 @@ html {
   color: transparent;
   font-size: 28px;
   font-weight: bold;
-  font-family: 'Cinzel', serif;
+  font-family: 'Montserrat', sans-serif;
   letter-spacing: 4px;
 }
 
@@ -1057,12 +1101,14 @@ html {
   margin-bottom: 15px;
   font-size: 14px;
   letter-spacing: 1px;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .footer-email-link {
   color: #D4AF37;
   text-decoration: none;
   transition: color 0.3s;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .footer-email-link:hover {
@@ -1073,6 +1119,7 @@ html {
 .footer-copyright {
   color: #666;
   font-size: 14px;
+  font-family: 'Montserrat', sans-serif;
 }
 
 @media (max-width: 768px) {
@@ -1154,7 +1201,7 @@ html {
   color: #1A1A1A;
   font-weight: bold;
   cursor: pointer;
-  font-family: 'Cinzel', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
 }
 
@@ -1166,7 +1213,7 @@ html {
   border-radius: 30px;
   cursor: pointer;
   margin-bottom: 30px;
-  font-family: 'Cinzel', serif;
+  font-family: 'Inter', sans-serif;
   font-weight: bold;
   transition: all 0.3s;
   font-size: 14px;
@@ -1236,7 +1283,7 @@ html {
   padding: 10px 25px;
   border-radius: 30px;
   cursor: pointer;
-  font-family: 'Cinzel', serif;
+  font-family: 'Inter', sans-serif;
   transition: all 0.3s;
 }
 
@@ -1263,7 +1310,7 @@ html {
   font-size: 16px;
   cursor: pointer;
   border-radius: 8px;
-  font-family: 'Cinzel', serif;
+  font-family: 'Inter', sans-serif;
   transition: all 0.3s;
 }
 
@@ -1322,7 +1369,7 @@ html {
   border-radius: 50px;
   cursor: pointer;
   font-weight: bold;
-  font-family: 'Cinzel', serif;
+  font-family: 'Inter', sans-serif;
   margin: 10px 0;
   transition: all 0.3s;
   text-align: center;
@@ -1503,19 +1550,21 @@ html {
   font-size: 18px;
   margin-bottom: 5px;
   color: #D4AF37;
-  font-family: 'Cinzel', serif;
+  font-family: 'Inter', sans-serif;
 }
 
 .portfolio-admin-card p {
   font-size: 13px;
   color: #B8B0A8;
   margin-bottom: 5px;
+  font-family: 'Inter', sans-serif;
 }
 
 .photos-count {
   font-size: 12px;
   color: #D4AF37;
   margin: 10px 0;
+  font-family: 'Inter', sans-serif;
 }
 
 .edit-btn {
@@ -1529,6 +1578,7 @@ html {
   margin-right: 8px;
   font-weight: bold;
   transition: all 0.3s;
+  font-family: 'Inter', sans-serif;
 }
 
 .edit-btn:hover {
@@ -1545,6 +1595,7 @@ html {
   cursor: pointer;
   font-size: 12px;
   transition: all 0.3s;
+  font-family: 'Inter', sans-serif;
 }
 
 .delete-btn:hover {
@@ -1602,7 +1653,7 @@ html {
   font-size: 14px;
   margin: 10px 0 15px;
   color: #D4AF37;
-  font-family: 'Cinzel', serif;
+  font-family: 'Inter', sans-serif;
   text-align: center;
 }
 
@@ -1650,7 +1701,7 @@ html {
   cursor: pointer;
   font-size: 12px;
   font-weight: 500;
-  font-family: 'Cinzel', serif;
+  font-family: 'Inter', sans-serif;
   transition: all 0.3s ease;
   white-space: nowrap;
   margin: 0;
@@ -1708,7 +1759,7 @@ html {
   font-size: 18px;
   margin-bottom: 10px;
   color: #D4AF37;
-  font-family: 'Cinzel', serif;
+  font-family: 'Inter', sans-serif;
 }
 
 .service-admin-card p {
@@ -1716,6 +1767,7 @@ html {
   color: #B8B0A8;
   margin-bottom: 15px;
   line-height: 1.5;
+  font-family: 'Inter', sans-serif;
 }
 
 /* Admin Grids Responsive */
@@ -1772,6 +1824,7 @@ html {
 .inquiry-card p {
   margin: 5px 0;
   font-size: 14px;
+  font-family: 'Inter', sans-serif;
 }
 
 .inquiry-card strong {
@@ -1816,7 +1869,7 @@ html {
 
 .modal-header h3 {
   color: #D4AF37;
-  font-family: 'Cinzel', serif;
+  font-family: 'Inter', sans-serif;
   margin: 0;
   font-size: 18px;
 }
@@ -1844,6 +1897,7 @@ html {
   color: #F2F2F2;
   font-size: 16px;
   line-height: 1.5;
+  font-family: 'Inter', sans-serif;
 }
 
 .modal-footer {
@@ -1861,7 +1915,7 @@ html {
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
-  font-family: 'Cinzel', serif;
+  font-family: 'Inter', sans-serif;
   transition: all 0.3s;
 }
 
@@ -1885,7 +1939,7 @@ html {
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
-  font-family: 'Cinzel', serif;
+  font-family: 'Inter', sans-serif;
   margin-right: 10px;
   transition: all 0.3s;
 }
@@ -1904,7 +1958,7 @@ html {
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
-  font-family: 'Cinzel', serif;
+  font-family: 'Inter', sans-serif;
   transition: all 0.3s;
 }
 
@@ -1990,7 +2044,7 @@ html {
 .existing-images-section h3 {
   color: #D4AF37;
   margin-bottom: 15px;
-  font-family: 'Cinzel', serif;
+  font-family: 'Inter', sans-serif;
 }
 
 .new-images-grid,
@@ -2083,6 +2137,7 @@ html {
   border-radius: 8px;
   text-align: center;
   margin-bottom: 20px;
+  font-family: 'Inter', sans-serif;
 }
 
 .form-error {
@@ -2093,6 +2148,7 @@ html {
   border-radius: 8px;
   text-align: center;
   margin-bottom: 20px;
+  font-family: 'Inter', sans-serif;
 }
 
 .form-sending {
@@ -2103,6 +2159,7 @@ html {
   border-radius: 8px;
   text-align: center;
   margin-bottom: 20px;
+  font-family: 'Inter', sans-serif;
 }
 
 /* ============================================
@@ -2149,4 +2206,40 @@ html {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #c49f2e;
+}
+/* ============================================
+   FOOTER CREDIT
+   ============================================ */
+.footer-credit {
+  margin: 20px 0 10px;
+}
+
+.footer-designed {
+  color: #8a8a8a;
+  font-size: 13px;
+  letter-spacing: 1px;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.footer-brand {
+  color: #D4AF37;
+  font-weight: 600;
+  letter-spacing: 2px;
+  position: relative;
+  display: inline-block;
+}
+
+.footer-brand::before {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0%;
+  height: 1px;
+  background: linear-gradient(90deg, #D4AF37, transparent);
+  transition: width 0.3s ease;
+}
+
+.footer-brand:hover::before {
+  width: 100%;
 }

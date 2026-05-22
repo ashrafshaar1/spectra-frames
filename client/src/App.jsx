@@ -1548,6 +1548,9 @@ function App() {
             <div className="footer-contact-info">
               <p className="footer-contact">Ainab, Lebanon | +961 78 977 272 | <a href="mailto:spectraframes.00@gmail.com" className="footer-email-link">spectraframes.00@gmail.com</a></p>
             </div>
+            <div className="footer-credit">
+              <p className="footer-designed">Designed & Published by <span className="footer-brand">Spectra Frames</span></p>
+            </div>
             <p className="footer-copyright">2026 Spectra Frames Photography Agency. All rights reserved.</p>
           </div>
         </footer>
