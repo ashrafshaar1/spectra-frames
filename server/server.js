@@ -530,7 +530,7 @@ app.get('/api/health', (req, res) => {
 
 // ===== START SERVER =====
 async function startServer() {
-  await seedDefaultData();
+  //await seedDefaultData();
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 Server running on http://localhost:${PORT}`);
     console.log(`🗄️ Supabase (PostgreSQL + Storage)`);

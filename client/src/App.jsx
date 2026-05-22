@@ -1540,15 +1540,15 @@ function App() {
               <span className="footer-logo-text">SPECTRA FRAMES</span>
             </div>
             <div className="footer-social">
-              <a href="https://facebook.com/spectraframes" target="_blank" rel="noopener noreferrer" className="social-link facebook"><FaFacebookF /></a>
-              <a href="https://instagram.com/spectraframes" target="_blank" rel="noopener noreferrer" className="social-link instagram"><FaInstagram /></a>
-              <a href="https://tiktok.com/@spectraframes" target="_blank" rel="noopener noreferrer" className="social-link tiktok"><FaTiktok /></a>
-              <a href="https://wa.me/96171234567" target="_blank" rel="noopener noreferrer" className="social-link whatsapp"><FaWhatsapp /></a>
+              <a href="https://www.facebook.com/share/1Gu7UjDUn2/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" className="social-link facebook"><FaFacebookF /></a>
+              <a href="https://www.instagram.com/spectra.frames?igsh=djZxcW43YnplY3ps" target="_blank" rel="noopener noreferrer" className="social-link instagram"><FaInstagram /></a>
+              <a href="https://www.tiktok.com/@spectra.frames?_r=1&_t=ZS-96ZhwOqCXZf" target="_blank" rel="noopener noreferrer" className="social-link tiktok"><FaTiktok /></a>
+              <a href="https://wa.me/96178977272" target="_blank" rel="noopener noreferrer" className="social-link whatsapp"><FaWhatsapp /></a>
             </div>
             <div className="footer-contact-info">
-              <p className="footer-contact">Beirut, Lebanon | +961 71 123 456 | <a href="mailto:spectraframes.00@gmail.com" className="footer-email-link">spectraframes.00@gmail.com</a></p>
+              <p className="footer-contact">Ainab, Lebanon | +961 78 977 272 | <a href="mailto:spectraframes.00@gmail.com" className="footer-email-link">spectraframes.00@gmail.com</a></p>
             </div>
-            <p className="footer-copyright">2024 Spectra Frames Photography Agency. All rights reserved.</p>
+            <p className="footer-copyright">2026 Spectra Frames Photography Agency. All rights reserved.</p>
           </div>
         </footer>
       </div>
