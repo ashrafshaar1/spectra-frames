@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
 import './App.css';
-import { FaFacebookF, FaInstagram, FaTiktok, FaWhatsapp, FaUserLock } from 'react-icons/fa';
+import { FaFacebookF, FaInstagram, FaTiktok, FaWhatsapp, FaUserLock, FaPlay, FaPause, FaGlobe, FaSun, FaMoon } from 'react-icons/fa';
 import emailjs from '@emailjs/browser';
 
 // EmailJS configuration
@@ -16,89 +16,71 @@ const API_URL = 'https://spectra-frames-api.onrender.com/api';
 const ADMIN_USERNAME = 'ashrafshaar';
 const ADMIN_PASSWORD = 'ItShYpEr75@';
 
-// LogoImage component for fast preload (clients & partners)
+// Translations
+const translations = {
+  en: {
+    hero: { bookNow: 'Book Now', viewWork: 'View Work' },
+    clients: { title: 'Our Clients', subtitle: 'Trusted by leading brands worldwide' },
+    partners: { title: 'Our Partners', subtitle: 'Collaborating with industry leaders' },
+    portfolio: { title: 'Our Portfolio', subtitle: 'Click on any project to view gallery' },
+    services: { title: 'Our Services', subtitle: 'Professional photography tailored to your needs' },
+    contact: { title: "Let's Create Together", subtitle: 'Ready to capture your next moment? Reach out to us', name: 'Your Name', email: 'Your Email', phone: 'Phone Number', message: 'Tell us about your vision...', send: 'Send Message', success: 'Message sent successfully! We\'ll contact you soon.', error: 'Something went wrong. Please try again later.', sending: 'Sending...' },
+    pricing: { title: 'Packages', subtitle: 'Choose the perfect package for your needs', viewPackages: 'View Packages →', backToHome: 'Back to Home', comingSoon: 'Coming Soon', emptyMessage: 'Packages are being prepared. Please check back later or contact us for custom quotes.', socialTitle: 'Social Media Packages', socialDesc: 'Perfect for influencers, brands, and content creators', photoTitle: 'Photography Sessions', photoDesc: 'Professional photography for your special moments', mostPopular: 'Most Popular', bookNow: 'Book Now', perMonth: 'month', perSession: 'session' },
+    video: { title: 'Featured Film', subtitle: 'Watch our latest showcase' },
+    footer: { designed: 'Designed & Published by', allRights: 'All rights reserved' },
+    admin: { loginTitle: 'Admin Login', username: 'Username', password: 'Password', login: 'Login', panelTitle: 'Admin Panel - Spectra Frames', refresh: 'Refresh', logout: 'Logout' }
+  },
+  ar: {
+    hero: { bookNow: 'احجز الآن', viewWork: 'شاهد الأعمال' },
+    clients: { title: 'عملاؤنا', subtitle: 'موثوق من قبل كبرى العلامات التجارية' },
+    partners: { title: 'شركاؤنا', subtitle: 'نتعاون مع قادة الصناعة' },
+    portfolio: { title: 'أعمالنا', subtitle: 'انقر على أي مشروع لمشاهدة المعرض' },
+    services: { title: 'خدماتنا', subtitle: 'تصوير احترافي مصمم حسب احتياجاتك' },
+    contact: { title: 'لنبدع معاً', subtitle: 'هل أنت مستعد لتوثيق لحظتك القادمة؟ تواصل معنا', name: 'الاسم الكامل', email: 'البريد الإلكتروني', phone: 'رقم الهاتف', message: 'أخبرنا عن رؤيتك...', send: 'إرسال', success: 'تم إرسال الرسالة بنجاح! سنتواصل معك قريباً', error: 'حدث خطأ. يرجى المحاولة لاحقاً', sending: 'جاري الإرسال...' },
+    pricing: { title: 'الباقات', subtitle: 'اختر الباقة المناسبة لاحتياجاتك', viewPackages: 'عرض الباقات ←', backToHome: 'العودة للرئيسية', comingSoon: 'قريباً', emptyMessage: 'يتم تجهيز الباقات. يرجى العودة لاحقاً أو التواصل معنا للحصول على عروض مخصصة.', socialTitle: 'باقات التواصل الاجتماعي', socialDesc: 'مثالية للمؤثرين والعلامات التجارية ومنشئي المحتوى', photoTitle: 'جلسات التصوير', photoDesc: 'تصوير احترافي للحظاتك المميزة', mostPopular: 'الأكثر طلباً', bookNow: 'احجز الآن', perMonth: 'شهر', perSession: 'جلسة' },
+    video: { title: 'فيديو تعريفي', subtitle: 'شاهد أحدث أعمالنا' },
+    footer: { designed: 'تصميم ونشر بواسطة', allRights: 'جميع الحقوق محفوظة' },
+    admin: { loginTitle: 'دخول المشرف', username: 'اسم المستخدم', password: 'كلمة المرور', login: 'دخول', panelTitle: 'لوحة التحكم - سبيكترا فرامز', refresh: 'تحديث', logout: 'تسجيل خروج' }
+  },
+  fr: {
+    hero: { bookNow: 'Réserver', viewWork: 'Voir le travail' },
+    clients: { title: 'Nos Clients', subtitle: 'Approuvé par les plus grandes marques' },
+    partners: { title: 'Nos Partenaires', subtitle: 'Collaboration avec des leaders du secteur' },
+    portfolio: { title: 'Notre Portfolio', subtitle: 'Cliquez sur un projet pour voir la galerie' },
+    services: { title: 'Nos Services', subtitle: 'Photographie professionnelle adaptée à vos besoins' },
+    contact: { title: 'Créez avec Nous', subtitle: 'Prêt à capturer votre prochain moment? Contactez-nous', name: 'Votre Nom', email: 'Votre Email', phone: 'Numéro de Téléphone', message: 'Parlez-nous de votre vision...', send: 'Envoyer', success: 'Message envoyé avec succès! Nous vous contacterons bientôt.', error: 'Une erreur est survenue. Veuillez réessayer plus tard.', sending: 'Envoi en cours...' },
+    pricing: { title: 'Forfaits', subtitle: 'Choisissez le forfait parfait pour vos besoins', viewPackages: 'Voir les forfaits →', backToHome: 'Retour à l\'accueil', comingSoon: 'Bientôt disponible', emptyMessage: 'Les forfaits sont en préparation. Veuillez revenir plus tard ou nous contacter pour des devis personnalisés.', socialTitle: 'Forfaits Médias Sociaux', socialDesc: 'Parfait pour les influenceurs, marques et créateurs de contenu', photoTitle: 'Séances Photo', photoDesc: 'Photographie professionnelle pour vos moments spéciaux', mostPopular: 'Le Plus Populaire', bookNow: 'Réserver', perMonth: 'mois', perSession: 'séance' },
+    video: { title: 'Vidéo Présentation', subtitle: 'Regardez notre dernière réalisation' },
+    footer: { designed: 'Conçu et publié par', allRights: 'Tous droits réservés' },
+    admin: { loginTitle: 'Connexion Admin', username: 'Nom d\'utilisateur', password: 'Mot de passe', login: 'Se connecter', panelTitle: 'Panneau d\'administration - Spectra Frames', refresh: 'Actualiser', logout: 'Déconnexion' }
+  }
+};
+
+// LogoImage component
 function LogoImage({ src, alt, className }) {
   const [loaded, setLoaded] = useState(false);
-  
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      {!loaded && (
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: '#2a2a2a',
-          borderRadius: '8px'
-        }} />
-      )}
-      <img
-        src={src}
-        alt={alt}
-        className={className}
-        onLoad={() => setLoaded(true)}
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'contain',
-          opacity: loaded ? 1 : 0,
-          transition: 'opacity 0.2s ease'
-        }}
-      />
+      {!loaded && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: '#2a2a2a', borderRadius: '8px' }} />}
+      <img src={src} alt={alt} className={className} onLoad={() => setLoaded(true)} style={{ width: '100%', height: '100%', objectFit: 'contain', opacity: loaded ? 1 : 0, transition: 'opacity 0.2s ease' }} />
     </div>
   );
 }
 
-// PortfolioImage component with Intersection Observer for heavy images
+// PortfolioImage component
 function PortfolioImage({ src, alt, className }) {
   const [imageSrc, setImageSrc] = useState(null);
   const imgRef = useRef(null);
-
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          setImageSrc(src);
-          observer.unobserve(entry.target);
-        }
-      });
+      entries.forEach(entry => { if (entry.isIntersecting) { setImageSrc(src); observer.unobserve(entry.target); } });
     }, { rootMargin: '200px', threshold: 0.1 });
-
-    if (imgRef.current) {
-      observer.observe(imgRef.current);
-    }
-
-    return () => {
-      if (imgRef.current) {
-        observer.unobserve(imgRef.current);
-      }
-    };
+    if (imgRef.current) observer.observe(imgRef.current);
+    return () => { if (imgRef.current) observer.unobserve(imgRef.current); };
   }, [src]);
-
   return (
     <div ref={imgRef} className={className} style={{ width: '100%', height: '100%' }}>
-      {imageSrc ? (
-        <img 
-          src={imageSrc} 
-          alt={alt} 
-          style={{ 
-            width: '100%', 
-            height: '100%', 
-            objectFit: 'cover',
-            transition: 'transform 0.6s ease'
-          }}
-          loading="lazy"
-        />
-      ) : (
-        <div style={{
-          background: 'linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%)',
-          backgroundSize: '200% 100%',
-          animation: 'skeleton-loading 1.5s infinite',
-          width: '100%',
-          height: '100%'
-        }} />
-      )}
+      {imageSrc ? <img src={imageSrc} alt={alt} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease' }} loading="lazy" /> : <div style={{ background: 'linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%)', backgroundSize: '200% 100%', animation: 'skeleton-loading 1.5s infinite', width: '100%', height: '100%' }} />}
     </div>
   );
 }
@@ -106,48 +88,15 @@ function PortfolioImage({ src, alt, className }) {
 // Gallery Modal Component
 function GalleryModal({ images, currentIndex, onClose, onNext, onPrev }) {
   const [imageLoaded, setImageLoaded] = useState(false);
-  
-  useEffect(() => {
-    setImageLoaded(false);
-  }, [currentIndex]);
-
-  useEffect(() => {
-    const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, [onClose]);
-
+  useEffect(() => { setImageLoaded(false); }, [currentIndex]);
+  useEffect(() => { const handleEsc = (e) => { if (e.key === 'Escape') onClose(); }; window.addEventListener('keydown', handleEsc); return () => window.removeEventListener('keydown', handleEsc); }, [onClose]);
   return (
     <div className="gallery-modal" onClick={onClose}>
       <div className="gallery-modal-content" onClick={(e) => e.stopPropagation()}>
         <button className="gallery-close" onClick={onClose}>×</button>
         <button className="gallery-prev" onClick={onPrev}>‹</button>
-        
-        {!imageLoaded && (
-          <div 
-            className="image-skeleton"
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '80%',
-              height: '80%',
-              background: 'linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%)',
-              backgroundSize: '200% 100%',
-              animation: 'skeleton-loading 1.5s infinite',
-              borderRadius: '8px'
-            }}
-          />
-        )}
-        <img 
-          src={images[currentIndex]} 
-          alt={`Gallery ${currentIndex + 1}`} 
-          className="gallery-image"
-          onLoad={() => setImageLoaded(true)}
-          style={{ opacity: imageLoaded ? 1 : 0, transition: 'opacity 0.3s ease' }}
-        />
-        
+        {!imageLoaded && <div className="image-skeleton" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '80%', height: '80%', background: 'linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%)', backgroundSize: '200% 100%', animation: 'skeleton-loading 1.5s infinite', borderRadius: '8px' }} />}
+        <img src={images[currentIndex]} alt={`Gallery ${currentIndex + 1}`} className="gallery-image" onLoad={() => setImageLoaded(true)} style={{ opacity: imageLoaded ? 1 : 0, transition: 'opacity 0.3s ease' }} />
         <button className="gallery-next" onClick={onNext}>›</button>
         <div className="gallery-counter">{currentIndex + 1} / {images.length}</div>
       </div>
@@ -155,8 +104,104 @@ function GalleryModal({ images, currentIndex, onClose, onNext, onPrev }) {
   );
 }
 
+// Loading Screen Component (without spinner)
+function LoadingScreen({ onComplete }) {
+  useEffect(() => {
+    const timer = setTimeout(() => { onComplete(); }, 2000);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
+  return (
+    <div className="loading-screen">
+      <div className="loader">
+        <img src="/logo.png" alt="Spectra Frames" className="loader-logo-img" />
+      </div>
+    </div>
+  );
+}
+
+// Packages Page Component
+function PackagesPage({ packagesData, t }) {
+  const navigate = useNavigate();
+
+  const hasSocialPackages = packagesData.social.length > 0;
+  const hasPhotoPackages = packagesData.photo.length > 0;
+
+  if (!hasSocialPackages && !hasPhotoPackages) {
+    return (
+      <div className="packages-page">
+        <div className="container">
+          <button className="back-btn" onClick={() => navigate('/')}>← {t.pricing.backToHome}</button>
+          <div className="packages-header">
+            <h1 className="packages-main-title">{t.pricing.title}</h1>
+            <p className="packages-subtitle">{t.pricing.comingSoon}</p>
+          </div>
+          <div className="empty-packages">
+            <p>{t.pricing.emptyMessage}</p>
+            <button className="btn-primary" onClick={() => navigate('/#contact')}>{t.contact.send}</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="packages-page">
+      <div className="container">
+        <button className="back-btn" onClick={() => navigate('/')}>← {t.pricing.backToHome}</button>
+        
+        <div className="packages-header">
+          <h1 className="packages-main-title">{t.pricing.title}</h1>
+          <p className="packages-subtitle">{t.pricing.subtitle}</p>
+        </div>
+
+        {/* Social Media Packages */}
+        {hasSocialPackages && (
+          <div className="packages-category">
+            <h2 className="packages-category-title">{t.pricing.socialTitle}</h2>
+            <p className="packages-category-desc">{t.pricing.socialDesc}</p>
+            <div className="packages-grid">
+              {packagesData.social.map((pkg) => (
+                <div key={pkg.id} className={`package-card ${pkg.popular ? 'featured' : ''}`}>
+                  {pkg.popular && <div className="featured-badge">{t.pricing.mostPopular}</div>}
+                  <h3 className="package-name">{pkg.name}</h3>
+                  <div className="package-price">{pkg.price}<span> / {pkg.duration === 'month' ? t.pricing.perMonth : t.pricing.perSession}</span></div>
+                  <ul className="package-features">
+                    {pkg.features.map((feature, i) => (<li key={i}>✓ {feature}</li>))}
+                  </ul>
+                  <button className="package-btn" onClick={() => window.location.href = 'mailto:spectraframes.00@gmail.com?subject=Social Media Package Booking'}>{t.pricing.bookNow} →</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Photography Sessions Packages */}
+        {hasPhotoPackages && (
+          <div className="packages-category">
+            <h2 className="packages-category-title">{t.pricing.photoTitle}</h2>
+            <p className="packages-category-desc">{t.pricing.photoDesc}</p>
+            <div className="packages-grid">
+              {packagesData.photo.map((pkg) => (
+                <div key={pkg.id} className={`package-card ${pkg.popular ? 'featured' : ''}`}>
+                  {pkg.popular && <div className="featured-badge">{t.pricing.mostPopular}</div>}
+                  <h3 className="package-name">{pkg.name}</h3>
+                  <div className="package-price">{pkg.price}<span> / {pkg.duration === 'month' ? t.pricing.perMonth : t.pricing.perSession}</span></div>
+                  <ul className="package-features">
+                    {pkg.features.map((feature, i) => (<li key={i}>✓ {feature}</li>))}
+                  </ul>
+                  <button className="package-btn" onClick={() => window.location.href = 'mailto:spectraframes.00@gmail.com?subject=Photography Session Booking'}>{t.pricing.bookNow} →</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Home Page Component
-function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
+function HomePage({ scrollToSection, portfolios, refreshPortfolios, t, packagesData }) {
   const [services, setServices] = useState([]);
   const [clients, setClients] = useState([]);
   const [partners, setPartners] = useState([]);
@@ -168,28 +213,18 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
     service: 'Wedding Photography',
     message: ''
   });
+  const [videoPlaying, setVideoPlaying] = useState(true);
+  const videoRef = useRef(null);
 
   const loadData = () => {
-    fetch(`${API_URL}/clients`)
-      .then(res => res.json())
-      .then(data => setClients(data))
-      .catch(err => console.error('Failed to load clients:', err));
-    
-    fetch(`${API_URL}/partners`)
-      .then(res => res.json())
-      .then(data => setPartners(data))
-      .catch(err => console.error('Failed to load partners:', err));
-    
-    fetch(`${API_URL}/services`)
-      .then(res => res.json())
-      .then(data => setServices(data))
-      .catch(err => console.error('Failed to load services:', err));
+    fetch(`${API_URL}/clients`).then(res => res.json()).then(data => setClients(data)).catch(err => console.error('Failed to load clients:', err));
+    fetch(`${API_URL}/partners`).then(res => res.json()).then(data => setPartners(data)).catch(err => console.error('Failed to load partners:', err));
+    fetch(`${API_URL}/services`).then(res => res.json()).then(data => setServices(data)).catch(err => console.error('Failed to load services:', err));
   };
 
   useEffect(() => {
     refreshPortfolios();
     loadData();
-    
     const interval = setInterval(() => loadData(), 10000);
     return () => clearInterval(interval);
   }, []);
@@ -201,9 +236,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormStatus('sending');
-    
     try {
-      // Send email via EmailJS
       const templateParams = {
         name: formData.name,
         email: formData.email,
@@ -212,14 +245,7 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
         message: formData.message,
         to_email: 'spectraframes.00@gmail.com'
       };
-      
-      const result = await emailjs.send(
-        EMAILJS_SERVICE_ID,
-        EMAILJS_TEMPLATE_ID,
-        templateParams,
-        EMAILJS_PUBLIC_KEY
-      );
-      
+      const result = await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams, EMAILJS_PUBLIC_KEY);
       if (result.status === 200) {
         setFormStatus('success');
         setFormData({ name: '', email: '', phone: '', service: 'Wedding Photography', message: '' });
@@ -235,6 +261,13 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
     }
   };
 
+  const toggleVideo = () => {
+    if (videoRef.current) {
+      if (videoPlaying) { videoRef.current.pause(); } else { videoRef.current.play(); }
+      setVideoPlaying(!videoPlaying);
+    }
+  };
+
   return (
     <>
       <section id="home" className="hero">
@@ -246,8 +279,8 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
               <div className="logo-centered-fallback">SF</div>
             </div>
             <div className="hero-buttons-centered">
-              <button className="btn-primary" onClick={() => scrollToSection('contact')}>Book Now</button>
-              <button className="btn-secondary" onClick={() => scrollToSection('portfolio')}>View Work</button>
+              <button className="btn-primary" onClick={() => scrollToSection('contact')}>{t.hero.bookNow}</button>
+              <button className="btn-secondary" onClick={() => scrollToSection('portfolio')}>{t.hero.viewWork}</button>
             </div>
           </div>
         </div>
@@ -257,8 +290,8 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
         <section className="clients-section">
           <div className="container">
             <div className="section-header">
-              <h2 className="section-title">Our Clients</h2>
-              <p className="section-subtitle">Trusted by leading brands worldwide</p>
+              <h2 className="section-title">{t.clients.title}</h2>
+              <p className="section-subtitle">{t.clients.subtitle}</p>
             </div>
             <div className="clients-slider">
               <div className="clients-track">
@@ -280,8 +313,8 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
         <section className="partners-section">
           <div className="container">
             <div className="section-header">
-              <h2 className="section-title">Our Partners</h2>
-              <p className="section-subtitle">Collaborating with industry leaders</p>
+              <h2 className="section-title">{t.partners.title}</h2>
+              <p className="section-subtitle">{t.partners.subtitle}</p>
             </div>
             <div className="partners-slider">
               <div className="partners-track">
@@ -302,8 +335,8 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
       <section id="portfolio" className="portfolio">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Our Portfolio</h2>
-            <p className="section-subtitle">Click on any project to view gallery</p>
+            <h2 className="section-title">{t.portfolio.title}</h2>
+            <p className="section-subtitle">{t.portfolio.subtitle}</p>
           </div>
           <div className="portfolio-grid">
             {portfolios.map((item) => (
@@ -330,11 +363,41 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
         </div>
       </section>
 
+      {/* Featured Video Section */}
+      <section className="featured-video">
+        <div className="container">
+          <div className="section-header">
+            <h2 className="section-title">{t.video.title}</h2>
+            <p className="section-subtitle">{t.video.subtitle}</p>
+          </div>
+          <div className="video-wrapper" style={{ position: 'relative' }}>
+            <video ref={videoRef} autoPlay loop muted playsInline style={{ width: '100%' }}>
+              <source src="https://assets.mixkit.co/videos/preview/mixkit-portrait-of-a-woman-using-a-camera-34398-large.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            <button onClick={toggleVideo} style={{ position: 'absolute', bottom: '20px', right: '20px', background: 'rgba(212, 175, 55, 0.8)', border: 'none', width: '45px', height: '45px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', color: '#1A1A1A' }}>{videoPlaying ? <FaPause /> : <FaPlay />}</button>
+          </div>
+        </div>
+      </section>
+
+      {/* Packages Section - Simple Redirect */}
+      <section className="packages-redirect">
+        <div className="container">
+          <div className="packages-redirect-content">
+            <h2 className="section-title">{t.pricing.title}</h2>
+            <p className="packages-redirect-text">Choose the perfect package for your photography needs</p>
+            <Link to="/packages">
+              <button className="btn-primary">{t.pricing.viewPackages}</button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <section id="services" className="services">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Our Services</h2>
-            <p className="section-subtitle">Professional photography tailored to your needs</p>
+            <h2 className="section-title">{t.services.title}</h2>
+            <p className="section-subtitle">{t.services.subtitle}</p>
           </div>
           <div className="services-grid">
             {services.map((service) => (
@@ -350,24 +413,24 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios }) {
       <section id="contact" className="contact">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Let's Create Together</h2>
-            <p className="section-subtitle">Ready to capture your next moment? Reach out to us</p>
+            <h2 className="section-title">{t.contact.title}</h2>
+            <p className="section-subtitle">{t.contact.subtitle}</p>
           </div>
           <div className="contact-wrapper">
             <form className="contact-form" onSubmit={handleSubmit}>
-              {formStatus === 'success' && <div className="form-success">Message sent successfully! We'll contact you soon.</div>}
-              {formStatus === 'error' && <div className="form-error">Something went wrong. Please try again later.</div>}
-              {formStatus === 'sending' && <div className="form-sending">Sending...</div>}
-              <input type="text" name="name" placeholder="Your Name" value={formData.name} onChange={handleChange} required className="form-input" />
-              <input type="email" name="email" placeholder="Your Email" value={formData.email} onChange={handleChange} required className="form-input" />
-              <input type="tel" name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleChange} className="form-input" />
+              {formStatus === 'success' && <div className="form-success">{t.contact.success}</div>}
+              {formStatus === 'error' && <div className="form-error">{t.contact.error}</div>}
+              {formStatus === 'sending' && <div className="form-sending">{t.contact.sending}</div>}
+              <input type="text" name="name" placeholder={t.contact.name} value={formData.name} onChange={handleChange} required className="form-input" />
+              <input type="email" name="email" placeholder={t.contact.email} value={formData.email} onChange={handleChange} required className="form-input" />
+              <input type="tel" name="phone" placeholder={t.contact.phone} value={formData.phone} onChange={handleChange} className="form-input" />
               <select name="service" value={formData.service} onChange={handleChange} className="form-select">
                 {services.map((service) => (
                   <option key={service.id || service._id} value={service.title}>{service.title}</option>
                 ))}
               </select>
-              <textarea name="message" rows="4" placeholder="Tell us about your vision..." value={formData.message} onChange={handleChange} required className="form-textarea"></textarea>
-              <button type="submit" className="btn-submit">Send Message</button>
+              <textarea name="message" rows="4" placeholder={t.contact.message} value={formData.message} onChange={handleChange} required className="form-textarea"></textarea>
+              <button type="submit" className="btn-submit">{t.contact.send}</button>
             </form>
           </div>
         </div>
@@ -454,7 +517,7 @@ function PortfolioDetail() {
 }
 
 // Admin Panel Component
-function AdminPanel() {
+function AdminPanel({ packagesData, setPackagesData, t }) {
   const [portfolios, setPortfolios] = useState([]);
   const [partners, setPartners] = useState([]);
   const [clients, setClients] = useState([]);
@@ -493,6 +556,10 @@ function AdminPanel() {
   const [editingService, setEditingService] = useState(null);
   const [editServiceForm, setEditServiceForm] = useState({ title: '', description: '' });
 
+  // Package management state
+  const [editingPackage, setEditingPackage] = useState(null);
+  const [packageForm, setPackageForm] = useState({ type: 'social', name: '', price: '', features: '', popular: false, duration: 'month' });
+
   const navigate = useNavigate();
 
   const showModalMessage = (title, message) => {
@@ -517,7 +584,60 @@ function AdminPanel() {
     setConfirmId(null);
   };
 
-  // ========== UPLOAD FUNCTIONS ==========
+  const handlePackageSubmit = (e) => {
+    e.preventDefault();
+    const featuresList = packageForm.features.split(',').map(f => f.trim());
+    const newPackage = {
+      id: editingPackage ? editingPackage.id : Date.now().toString(),
+      name: packageForm.name,
+      price: packageForm.price,
+      features: featuresList,
+      popular: packageForm.popular,
+      duration: packageForm.duration
+    };
+    
+    if (editingPackage) {
+      setPackagesData(prev => ({
+        ...prev,
+        [packageForm.type]: prev[packageForm.type].map(pkg => pkg.id === editingPackage.id ? newPackage : pkg)
+      }));
+      showModalMessage('Success', 'Package updated successfully!');
+    } else {
+      setPackagesData(prev => ({
+        ...prev,
+        [packageForm.type]: [...prev[packageForm.type], newPackage]
+      }));
+      showModalMessage('Success', 'Package added successfully!');
+    }
+    resetPackageForm();
+  };
+
+  const resetPackageForm = () => {
+    setEditingPackage(null);
+    setPackageForm({ type: 'social', name: '', price: '', features: '', popular: false, duration: 'month' });
+  };
+
+  const editPackage = (type, pkg) => {
+    setEditingPackage(pkg);
+    setPackageForm({
+      type: type,
+      name: pkg.name,
+      price: pkg.price,
+      features: pkg.features.join(', '),
+      popular: pkg.popular,
+      duration: pkg.duration || 'month'
+    });
+  };
+
+  const deletePackage = (type, id) => {
+    showConfirmModalMessage('Delete this package?', () => {
+      setPackagesData(prev => ({
+        ...prev,
+        [type]: prev[type].filter(pkg => pkg.id !== id)
+      }));
+      showModalMessage('Success', 'Package deleted successfully!');
+    }, null);
+  };
 
   const uploadToServer = async (file, onProgress) => {
     return new Promise((resolve, reject) => {
@@ -717,7 +837,6 @@ function AdminPanel() {
     setUploadProgress(0);
   };
 
-  // Load functions
   const loadPortfolios = async () => {
     try {
       const res = await fetch(`${API_URL}/portfolio`);
@@ -857,7 +976,6 @@ function AdminPanel() {
     setUploading(false);
   };
 
-  // DELETE functions
   const handleDeletePortfolio = async (id) => {
     if (!id || id === 'undefined') {
       showModalMessage('Error', 'Invalid ID');
@@ -1196,13 +1314,13 @@ function AdminPanel() {
       <div className="admin-login">
         <div className="container">
           <div className="login-box">
-            <button className="back-to-home" onClick={() => navigate('/')}>Back to Home</button>
-            <h2>Admin Login</h2>
+            <button className="back-to-home" onClick={() => navigate('/')}>← {t.pricing.backToHome}</button>
+            <h2>{t.admin.loginTitle}</h2>
             <form onSubmit={handleLogin}>
-              <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} className="form-input" required />
-              <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-input" required />
+              <input type="text" placeholder={t.admin.username} value={username} onChange={(e) => setUsername(e.target.value)} className="form-input" required />
+              <input type="password" placeholder={t.admin.password} value={password} onChange={(e) => setPassword(e.target.value)} className="form-input" required />
               {loginError && <div className="form-error">{loginError}</div>}
-              <button type="submit" className="btn-primary">Login</button>
+              <button type="submit" className="btn-primary">{t.admin.login}</button>
             </form>
           </div>
         </div>
@@ -1214,10 +1332,10 @@ function AdminPanel() {
     <div className="admin-panel">
       <div className="container">
         <div className="admin-header">
-          <h1>Admin Panel - Spectra Frames</h1>
+          <h1>{t.admin.panelTitle}</h1>
           <div>
-            <button onClick={refreshAllData} className="btn-secondary">Refresh</button>
-            <button onClick={handleLogout} className="btn-secondary">Logout</button>
+            <button onClick={refreshAllData} className="btn-secondary">{t.admin.refresh}</button>
+            <button onClick={handleLogout} className="btn-secondary">{t.admin.logout}</button>
           </div>
         </div>
         
@@ -1226,6 +1344,7 @@ function AdminPanel() {
           <button className={`tab-btn ${activeTab === 'partners' ? 'active' : ''}`} onClick={() => setActiveTab('partners')}>Partners ({partners.length})</button>
           <button className={`tab-btn ${activeTab === 'clients' ? 'active' : ''}`} onClick={() => setActiveTab('clients')}>Clients ({clients.length})</button>
           <button className={`tab-btn ${activeTab === 'services' ? 'active' : ''}`} onClick={() => setActiveTab('services')}>Services ({services.length})</button>
+          <button className={`tab-btn ${activeTab === 'packages' ? 'active' : ''}`} onClick={() => setActiveTab('packages')}>Packages</button>
           <button className={`tab-btn ${activeTab === 'inquiries' ? 'active' : ''}`} onClick={() => setActiveTab('inquiries')}>Inquiries ({inquiries.length})</button>
         </div>
         
@@ -1380,6 +1499,119 @@ function AdminPanel() {
             </div>
           </>
         )}
+
+        {activeTab === 'packages' && (
+          <div className="admin-form">
+            <h2>Manage Packages</h2>
+            
+            {/* Add/Edit Form */}
+            <div className="package-form">
+              <h3>{editingPackage ? 'Edit Package' : 'Add New Package'}</h3>
+              <form onSubmit={handlePackageSubmit}>
+                <select 
+                  value={packageForm.type} 
+                  onChange={(e) => setPackageForm({ ...packageForm, type: e.target.value })}
+                  className="form-select"
+                >
+                  <option value="social">Social Media</option>
+                  <option value="photo">Photography Sessions</option>
+                </select>
+                <input 
+                  type="text" 
+                  placeholder="Package Name" 
+                  value={packageForm.name} 
+                  onChange={(e) => setPackageForm({ ...packageForm, name: e.target.value })}
+                  required 
+                  className="form-input" 
+                />
+                <input 
+                  type="text" 
+                  placeholder="Price (e.g., $299)" 
+                  value={packageForm.price} 
+                  onChange={(e) => setPackageForm({ ...packageForm, price: e.target.value })}
+                  required 
+                  className="form-input" 
+                />
+                <textarea 
+                  placeholder="Features (comma separated, e.g., 5 Photos, 2 Reels, 1 Story)" 
+                  value={packageForm.features} 
+                  onChange={(e) => setPackageForm({ ...packageForm, features: e.target.value })}
+                  required 
+                  rows="3"
+                  className="form-textarea" 
+                />
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={packageForm.popular} 
+                    onChange={(e) => setPackageForm({ ...packageForm, popular: e.target.checked })}
+                  />
+                  Mark as "Most Popular"
+                </label>
+                <select 
+                  value={packageForm.duration} 
+                  onChange={(e) => setPackageForm({ ...packageForm, duration: e.target.value })}
+                  className="form-select"
+                >
+                  <option value="month">Per Month</option>
+                  <option value="session">Per Session</option>
+                </select>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                  <button type="submit" className="btn-primary">{editingPackage ? 'Update' : 'Add'} Package</button>
+                  {editingPackage && <button type="button" onClick={resetPackageForm} className="btn-secondary">Cancel</button>}
+                </div>
+              </form>
+            </div>
+
+            {/* Social Media Packages List */}
+            <div className="packages-admin-list">
+              <h3>Social Media Packages</h3>
+              <div className="packages-admin-grid">
+                {packagesData.social.map(pkg => (
+                  <div key={pkg.id} className="package-admin-card">
+                    <div className="package-admin-info">
+                      <h4>{pkg.name}</h4>
+                      <p className="package-price-admin">{pkg.price}</p>
+                      <ul className="package-features-admin">
+                        {pkg.features.map((f, i) => <li key={i}>✓ {f}</li>)}
+                      </ul>
+                      {pkg.popular && <span className="popular-badge">Popular</span>}
+                      <span className="duration-badge">{pkg.duration === 'month' ? 'Monthly' : 'Per Session'}</span>
+                    </div>
+                    <div className="package-admin-actions">
+                      <button onClick={() => editPackage('social', pkg)} className="edit-btn">Edit</button>
+                      <button onClick={() => deletePackage('social', pkg.id)} className="delete-btn">Delete</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Photography Sessions Packages List */}
+            <div className="packages-admin-list">
+              <h3>Photography Sessions Packages</h3>
+              <div className="packages-admin-grid">
+                {packagesData.photo.map(pkg => (
+                  <div key={pkg.id} className="package-admin-card">
+                    <div className="package-admin-info">
+                      <h4>{pkg.name}</h4>
+                      <p className="package-price-admin">{pkg.price}</p>
+                      <ul className="package-features-admin">
+                        {pkg.features.map((f, i) => <li key={i}>✓ {f}</li>)}
+                      </ul>
+                      {pkg.popular && <span className="popular-badge">Popular</span>}
+                      <span className="duration-badge">{pkg.duration === 'month' ? 'Monthly' : 'Per Session'}</span>
+                    </div>
+                    <div className="package-admin-actions">
+                      <button onClick={() => editPackage('photo', pkg)} className="edit-btn">Edit</button>
+                      <button onClick={() => deletePackage('photo', pkg.id)} className="delete-btn">Delete</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
         
         {activeTab === 'inquiries' && (
           <div className="inquiries-list">
@@ -1394,7 +1626,6 @@ function AdminPanel() {
         )}
       </div>
       
-      {/* Image Manager Modal */}
       {showImageManager && currentPortfolio && (
         <div className="image-manager-modal">
           <div className="image-manager-content">
@@ -1441,7 +1672,6 @@ function AdminPanel() {
         </div>
       )}
       
-      {/* Success/Error Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-container">
@@ -1459,7 +1689,6 @@ function AdminPanel() {
         </div>
       )}
       
-      {/* Confirm Modal */}
       {showConfirmModal && (
         <div className="modal-overlay" onClick={() => setShowConfirmModal(false)}>
           <div className="modal-container">
@@ -1485,11 +1714,41 @@ function AdminPanel() {
 function App() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [portfolios, setPortfolios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [darkMode, setDarkMode] = useState(true);
+  const [lang, setLang] = useState('en');
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const [packagesData, setPackagesData] = useState({
+    social: [],
+    photo: []
+  });
+  const t = translations[lang];
 
-  // Initialize EmailJS
   useEffect(() => {
     emailjs.init(EMAILJS_PUBLIC_KEY);
   }, []);
+
+  // Apply theme
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.remove('light-mode');
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+      document.body.classList.add('light-mode');
+    }
+  }, [darkMode]);
+
+  // Close language menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (showLangMenu && !e.target.closest('.lang-wrapper') && !e.target.closest('.lang-menu')) {
+        setShowLangMenu(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showLangMenu]);
 
   const loadPortfolios = async () => {
     try {
@@ -1513,25 +1772,42 @@ function App() {
   const refreshPortfolios = () => loadPortfolios();
 
   return (
-    <Router
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-      }}
-    >
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <div className="app">
-        {showScrollTop && <button onClick={scrollToTop} className="floating-scroll">↑</button>}
+        {loading && <LoadingScreen onComplete={() => setLoading(false)} />}
         
-        <div className="admin-icon-wrapper">
-          <Link to="/admin" className="admin-icon-link">
-            <FaUserLock className="admin-icon" />
-          </Link>
+        <button className={`floating-scroll ${showScrollTop ? 'visible' : ''}`} onClick={scrollToTop}>↑</button>
+        
+        <div className="top-buttons">
+          <button className="theme-toggle" onClick={() => setDarkMode(!darkMode)}>
+            {darkMode ? <FaSun /> : <FaMoon />}
+          </button>
+          
+          <div className="lang-wrapper">
+            <button className="lang-toggle" onClick={() => setShowLangMenu(!showLangMenu)}>
+              <FaGlobe />
+            </button>
+            {showLangMenu && (
+              <div className="lang-menu">
+                <button className="lang-option" onClick={() => { setLang('en'); setShowLangMenu(false); }}>English</button>
+                <button className="lang-option" onClick={() => { setLang('ar'); setShowLangMenu(false); }}>العربية</button>
+                <button className="lang-option" onClick={() => { setLang('fr'); setShowLangMenu(false); }}>Français</button>
+              </div>
+            )}
+          </div>
+          
+          <div className="admin-icon-wrapper">
+            <Link to="/admin" className="admin-icon-link">
+              <FaUserLock className="admin-icon" />
+            </Link>
+          </div>
         </div>
         
         <Routes>
-          <Route path="/" element={<HomePage scrollToSection={scrollToSection} portfolios={portfolios} refreshPortfolios={refreshPortfolios} />} />
+          <Route path="/" element={<HomePage scrollToSection={scrollToSection} portfolios={portfolios} refreshPortfolios={refreshPortfolios} t={t} packagesData={packagesData} />} />
           <Route path="/portfolio/:id" element={<PortfolioDetail />} />
-          <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/packages" element={<PackagesPage packagesData={packagesData} t={t} />} />
+          <Route path="/admin" element={<AdminPanel packagesData={packagesData} setPackagesData={setPackagesData} t={t} />} />
         </Routes>
         
         <footer className="footer">
@@ -1549,9 +1825,9 @@ function App() {
               <p className="footer-contact">Ainab, Lebanon | +961 78 977 272 | <a href="mailto:spectraframes.00@gmail.com" className="footer-email-link">spectraframes.00@gmail.com</a></p>
             </div>
             <div className="footer-credit">
-              <p className="footer-designed">Designed & Published by <span className="footer-brand">Spectra Frames</span></p>
+              <p className="footer-designed">{t.footer.designed} <span className="footer-brand">Spectra Frames</span></p>
             </div>
-            <p className="footer-copyright">2026 Spectra Frames Photography Agency. All rights reserved.</p>
+            <p className="footer-copyright">2026 Spectra Frames Photography Agency. {t.footer.allRights}</p>
           </div>
         </footer>
       </div>
