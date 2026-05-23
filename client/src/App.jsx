@@ -1711,8 +1711,6 @@ function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
 
 // Main App
 function App() {
-  const [showScrollTop, setShowScrollTop] = useState(false);
-  const [portfolios, setPortfolios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(true);
   const [lang, setLang] = useState('en');
@@ -1722,6 +1720,7 @@ function App() {
     social: [],
     photo: []
   });
+  const [portfolios, setPortfolios] = useState([]);
   const t = translations[lang];
   
   const logoSrc = darkMode ? '/logo-dark.png' : '/logo-light.png';
@@ -1762,12 +1761,8 @@ function App() {
 
   useEffect(() => {
     loadPortfolios();
-    const handleScroll = () => setShowScrollTop(window.scrollY > 300);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
   const scrollToSection = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   const refreshPortfolios = () => loadPortfolios();
 
@@ -1775,8 +1770,6 @@ function App() {
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <div className="app">
         {loading && <LoadingScreen onComplete={() => setLoading(false)} logoSrc={logoSrc} />}
-        
-        <button className={`floating-scroll ${showScrollTop ? 'visible' : ''}`} onClick={scrollToTop}>↑</button>
         
         <div className="top-buttons">
           <button className="theme-toggle" onClick={() => setDarkMode(!darkMode)}>

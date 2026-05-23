@@ -29,6 +29,44 @@ function ChatBot({ onClose }) {
     inputRef.current?.focus();
   }, []);
 
+  // منع تمرير الصفحة الرئيسية عند فتح الشات وإصلاح الكيبورد
+  useEffect(() => {
+    // منع التمرير في الصفحة الرئيسية
+    document.body.classList.add('chatbot-open');
+    
+    // تمرير الصفحة لأعلى عند فتح الشات على التلفون
+    if (window.innerWidth <= 768) {
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 50);
+    }
+    
+    // كشف فتح وإغلاق الكيبورد على التلفون
+    const handleResize = () => {
+      const chatbotContainer = document.querySelector('.chatbot-container');
+      if (chatbotContainer) {
+        // إذا كان ارتفاع النافذة أقل من المعتاد، الكيبورد مفتوح
+        const isKeyboardOpen = window.innerHeight < 600;
+        if (isKeyboardOpen) {
+          chatbotContainer.classList.add('keyboard-open');
+          // لف الشات للأسفل عند فتح الكيبورد
+          setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+          }, 100);
+        } else {
+          chatbotContainer.classList.remove('keyboard-open');
+        }
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      document.body.classList.remove('chatbot-open');
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   // Check if question is photography-related
   const isPhotographyQuestion = (text) => {
     const keywords = [
