@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
 import './App.css';
-import { FaFacebookF, FaInstagram, FaTiktok, FaWhatsapp, FaUserLock, FaPlay, FaPause, FaGlobe, FaSun, FaMoon } from 'react-icons/fa';
+import { FaFacebookF, FaInstagram, FaTiktok, FaWhatsapp, FaUserLock, FaPlay, FaPause, FaGlobe, FaSun, FaMoon, FaRobot } from 'react-icons/fa';
 import emailjs from '@emailjs/browser';
+import ChatBot from './components/ChatBot';
 
 // EmailJS configuration
 const EMAILJS_SERVICE_ID = 'service_qhrwy34';
@@ -1716,6 +1717,7 @@ function App() {
   const [darkMode, setDarkMode] = useState(true);
   const [lang, setLang] = useState('en');
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const [showChatBot, setShowChatBot] = useState(false);
   const [packagesData, setPackagesData] = useState({
     social: [],
     photo: []
@@ -1800,6 +1802,14 @@ function App() {
             </Link>
           </div>
         </div>
+
+        {/* Chat Bot Toggle Button */}
+        {!showChatBot && (
+          <button className="chatbot-toggle" onClick={() => setShowChatBot(true)}>
+            <FaRobot />
+          </button>
+        )}
+        {showChatBot && <ChatBot onClose={() => setShowChatBot(false)} />}
         
         <Routes>
           <Route path="/" element={<HomePage scrollToSection={scrollToSection} portfolios={portfolios} refreshPortfolios={refreshPortfolios} t={t} packagesData={packagesData} logoSrc={logoSrc} />} />
