@@ -98,6 +98,7 @@ html {
   position: absolute;
   top: 55px;
   right: 0;
+  background: rgba(26, 26, 26, 0.98);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(212, 175, 55, 0.4);
   border-radius: 16px;
@@ -127,6 +128,7 @@ html {
   width: 100%;
   border: none;
   background: none;
+  color: #F2F2F2;
   cursor: pointer;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
@@ -1329,6 +1331,36 @@ html {
 .packages-header {
   text-align: center;
   margin-bottom: 60px;
+  position: relative;
+}
+
+.back-to-home-top {
+  background: rgba(212, 175, 55, 0.85);
+  border: none;
+  color: #1A1A1A;
+  padding: 8px 20px;
+  border-radius: 30px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-weight: bold;
+  transition: all 0.3s;
+  font-size: 13px;
+  display: inline-block;
+  margin-bottom: 20px;
+}
+
+.back-to-home-top:hover {
+  background: #D4AF37;
+  transform: translateX(-5px);
+}
+
+body.light-mode .back-to-home-top {
+  background: rgba(212, 175, 55, 0.85);
+  color: #1C1C1C;
+}
+
+body.light-mode .back-to-home-top:hover {
+  background: #D4AF37;
 }
 
 .packages-main-title {
@@ -1469,59 +1501,93 @@ html {
 }
 
 /* ============================================
-   ADMIN LOGIN
+   ADMIN LOGIN PAGE
    ============================================ */
-.admin-login {
-  min-height: 100vh;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  margin: 0;
+.admin-login-page {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 9999;
+  width: 100%;
+  height: 100vh;
+  background: radial-gradient(ellipse at center, #1A1A1A 0%, #0a0a0a 100%);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.light-mode .admin-login-page {
+  background: radial-gradient(ellipse at center, #F5F0E8 0%, #E8DED0 100%);
+}
+
+.admin-login-container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.login-logo {
+  width: 150px;
+  height: auto;
+  margin: 0 auto 30px auto;
+  display: block;
 }
 
 .login-box {
+  background: rgba(37, 37, 37, 0.95);
   backdrop-filter: blur(10px);
-  padding: 50px 40px;
+  padding: 40px 35px;
   border-radius: 20px;
   text-align: center;
   width: 100%;
-  max-width: 420px;
-  margin: 0 auto;
+  max-width: 400px;
   border: 1px solid rgba(212, 175, 55, 0.3);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-  position: relative;
-  z-index: 10000;
+}
+
+body.light-mode .login-box {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(212, 175, 55, 0.4);
 }
 
 .login-box h2 {
   color: #D4AF37;
-  margin-bottom: 30px;
+  margin-bottom: 25px;
   font-family: 'Cinzel', serif;
-  font-size: 28px;
+  font-size: 24px;
   letter-spacing: 2px;
+}
+
+body.light-mode .login-box h2 {
+  color: #B8860B;
 }
 
 .login-box .form-input {
   width: 100%;
-  margin-bottom: 20px;
-  padding: 14px 18px;
+  margin-bottom: 15px;
+  padding: 12px 16px;
   border-radius: 10px;
   border: 1px solid rgba(212, 175, 55, 0.3);
+  background: rgba(26, 26, 26, 0.8);
+  color: #F2F2F2;
   font-size: 14px;
+}
+
+body.light-mode .login-box .form-input {
+  background: #F5F0E8;
+  color: #1C1C1C;
+  border-color: rgba(212, 175, 55, 0.3);
 }
 
 .login-box .btn-primary {
   width: 100%;
-  padding: 12px;
-  margin-top: 10px;
+  padding: 10px;
+  margin-top: 5px;
+  margin-bottom: 25px;
   background: linear-gradient(135deg, #D4AF37, #B8860B);
   border: none;
   border-radius: 10px;
@@ -1529,49 +1595,32 @@ html {
   font-weight: bold;
   cursor: pointer;
   font-family: 'Inter', sans-serif;
-  font-size: 16px;
+  font-size: 15px;
 }
 
-.back-to-home {
-  background: rgba(212, 175, 55, 0.8);
-  border: none;
-  color: #1A1A1A;
-  padding: 10px 25px;
+.login-box .back-to-home {
+  background: transparent;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  color: #D4AF37;
+  padding: 8px 20px;
   border-radius: 30px;
   cursor: pointer;
-  margin-bottom: 30px;
   font-family: 'Inter', sans-serif;
   font-weight: bold;
   transition: all 0.3s;
-  font-size: 14px;
+  font-size: 13px;
   display: inline-block;
+  width: auto;
 }
 
-.back-to-home:hover {
-  background: #D4AF37;
-  transform: translateX(-5px);
+.login-box .back-to-home:hover {
+  background: rgba(212, 175, 55, 0.2);
+  transform: translateX(-3px);
 }
 
-@media (max-width: 576px) {
-  .login-box {
-    padding: 30px 25px;
-    margin: 0 15px;
-    max-width: calc(100% - 30px);
-  }
-  .login-box h2 {
-    font-size: 24px;
-    margin-bottom: 25px;
-  }
-  .login-box .form-input {
-    padding: 12px 15px;
-    font-size: 14px;
-    margin-bottom: 15px;
-  }
-  .back-to-home {
-    margin-bottom: 20px;
-    font-size: 13px;
-    padding: 8px 20px;
-  }
+.login-box .form-error {
+  margin-bottom: 15px;
+  font-size: 13px;
 }
 
 /* ============================================
@@ -1619,31 +1668,56 @@ html {
   transform: translateY(-2px);
 }
 
+/* ===== ADMIN TABS - GOLD COLOR ===== */
 .admin-tabs {
   display: flex;
-  gap: 20px;
+  gap: 15px;
   margin-bottom: 35px;
   flex-wrap: wrap;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
   padding-bottom: 15px;
 }
 
 .tab-btn {
   background: transparent;
   border: none;
+  color: #B8B0A8;
   padding: 10px 25px;
   font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 40px;
   font-family: 'Inter', sans-serif;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
+  letter-spacing: 0.5px;
 }
 
-.tab-btn:hover { color: #D4AF37; }
-.tab-btn.active {
-  background: rgba(212, 175, 55, 0.2);
+.tab-btn:hover {
   color: #D4AF37;
-  border: 1px solid #D4AF37;
+  background: rgba(212, 175, 55, 0.1);
+  transform: translateY(-2px);
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+  color: #1A1A1A;
+  border: none;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+
+body.light-mode .tab-btn {
+  color: #6B6257;
+}
+
+body.light-mode .tab-btn:hover {
+  background: rgba(212, 175, 55, 0.15);
+  color: #B8860B;
+}
+
+body.light-mode .tab-btn.active {
+  background: linear-gradient(135deg, #D4AF37, #B8860B);
+  color: #1C1C1C;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 768px) {
@@ -1652,13 +1726,19 @@ html {
   .admin-header h1 { font-size: 28px; }
   .admin-header div { justify-content: center; width: 100%; }
   .admin-header .btn-secondary { padding: 8px 16px; font-size: 13px; }
-  .admin-tabs { flex-direction: column; gap: 8px; align-items: stretch; }
-  .tab-btn { text-align: center; padding: 10px; font-size: 14px; width: 100%; }
+  .admin-tabs { 
+    justify-content: center;
+    gap: 10px;
+  }
+  .tab-btn { 
+    padding: 8px 18px; 
+    font-size: 14px; 
+  }
 }
 
 @media (max-width: 480px) {
   .admin-header h1 { font-size: 22px; }
-  .tab-btn { font-size: 12px; padding: 8px; }
+  .tab-btn { font-size: 12px; padding: 6px 14px; }
 }
 
 /* ============================================
@@ -2469,8 +2549,8 @@ html {
    LIGHT MODE STYLES
    ============================================ */
 body.light-mode {
-  background-color: #f5f5f5;
-  color: #1A1A1A;
+  background-color: #F5F0E8;
+  color: #1C1C1C;
 }
 
 body.light-mode .app,
@@ -2486,11 +2566,32 @@ body.light-mode .packages-redirect,
 body.light-mode .packages-page,
 body.light-mode .admin-panel,
 body.light-mode .portfolio-detail {
-  background-color: #f5f5f5;
+  background-color: #F5F0E8;
 }
 
 body.light-mode .hero {
-  background: radial-gradient(ellipse at center, #f5f5f5 0%, #e0e0e0 100%);
+  background: radial-gradient(ellipse at center, #F5F0E8 0%, #E8DED0 100%);
+}
+
+body.light-mode .logo-centered-img {
+  filter: brightness(0.85) drop-shadow(0 0 20px rgba(212, 175, 55, 0.25));
+}
+
+body.light-mode .logo-centered-fallback {
+  background: linear-gradient(135deg, #B8860B 0%, #8B6914 100%);
+  color: #F5F0E8;
+}
+
+body.light-mode .section-title {
+  background: linear-gradient(135deg, #B8860B 0%, #D4AF37 50%, #B8860B 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+body.light-mode .section-subtitle {
+  color: #6B6257;
+  opacity: 1;
 }
 
 body.light-mode .client-card,
@@ -2505,9 +2606,21 @@ body.light-mode .portfolio-admin-card,
 body.light-mode .client-admin-card,
 body.light-mode .partner-admin-card,
 body.light-mode .service-admin-card,
-body.light-mode .inquiry-card {
-  background: rgba(255, 255, 255, 0.95);
+body.light-mode .inquiry-card,
+body.light-mode .package-form {
+  background: #E8DED0;
   border-color: rgba(212, 175, 55, 0.3);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+body.light-mode .client-card:hover,
+body.light-mode .partner-card:hover,
+body.light-mode .portfolio-card:hover,
+body.light-mode .service-card:hover,
+body.light-mode .package-card:hover,
+body.light-mode .pricing-card:hover {
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+  border-color: #D4AF37;
 }
 
 body.light-mode .client-name,
@@ -2523,93 +2636,95 @@ body.light-mode .pricing-features li,
 body.light-mode .portfolio-category,
 body.light-mode .detail-description,
 body.light-mode .packages-subtitle,
-body.light-mode .packages-category-desc {
-  color: #1A1A1A;
+body.light-mode .packages-category-desc,
+body.light-mode .packages-main-title {
+  color: #1C1C1C;
+}
+
+body.light-mode .package-name,
+body.light-mode .pricing-title,
+body.light-mode .packages-category-title {
+  color: #B8860B;
+}
+
+body.light-mode .package-price,
+body.light-mode .pricing-price {
+  color: #D4AF37;
 }
 
 body.light-mode .footer {
-  background: #e0e0e0;
+  background: #E8DED0;
+  border-top-color: #D4AF37;
+}
+
+body.light-mode .footer-logo-text {
+  background: linear-gradient(135deg, #B8860B, #D4AF37);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+body.light-mode .footer-contact {
+  color: #6B6257;
+}
+
+body.light-mode .footer-designed {
+  color: #6B6257;
+}
+
+body.light-mode .footer-copyright {
+  color: #6B6257;
 }
 
 body.light-mode .form-input,
 body.light-mode .form-select,
 body.light-mode .form-textarea {
-  background: rgba(255, 255, 255, 0.9);
-  color: #1A1A1A;
-  border-color: rgba(212, 175, 55, 0.3);
+  background: #F5F0E8;
+  color: #1C1C1C;
+  border-color: rgba(212, 175, 55, 0.4);
+}
+
+body.light-mode .form-input:focus,
+body.light-mode .form-select:focus,
+body.light-mode .form-textarea:focus {
+  border-color: #D4AF37;
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
 }
 
 body.light-mode .form-input::placeholder,
 body.light-mode .form-select::placeholder,
 body.light-mode .form-textarea::placeholder {
-  color: #888;
+  color: #6B6257;
 }
 
 body.light-mode .lang-menu {
-  background: rgba(255, 255, 255, 0.98);
+  background: #E8DED0;
   border-color: rgba(212, 175, 55, 0.5);
 }
 
 body.light-mode .lang-option {
-  color: #1A1A1A;
+  color: #1C1C1C;
 }
 
 body.light-mode .lang-option:hover {
-  background: rgba(212, 175, 55, 0.15);
+  background: rgba(212, 175, 55, 0.2);
   color: #D4AF37;
 }
 
-body.light-mode .admin-icon-link,
-body.light-mode .lang-toggle,
-body.light-mode .theme-toggle {
-  background: rgba(212, 175, 55, 0.85);
-}
-
-body.light-mode .back-btn {
-  background: rgba(212, 175, 55, 0.85);
-  color: #1A1A1A;
-}
-
-body.light-mode .back-btn:hover {
-  background: #D4AF37;
-}
-
-body.light-mode .section-subtitle,
-body.light-mode .packages-redirect-text,
-body.light-mode .packages-subtitle,
-body.light-mode .packages-category-desc,
-body.light-mode .empty-packages p {
-  color: #555;
-}
-
-body.light-mode .empty-packages {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-body.light-mode .featured-badge,
-body.light-mode .popular-badge {
+body.light-mode .btn-primary {
   background: linear-gradient(135deg, #D4AF37, #B8860B);
-  color: #1A1A1A;
+  color: #1C1C1C;
 }
 
-body.light-mode .duration-badge {
-  background: rgba(212, 175, 55, 0.2);
+body.light-mode .btn-secondary {
+  background: #E8DED0;
+  border-color: #D4AF37;
   color: #B8860B;
 }
 
-body.light-mode .login-box {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(212, 175, 55, 0.4);
-}
-
-body.light-mode .login-box h2 {
-  color: #D4AF37;
-}
-
-body.light-mode .login-box .form-input {
-  background: rgba(245, 245, 245, 0.9);
-  color: #1A1A1A;
-  border-color: rgba(212, 175, 55, 0.3);
+body.light-mode .btn-secondary:hover {
+  background: #D4AF37;
+  color: #1C1C1C;
 }
 
 body.light-mode .admin-header h1 {
@@ -2619,19 +2734,29 @@ body.light-mode .admin-header h1 {
   color: transparent;
 }
 
-body.light-mode .tab-btn {
-  color: #555;
+body.light-mode .admin-header .btn-secondary {
+  background: transparent;
+  border-color: #D4AF37;
+  color: #B8860B;
 }
 
-body.light-mode .tab-btn.active {
-  background: rgba(212, 175, 55, 0.2);
-  color: #D4AF37;
-  border-color: #D4AF37;
+body.light-mode .admin-header .btn-secondary:hover {
+  background: #D4AF37;
+  color: #1C1C1C;
 }
 
 body.light-mode .upload-label {
   background: linear-gradient(135deg, #D4AF37, #B8860B);
-  color: #1A1A1A;
+  color: #1C1C1C;
+}
+
+body.light-mode .edit-btn {
+  background: rgba(212, 175, 55, 0.85);
+  color: #1C1C1C;
+}
+
+body.light-mode .edit-btn:hover {
+  background: #D4AF37;
 }
 
 body.light-mode .delete-btn {
@@ -2639,53 +2764,85 @@ body.light-mode .delete-btn {
   color: white;
 }
 
-body.light-mode .edit-btn {
-  background: rgba(212, 175, 55, 0.85);
-  color: #1A1A1A;
+body.light-mode .delete-all-btn {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  color: white;
 }
 
-body.light-mode .edit-btn:hover {
+body.light-mode .back-btn,
+body.light-mode .back-to-home-top {
+  background: rgba(212, 175, 55, 0.85);
+  color: #1C1C1C;
+}
+
+body.light-mode .back-btn:hover,
+body.light-mode .back-to-home-top:hover {
   background: #D4AF37;
 }
 
-body.light-mode .modal-container {
-  background: #ffffff;
+body.light-mode .featured-badge,
+body.light-mode .popular-badge {
+  background: linear-gradient(135deg, #D4AF37, #B8860B);
+  color: #1C1C1C;
+}
+
+body.light-mode .duration-badge {
+  background: rgba(212, 175, 55, 0.2);
+  color: #B8860B;
+}
+
+body.light-mode .package-btn,
+body.light-mode .pricing-btn {
   border-color: #D4AF37;
+  color: #B8860B;
 }
 
-body.light-mode .modal-header {
-  border-bottom-color: rgba(212, 175, 55, 0.3);
+body.light-mode .package-btn:hover,
+body.light-mode .pricing-btn:hover {
+  background: #D4AF37;
+  color: #1C1C1C;
 }
 
-body.light-mode .modal-body p {
-  color: #1A1A1A;
+body.light-mode .empty-packages {
+  background: #E8DED0;
 }
 
-body.light-mode .modal-footer {
-  border-top-color: rgba(212, 175, 55, 0.3);
+body.light-mode .empty-packages p {
+  color: #6B6257;
 }
 
-body.light-mode .image-manager-content {
-  background: #ffffff;
-  border-color: #D4AF37;
+body.light-mode .packages-redirect-text {
+  color: #6B6257;
 }
 
-body.light-mode .image-manager-header {
-  border-bottom-color: #D4AF37;
+body.light-mode .admin-icon-link,
+body.light-mode .lang-toggle,
+body.light-mode .theme-toggle {
+  background: rgba(212, 175, 55, 0.85);
+  color: #1C1C1C;
 }
 
-body.light-mode .close-modal {
-  color: #D4AF37;
+body.light-mode .admin-icon-link:hover,
+body.light-mode .lang-toggle:hover,
+body.light-mode .theme-toggle:hover {
+  background: #D4AF37;
 }
 
-body.light-mode .new-image-item,
-body.light-mode .existing-image-item {
-  border-color: rgba(212, 175, 55, 0.3);
+body.light-mode .progress-bar {
+  background: linear-gradient(90deg, #D4AF37, #B8860B);
+  color: #1C1C1C;
 }
 
-body.light-mode .new-image-item:hover,
-body.light-mode .existing-image-item:hover {
-  border-color: #D4AF37;
+body.light-mode ::-webkit-scrollbar-track {
+  background: #E8DED0;
+}
+
+body.light-mode ::-webkit-scrollbar-thumb {
+  background: #D4AF37;
+}
+
+body.light-mode ::-webkit-scrollbar-thumb:hover {
+  background: #B8860B;
 }
 
 /* ============================================
@@ -2728,7 +2885,8 @@ body.dark-mode .portfolio-admin-card,
 body.dark-mode .client-admin-card,
 body.dark-mode .partner-admin-card,
 body.dark-mode .service-admin-card,
-body.dark-mode .inquiry-card {
+body.dark-mode .inquiry-card,
+body.dark-mode .package-form {
   background: rgba(37, 37, 37, 0.85);
   border-color: rgba(212, 175, 55, 0.2);
 }
@@ -2769,11 +2927,6 @@ body.dark-mode .lang-menu {
 
 body.dark-mode .lang-option {
   color: #F2F2F2;
-}
-
-body.dark-mode .login-box {
-  background: rgba(37, 37, 37, 0.95);
-  border-color: rgba(212, 175, 55, 0.3);
 }
 
 body.dark-mode .modal-container {
@@ -2823,10 +2976,6 @@ body.dark-mode .image-manager-content {
   background: #c49f2e;
 }
 
-body.light-mode ::-webkit-scrollbar-track {
-  background: #d0d0d0;
-}
-
 /* ============================================
    MISC
    ============================================ */
@@ -2850,579 +2999,4 @@ body.light-mode ::-webkit-scrollbar-track {
   font-size: 13px;
   font-weight: bold;
   margin: 10px 0;
-}
-/* ============================================
-   LIGHT MODE STYLES - UPDATED
-   ============================================ */
-body.light-mode {
-  background-color: #F5F0E8;
-  color: #1C1C1C;
-}
-
-body.light-mode .app,
-body.light-mode .hero,
-body.light-mode .clients-section,
-body.light-mode .partners-section,
-body.light-mode .portfolio,
-body.light-mode .services,
-body.light-mode .contact,
-body.light-mode .featured-video,
-body.light-mode .packages-redirect,
-body.light-mode .packages-page,
-body.light-mode .admin-panel,
-body.light-mode .portfolio-detail {
-  background-color: #F5F0E8;
-}
-
-/* Hero Section - Light Mode */
-body.light-mode .hero {
-  background: radial-gradient(ellipse at center, #F5F0E8 0%, #E8DED0 100%);
-}
-
-/* Logo - Light Mode */
-body.light-mode .logo-centered-img {
-  filter: brightness(0.85) drop-shadow(0 0 20px rgba(212, 175, 55, 0.25));
-}
-
-body.light-mode .logo-centered-fallback {
-  background: linear-gradient(135deg, #B8860B 0%, #8B6914 100%);
-  color: #F5F0E8;
-  box-shadow: 0 0 40px rgba(212, 175, 55, 0.3);
-}
-
-/* Section Titles - keep gold gradient */
-body.light-mode .section-title {
-  background: linear-gradient(135deg, #B8860B 0%, #D4AF37 50%, #B8860B 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-body.light-mode .section-subtitle {
-  color: #6B6257;
-  opacity: 1;
-}
-
-/* Cards - Light Mode (using #E8DED0) */
-body.light-mode .client-card,
-body.light-mode .partner-card,
-body.light-mode .portfolio-card,
-body.light-mode .service-card,
-body.light-mode .admin-form,
-body.light-mode .package-card,
-body.light-mode .pricing-card,
-body.light-mode .package-admin-card,
-body.light-mode .portfolio-admin-card,
-body.light-mode .client-admin-card,
-body.light-mode .partner-admin-card,
-body.light-mode .service-admin-card,
-body.light-mode .inquiry-card,
-body.light-mode .package-form {
-  background: #E8DED0;
-  border-color: rgba(212, 175, 55, 0.3);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-}
-
-body.light-mode .client-card:hover,
-body.light-mode .partner-card:hover,
-body.light-mode .portfolio-card:hover,
-body.light-mode .service-card:hover,
-body.light-mode .package-card:hover,
-body.light-mode .pricing-card:hover {
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-  border-color: #D4AF37;
-}
-
-/* Main Text Color - Light Mode (#1C1C1C) */
-body.light-mode .client-name,
-body.light-mode .partner-name,
-body.light-mode .portfolio-title,
-body.light-mode .service-desc,
-body.light-mode .package-name,
-body.light-mode .pricing-title,
-body.light-mode .package-price,
-body.light-mode .pricing-price,
-body.light-mode .package-features li,
-body.light-mode .pricing-features li,
-body.light-mode .portfolio-category,
-body.light-mode .detail-description,
-body.light-mode .packages-subtitle,
-body.light-mode .packages-category-desc,
-body.light-mode .portfolio-category,
-body.light-mode .admin-header h1,
-body.light-mode .tab-btn,
-body.light-mode .admin-form h2,
-body.light-mode .back-btn,
-body.light-mode .inquiry-card p,
-body.light-mode .modal-body p,
-body.light-mode .login-box h2,
-body.light-mode .packages-main-title {
-  color: #1C1C1C;
-}
-
-/* Secondary Text Color - Light Mode (#6B6257) */
-body.light-mode .section-subtitle,
-body.light-mode .packages-redirect-text,
-body.light-mode .packages-subtitle,
-body.light-mode .packages-category-desc,
-body.light-mode .detail-photos-count,
-body.light-mode .footer-contact,
-body.light-mode .footer-designed,
-body.light-mode .footer-copyright,
-body.light-mode .empty-packages p,
-body.light-mode .portfolio-photos-count {
-  color: #6B6257;
-}
-
-/* Package name in light mode - gold */
-body.light-mode .package-name,
-body.light-mode .pricing-title,
-body.light-mode .packages-category-title {
-  color: #B8860B;
-}
-
-/* Package price in light mode */
-body.light-mode .package-price,
-body.light-mode .pricing-price {
-  color: #D4AF37;
-}
-
-/* Footer - Light Mode */
-body.light-mode .footer {
-  background: #E8DED0;
-  border-top-color: #D4AF37;
-}
-
-body.light-mode .footer-logo-text {
-  background: linear-gradient(135deg, #B8860B, #D4AF37);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-/* Form inputs - Light Mode */
-body.light-mode .form-input,
-body.light-mode .form-select,
-body.light-mode .form-textarea {
-  background: #F5F0E8;
-  color: #1C1C1C;
-  border-color: rgba(212, 175, 55, 0.4);
-}
-
-body.light-mode .form-input:focus,
-body.light-mode .form-select:focus,
-body.light-mode .form-textarea:focus {
-  border-color: #D4AF37;
-  box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
-}
-
-body.light-mode .form-input::placeholder,
-body.light-mode .form-select::placeholder,
-body.light-mode .form-textarea::placeholder {
-  color: #6B6257;
-}
-
-/* Language menu - Light Mode */
-body.light-mode .lang-menu {
-  background: #E8DED0;
-  border-color: rgba(212, 175, 55, 0.5);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-}
-
-body.light-mode .lang-option {
-  color: #1C1C1C;
-}
-
-body.light-mode .lang-option:hover {
-  background: rgba(212, 175, 55, 0.2);
-  color: #D4AF37;
-}
-
-/* Buttons - Light Mode */
-body.light-mode .btn-primary {
-  background: linear-gradient(135deg, #D4AF37, #B8860B);
-  color: #1C1C1C;
-}
-
-body.light-mode .btn-secondary {
-  background: #E8DED0;
-  border-color: #D4AF37;
-  color: #B8860B;
-}
-
-body.light-mode .btn-secondary:hover {
-  background: #D4AF37;
-  color: #1C1C1C;
-}
-
-/* Admin Panel - Light Mode */
-body.light-mode .admin-header h1 {
-  background: linear-gradient(135deg, #B8860B, #D4AF37);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-body.light-mode .tab-btn {
-  color: #6B6257;
-}
-
-body.light-mode .tab-btn.active {
-  background: rgba(212, 175, 55, 0.15);
-  color: #B8860B;
-  border-color: #D4AF37;
-}
-
-body.light-mode .tab-btn:hover {
-  color: #D4AF37;
-}
-
-/* Admin buttons - Light Mode */
-body.light-mode .admin-header .btn-secondary {
-  background: transparent;
-  border-color: #D4AF37;
-  color: #B8860B;
-}
-
-body.light-mode .admin-header .btn-secondary:hover {
-  background: #D4AF37;
-  color: #1C1C1C;
-}
-
-/* Upload label - Light Mode */
-body.light-mode .upload-label {
-  background: linear-gradient(135deg, #D4AF37, #B8860B);
-  color: #1C1C1C;
-}
-
-/* Edit/Delete buttons - Light Mode */
-body.light-mode .edit-btn {
-  background: rgba(212, 175, 55, 0.85);
-  color: #1C1C1C;
-}
-
-body.light-mode .edit-btn:hover {
-  background: #D4AF37;
-}
-
-body.light-mode .delete-btn {
-  background: #dc3545;
-  color: white;
-}
-
-/* Delete all button - Light Mode */
-body.light-mode .delete-all-btn {
-  background: linear-gradient(135deg, #dc3545, #c82333);
-  color: white;
-}
-
-/* Back button - Light Mode */
-body.light-mode .back-btn {
-  background: rgba(212, 175, 55, 0.85);
-  color: #1C1C1C;
-}
-
-body.light-mode .back-btn:hover {
-  background: #D4AF37;
-}
-
-/* Package badges - Light Mode */
-body.light-mode .featured-badge,
-body.light-mode .popular-badge {
-  background: linear-gradient(135deg, #D4AF37, #B8860B);
-  color: #1C1C1C;
-}
-
-body.light-mode .duration-badge {
-  background: rgba(212, 175, 55, 0.2);
-  color: #B8860B;
-}
-
-/* Package button - Light Mode */
-body.light-mode .package-btn,
-body.light-mode .pricing-btn {
-  border-color: #D4AF37;
-  color: #B8860B;
-}
-
-body.light-mode .package-btn:hover,
-body.light-mode .pricing-btn:hover {
-  background: #D4AF37;
-  color: #1C1C1C;
-}
-
-/* Login box - Light Mode */
-body.light-mode .login-box {
-  background: #E8DED0;
-  border-color: rgba(212, 175, 55, 0.4);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-}
-
-body.light-mode .login-box h2 {
-  color: #B8860B;
-}
-
-body.light-mode .login-box .form-input {
-  background: #F5F0E8;
-  color: #1C1C1C;
-  border-color: rgba(212, 175, 55, 0.3);
-}
-
-body.light-mode .back-to-home {
-  background: rgba(212, 175, 55, 0.85);
-  color: #1C1C1C;
-}
-
-body.light-mode .back-to-home:hover {
-  background: #D4AF37;
-}
-
-/* Modal - Light Mode */
-body.light-mode .modal-container {
-  background: #E8DED0;
-  border-color: #D4AF37;
-}
-
-body.light-mode .modal-header {
-  border-bottom-color: rgba(212, 175, 55, 0.3);
-}
-
-body.light-mode .modal-header h3 {
-  color: #B8860B;
-}
-
-body.light-mode .modal-body p {
-  color: #1C1C1C;
-}
-
-body.light-mode .modal-footer {
-  border-top-color: rgba(212, 175, 55, 0.3);
-}
-
-/* Image Manager - Light Mode */
-body.light-mode .image-manager-content {
-  background: #E8DED0;
-  border-color: #D4AF37;
-}
-
-body.light-mode .image-manager-header {
-  border-bottom-color: #D4AF37;
-}
-
-body.light-mode .image-manager-header h2 {
-  color: #B8860B;
-}
-
-body.light-mode .close-modal {
-  color: #D4AF37;
-}
-
-body.light-mode .new-image-item,
-body.light-mode .existing-image-item {
-  border-color: rgba(212, 175, 55, 0.3);
-}
-
-body.light-mode .new-image-item:hover,
-body.light-mode .existing-image-item:hover {
-  border-color: #D4AF37;
-}
-
-/* Empty packages - Light Mode */
-body.light-mode .empty-packages {
-  background: #E8DED0;
-}
-
-body.light-mode .empty-packages p {
-  color: #6B6257;
-}
-
-/* Packages redirect text - Light Mode */
-body.light-mode .packages-redirect-text {
-  color: #6B6257;
-}
-
-/* Scrollbar - Light Mode */
-body.light-mode ::-webkit-scrollbar-track {
-  background: #E8DED0;
-}
-
-body.light-mode ::-webkit-scrollbar-thumb {
-  background: #D4AF37;
-}
-
-body.light-mode ::-webkit-scrollbar-thumb:hover {
-  background: #B8860B;
-}
-
-/* Admin icons - Light Mode */
-body.light-mode .admin-icon-link,
-body.light-mode .lang-toggle,
-body.light-mode .theme-toggle {
-  background: rgba(212, 175, 55, 0.85);
-  color: #1C1C1C;
-}
-
-body.light-mode .admin-icon-link:hover,
-body.light-mode .lang-toggle:hover,
-body.light-mode .theme-toggle:hover {
-  background: #D4AF37;
-}
-
-/* Progress bar - Light Mode */
-body.light-mode .progress-bar {
-  background: linear-gradient(90deg, #D4AF37, #B8860B);
-  color: #1C1C1C;
-}
-
-/* Form status messages - Light Mode */
-body.light-mode .form-success {
-  background: rgba(40, 167, 69, 0.1);
-  border-color: #28a745;
-  color: #28a745;
-}
-
-body.light-mode .form-error {
-  background: rgba(220, 53, 69, 0.1);
-  border-color: #dc3545;
-  color: #dc3545;
-}
-
-body.light-mode .form-sending {
-  background: rgba(212, 175, 55, 0.1);
-  border-color: #D4AF37;
-  color: #B8860B;
-}
-
-/* Image previews - Light Mode */
-body.light-mode .image-preview-item img,
-body.light-mode .image-preview img {
-  border-color: #D4AF37;
-  background: #E8DED0;
-}
-
-/* ============================================
-   ADMIN LOGIN PAGE - FULLSCREEN
-   ============================================ */
-.admin-login-page {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100vh;
-  background: radial-gradient(ellipse at center, #1A1A1A 0%, #0a0a0a 100%);
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-body.light-mode .admin-login-page {
-  background: radial-gradient(ellipse at center, #F5F0E8 0%, #E8DED0 100%);
-}
-
-.admin-login-container {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.login-logo {
-  width: 120px;
-  height: auto;
-  margin-bottom: 25px;
-}
-
-.login-box {
-  background: rgba(37, 37, 37, 0.95);
-  backdrop-filter: blur(10px);
-  padding: 35px 30px;
-  border-radius: 20px;
-  text-align: center;
-  width: 100%;
-  max-width: 380px;
-  margin: 0 auto;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-}
-
-body.light-mode .login-box {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(212, 175, 55, 0.4);
-}
-
-.login-box h2 {
-  color: #D4AF37;
-  margin-bottom: 25px;
-  font-family: 'Cinzel', serif;
-  font-size: 24px;
-  letter-spacing: 2px;
-}
-
-body.light-mode .login-box h2 {
-  color: #B8860B;
-}
-
-.login-box .form-input {
-  width: 100%;
-  margin-bottom: 15px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  background: rgba(26, 26, 26, 0.8);
-  color: #F2F2F2;
-  font-size: 14px;
-}
-
-body.light-mode .login-box .form-input {
-  background: #F5F0E8;
-  color: #1C1C1C;
-  border-color: rgba(212, 175, 55, 0.3);
-}
-
-.login-box .btn-primary {
-  width: 100%;
-  padding: 10px;
-  margin-top: 5px;
-  background: linear-gradient(135deg, #D4AF37, #B8860B);
-  border: none;
-  border-radius: 10px;
-  color: #1A1A1A;
-  font-weight: bold;
-  cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  font-size: 15px;
-}
-
-.login-box .form-error {
-  margin-bottom: 15px;
-  font-size: 13px;
-}
-
-/* Responsive */
-@media (max-width: 480px) {
-  .login-box {
-    padding: 25px 20px;
-    max-width: 320px;
-  }
-  .login-logo {
-    width: 100px;
-    margin-bottom: 20px;
-  }
-  .login-box h2 {
-    font-size: 20px;
-    margin-bottom: 20px;
-  }
-  .login-box .form-input {
-    padding: 10px 14px;
-    margin-bottom: 12px;
-    font-size: 13px;
-  }
-  .login-box .btn-primary {
-    padding: 8px;
-    font-size: 14px;
-  }
 }

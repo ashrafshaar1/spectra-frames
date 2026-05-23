@@ -25,10 +25,10 @@ const translations = {
     portfolio: { title: 'Our Portfolio', subtitle: 'Click on any project to view gallery' },
     services: { title: 'Our Services', subtitle: 'Professional photography tailored to your needs' },
     contact: { title: "Let's Create Together", subtitle: 'Ready to capture your next moment? Reach out to us', name: 'Your Name', email: 'Your Email', phone: 'Phone Number', message: 'Tell us about your vision...', send: 'Send Message', success: 'Message sent successfully! We\'ll contact you soon.', error: 'Something went wrong. Please try again later.', sending: 'Sending...' },
-    pricing: { title: 'Packages', subtitle: 'Choose the perfect package for your needs', viewPackages: 'View Packages →', backToHome: 'Back to Home', comingSoon: 'Coming Soon', emptyMessage: 'Packages are being prepared. Please check back later or contact us for custom quotes.', socialTitle: 'Social Media Packages', socialDesc: 'Perfect for influencers, brands, and content creators', photoTitle: 'Photography Sessions', photoDesc: 'Professional photography for your special moments', mostPopular: 'Most Popular', bookNow: 'Book Now', perMonth: 'month', perSession: 'session' },
+    pricing: { title: 'Packages', subtitle: 'Choose the perfect package for your needs', viewPackages: 'View Packages', backToHome: 'Back to Home', comingSoon: 'Coming Soon', emptyMessage: 'Packages are being prepared. Please check back later or contact us for custom quotes.', socialTitle: 'Social Media Packages', socialDesc: 'Perfect for influencers, brands, and content creators', photoTitle: 'Photography Sessions', photoDesc: 'Professional photography for your special moments', mostPopular: 'Most Popular', bookNow: 'Book Now', perMonth: 'month', perSession: 'session' },
     video: { title: 'Featured Film', subtitle: 'Watch our latest showcase' },
     footer: { designed: 'Designed & Published by', allRights: 'All rights reserved' },
-    admin: { loginTitle: 'Admin Login', username: 'Username', password: 'Password', login: 'Login', panelTitle: 'Admin Panel - Spectra Frames', refresh: 'Refresh', logout: 'Logout' }
+    admin: { loginTitle: 'Admin Login', username: 'Username', password: 'Password', login: 'Login', panelTitle: 'Admin Panel - Spectra Frames', refresh: 'Refresh', logout: 'Logout', portfolio: 'Portfolio', partners: 'Partners', clients: 'Clients', services: 'Services', packages: 'Packages', inquiries: 'Inquiries', addPortfolio: 'Add New Portfolio', title: 'Title', category: 'Category', description: 'Description', images: 'Images', uploadImages: 'Upload Images', addUrl: 'Add URL', create: 'Create', manageImages: 'Manage Images', delete: 'Delete', edit: 'Edit', deleteAll: 'Delete All', addPartner: 'Add Partner', addClient: 'Add Client', name: 'Name', logo: 'Logo', addService: 'Add Service', editService: 'Edit Service', managePackages: 'Manage Packages', addPackage: 'Add New Package', editPackage: 'Edit Package', packageName: 'Package Name', price: 'Price', features: 'Features', popular: 'Mark as "Most Popular"', duration: 'Duration', perMonth: 'Per Month', perSession: 'Per Session', monthly: 'Monthly', perSessionLabel: 'Per Session', comingSoonLabel: 'Coming Soon', cancel: 'Cancel', add: 'Add', popularBadge: 'Popular', addImages: 'Add Images', upload: 'Upload', saveImages: 'Save Images', existingImages: 'Existing Images' }
   },
   ar: {
     hero: { bookNow: 'احجز الآن', viewWork: 'شاهد الأعمال' },
@@ -37,10 +37,10 @@ const translations = {
     portfolio: { title: 'أعمالنا', subtitle: 'انقر على أي مشروع لمشاهدة المعرض' },
     services: { title: 'خدماتنا', subtitle: 'تصوير احترافي مصمم حسب احتياجاتك' },
     contact: { title: 'لنبدع معاً', subtitle: 'هل أنت مستعد لتوثيق لحظتك القادمة؟ تواصل معنا', name: 'الاسم الكامل', email: 'البريد الإلكتروني', phone: 'رقم الهاتف', message: 'أخبرنا عن رؤيتك...', send: 'إرسال', success: 'تم إرسال الرسالة بنجاح! سنتواصل معك قريباً', error: 'حدث خطأ. يرجى المحاولة لاحقاً', sending: 'جاري الإرسال...' },
-    pricing: { title: 'الباقات', subtitle: 'اختر الباقة المناسبة لاحتياجاتك', viewPackages: 'عرض الباقات ←', backToHome: 'العودة للرئيسية', comingSoon: 'قريباً', emptyMessage: 'يتم تجهيز الباقات. يرجى العودة لاحقاً أو التواصل معنا للحصول على عروض مخصصة.', socialTitle: 'باقات التواصل الاجتماعي', socialDesc: 'مثالية للمؤثرين والعلامات التجارية ومنشئي المحتوى', photoTitle: 'جلسات التصوير', photoDesc: 'تصوير احترافي للحظاتك المميزة', mostPopular: 'الأكثر طلباً', bookNow: 'احجز الآن', perMonth: 'شهر', perSession: 'جلسة' },
+    pricing: { title: 'الباقات', subtitle: 'اختر الباقة المناسبة لاحتياجاتك', viewPackages: 'عرض الباقات', backToHome: 'العودة للرئيسية', comingSoon: 'قريباً', emptyMessage: 'يتم تجهيز الباقات. يرجى العودة لاحقاً أو التواصل معنا للحصول على عروض مخصصة.', socialTitle: 'باقات التواصل الاجتماعي', socialDesc: 'مثالية للمؤثرين والعلامات التجارية ومنشئي المحتوى', photoTitle: 'جلسات التصوير', photoDesc: 'تصوير احترافي للحظاتك المميزة', mostPopular: 'الأكثر طلباً', bookNow: 'احجز الآن', perMonth: 'شهر', perSession: 'جلسة' },
     video: { title: 'فيديو تعريفي', subtitle: 'شاهد أحدث أعمالنا' },
     footer: { designed: 'تصميم ونشر بواسطة', allRights: 'جميع الحقوق محفوظة' },
-    admin: { loginTitle: 'دخول المشرف', username: 'اسم المستخدم', password: 'كلمة المرور', login: 'دخول', panelTitle: 'لوحة التحكم - سبيكترا فرامز', refresh: 'تحديث', logout: 'تسجيل خروج' }
+    admin: { loginTitle: 'دخول المشرف', username: 'اسم المستخدم', password: 'كلمة المرور', login: 'دخول', panelTitle: 'لوحة التحكم - سبيكترا فرامز', refresh: 'تحديث', logout: 'تسجيل خروج', portfolio: 'الأعمال', partners: 'الشركاء', clients: 'العملاء', services: 'الخدمات', packages: 'الباقات', inquiries: 'الاستفسارات', addPortfolio: 'إضافة عمل جديد', title: 'العنوان', category: 'التصنيف', description: 'الوصف', images: 'الصور', uploadImages: 'رفع الصور', addUrl: 'إضافة رابط', create: 'إنشاء', manageImages: 'إدارة الصور', delete: 'حذف', edit: 'تعديل', deleteAll: 'حذف الكل', addPartner: 'إضافة شريك', addClient: 'إضافة عميل', name: 'الاسم', logo: 'الشعار', addService: 'إضافة خدمة', editService: 'تعديل خدمة', managePackages: 'إدارة الباقات', addPackage: 'إضافة باقة جديدة', editPackage: 'تعديل باقة', packageName: 'اسم الباقة', price: 'السعر', features: 'الميزات', popular: 'تحديد كـ "الأكثر طلباً"', duration: 'المدة', perMonth: 'شهري', perSession: 'لكل جلسة', monthly: 'شهري', perSessionLabel: 'لكل جلسة', comingSoonLabel: 'قريباً', cancel: 'إلغاء', add: 'إضافة', popularBadge: 'الأكثر طلباً', addImages: 'إضافة صور', upload: 'رفع', saveImages: 'حفظ الصور', existingImages: 'الصور الموجودة' }
   },
   fr: {
     hero: { bookNow: 'Réserver', viewWork: 'Voir le travail' },
@@ -49,10 +49,10 @@ const translations = {
     portfolio: { title: 'Notre Portfolio', subtitle: 'Cliquez sur un projet pour voir la galerie' },
     services: { title: 'Nos Services', subtitle: 'Photographie professionnelle adaptée à vos besoins' },
     contact: { title: 'Créez avec Nous', subtitle: 'Prêt à capturer votre prochain moment? Contactez-nous', name: 'Votre Nom', email: 'Votre Email', phone: 'Numéro de Téléphone', message: 'Parlez-nous de votre vision...', send: 'Envoyer', success: 'Message envoyé avec succès! Nous vous contacterons bientôt.', error: 'Une erreur est survenue. Veuillez réessayer plus tard.', sending: 'Envoi en cours...' },
-    pricing: { title: 'Forfaits', subtitle: 'Choisissez le forfait parfait pour vos besoins', viewPackages: 'Voir les forfaits →', backToHome: 'Retour à l\'accueil', comingSoon: 'Bientôt disponible', emptyMessage: 'Les forfaits sont en préparation. Veuillez revenir plus tard ou nous contacter pour des devis personnalisés.', socialTitle: 'Forfaits Médias Sociaux', socialDesc: 'Parfait pour les influenceurs, marques et créateurs de contenu', photoTitle: 'Séances Photo', photoDesc: 'Photographie professionnelle pour vos moments spéciaux', mostPopular: 'Le Plus Populaire', bookNow: 'Réserver', perMonth: 'mois', perSession: 'séance' },
+    pricing: { title: 'Forfaits', subtitle: 'Choisissez le forfait parfait pour vos besoins', viewPackages: 'Voir les forfaits', backToHome: 'Retour à l\'accueil', comingSoon: 'Bientôt disponible', emptyMessage: 'Les forfaits sont en préparation. Veuillez revenir plus tard ou nous contacter pour des devis personnalisés.', socialTitle: 'Forfaits Médias Sociaux', socialDesc: 'Parfait pour les influenceurs, marques et créateurs de contenu', photoTitle: 'Séances Photo', photoDesc: 'Photographie professionnelle pour vos moments spéciaux', mostPopular: 'Le Plus Populaire', bookNow: 'Réserver', perMonth: 'mois', perSession: 'séance' },
     video: { title: 'Vidéo Présentation', subtitle: 'Regardez notre dernière réalisation' },
     footer: { designed: 'Conçu et publié par', allRights: 'Tous droits réservés' },
-    admin: { loginTitle: 'Connexion Admin', username: 'Nom d\'utilisateur', password: 'Mot de passe', login: 'Se connecter', panelTitle: 'Panneau d\'administration - Spectra Frames', refresh: 'Actualiser', logout: 'Déconnexion' }
+    admin: { loginTitle: 'Connexion Admin', username: 'Nom d\'utilisateur', password: 'Mot de passe', login: 'Se connecter', panelTitle: 'Panneau d\'administration - Spectra Frames', refresh: 'Actualiser', logout: 'Déconnexion', portfolio: 'Portfolio', partners: 'Partenaires', clients: 'Clients', services: 'Services', packages: 'Forfaits', inquiries: 'Demandes', addPortfolio: 'Ajouter un portfolio', title: 'Titre', category: 'Catégorie', description: 'Description', images: 'Images', uploadImages: 'Télécharger des images', addUrl: 'Ajouter une URL', create: 'Créer', manageImages: 'Gérer les images', delete: 'Supprimer', edit: 'Modifier', deleteAll: 'Tout supprimer', addPartner: 'Ajouter un partenaire', addClient: 'Ajouter un client', name: 'Nom', logo: 'Logo', addService: 'Ajouter un service', editService: 'Modifier le service', managePackages: 'Gérer les forfaits', addPackage: 'Ajouter un forfait', editPackage: 'Modifier le forfait', packageName: 'Nom du forfait', price: 'Prix', features: 'Caractéristiques', popular: 'Marquer comme "Populaire"', duration: 'Durée', perMonth: 'Par mois', perSession: 'Par séance', monthly: 'Mensuel', perSessionLabel: 'Par séance', comingSoonLabel: 'Bientôt', cancel: 'Annuler', add: 'Ajouter', popularBadge: 'Populaire', addImages: 'Ajouter des images', upload: 'Télécharger', saveImages: 'Enregistrer les images', existingImages: 'Images existantes' }
   }
 };
 
@@ -123,6 +123,10 @@ function LoadingScreen({ onComplete, logoSrc }) {
 function PackagesPage({ packagesData, t }) {
   const navigate = useNavigate();
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
   const hasSocialPackages = packagesData.social.length > 0;
   const hasPhotoPackages = packagesData.photo.length > 0;
 
@@ -154,7 +158,6 @@ function PackagesPage({ packagesData, t }) {
           <p className="packages-subtitle">{t.pricing.subtitle}</p>
         </div>
 
-        {/* Social Media Packages */}
         {hasSocialPackages && (
           <div className="packages-category">
             <h2 className="packages-category-title">{t.pricing.socialTitle}</h2>
@@ -175,7 +178,6 @@ function PackagesPage({ packagesData, t }) {
           </div>
         )}
 
-        {/* Photography Sessions Packages */}
         {hasPhotoPackages && (
           <div className="packages-category">
             <h2 className="packages-category-title">{t.pricing.photoTitle}</h2>
@@ -363,7 +365,6 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios, t, packagesD
         </div>
       </section>
 
-      {/* Featured Video Section */}
       <section className="featured-video">
         <div className="container">
           <div className="section-header">
@@ -380,14 +381,13 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios, t, packagesD
         </div>
       </section>
 
-      {/* Packages Section - Simple Redirect */}
       <section className="packages-redirect">
         <div className="container">
           <div className="packages-redirect-content">
             <h2 className="section-title">{t.pricing.title}</h2>
             <p className="packages-redirect-text">Choose the perfect package for your photography needs</p>
             <Link to="/packages">
-              <button className="btn-primary">{t.pricing.viewPackages}</button>
+              <button className="btn-primary">{t.pricing.viewPackages} →</button>
             </Link>
           </div>
         </div>
@@ -556,7 +556,6 @@ function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
   const [editingService, setEditingService] = useState(null);
   const [editServiceForm, setEditServiceForm] = useState({ title: '', description: '' });
 
-  // Package management state
   const [editingPackage, setEditingPackage] = useState(null);
   const [packageForm, setPackageForm] = useState({ type: 'social', name: '', price: '', features: '', popular: false, duration: 'month' });
 
@@ -1314,7 +1313,6 @@ function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
       <div className="admin-login-page">
         <div className="admin-login-container">
           <div className="login-box">
-            <button className="back-to-home" onClick={() => navigate('/')}>← {t.pricing.backToHome}</button>
             <img src={logoSrc} alt="Logo" className="login-logo" />
             <h2>{t.admin.loginTitle}</h2>
             <form onSubmit={handleLogin}>
@@ -1323,6 +1321,7 @@ function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
               {loginError && <div className="form-error">{loginError}</div>}
               <button type="submit" className="btn-primary">{t.admin.login}</button>
             </form>
+            <button className="back-to-home" onClick={() => navigate('/')}>← {t.pricing.backToHome}</button>
           </div>
         </div>
       </div>
@@ -1335,40 +1334,41 @@ function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
         <div className="admin-header">
           <h1>{t.admin.panelTitle}</h1>
           <div>
+            <button onClick={() => navigate('/')} className="btn-secondary">← {t.pricing.backToHome}</button>
             <button onClick={refreshAllData} className="btn-secondary">{t.admin.refresh}</button>
             <button onClick={handleLogout} className="btn-secondary">{t.admin.logout}</button>
           </div>
         </div>
         
         <div className="admin-tabs">
-          <button className={`tab-btn ${activeTab === 'portfolio' ? 'active' : ''}`} onClick={() => setActiveTab('portfolio')}>Portfolio ({portfolios.length})</button>
-          <button className={`tab-btn ${activeTab === 'partners' ? 'active' : ''}`} onClick={() => setActiveTab('partners')}>Partners ({partners.length})</button>
-          <button className={`tab-btn ${activeTab === 'clients' ? 'active' : ''}`} onClick={() => setActiveTab('clients')}>Clients ({clients.length})</button>
-          <button className={`tab-btn ${activeTab === 'services' ? 'active' : ''}`} onClick={() => setActiveTab('services')}>Services ({services.length})</button>
-          <button className={`tab-btn ${activeTab === 'packages' ? 'active' : ''}`} onClick={() => setActiveTab('packages')}>Packages</button>
-          <button className={`tab-btn ${activeTab === 'inquiries' ? 'active' : ''}`} onClick={() => setActiveTab('inquiries')}>Inquiries ({inquiries.length})</button>
+          <button className={`tab-btn ${activeTab === 'portfolio' ? 'active' : ''}`} onClick={() => setActiveTab('portfolio')}>{t.admin.portfolio} ({portfolios.length})</button>
+          <button className={`tab-btn ${activeTab === 'partners' ? 'active' : ''}`} onClick={() => setActiveTab('partners')}>{t.admin.partners} ({partners.length})</button>
+          <button className={`tab-btn ${activeTab === 'clients' ? 'active' : ''}`} onClick={() => setActiveTab('clients')}>{t.admin.clients} ({clients.length})</button>
+          <button className={`tab-btn ${activeTab === 'services' ? 'active' : ''}`} onClick={() => setActiveTab('services')}>{t.admin.services} ({services.length})</button>
+          <button className={`tab-btn ${activeTab === 'packages' ? 'active' : ''}`} onClick={() => setActiveTab('packages')}>{t.admin.packages}</button>
+          <button className={`tab-btn ${activeTab === 'inquiries' ? 'active' : ''}`} onClick={() => setActiveTab('inquiries')}>{t.admin.inquiries} ({inquiries.length})</button>
         </div>
         
         {activeTab === 'portfolio' && (
           <>
             <div className="admin-form">
-              <h2>Add New Portfolio</h2>
+              <h2>{t.admin.addPortfolio}</h2>
               <form key={formKey} onSubmit={handleAddPortfolio}>
-                <input type="text" name="title" placeholder="Title" value={formData.title} onChange={handleInputChange} required className="form-input" />
+                <input type="text" name="title" placeholder={t.admin.title} value={formData.title} onChange={handleInputChange} required className="form-input" />
                 <select name="category" value={formData.category} onChange={handleInputChange} className="form-select">
                   <option>Wedding</option><option>Portrait</option><option>Landscape</option><option>Street</option>
                   <option>Wildlife</option><option>Architecture</option><option>Event</option><option>Commercial</option>
                 </select>
-                <textarea name="description" placeholder="Description" value={formData.description} onChange={handleInputChange} rows="3" className="form-textarea"></textarea>
+                <textarea name="description" placeholder={t.admin.description} value={formData.description} onChange={handleInputChange} rows="3" className="form-textarea"></textarea>
                 
                 <div className="image-upload-area">
-                  <h3>Images</h3>
-                  <label className="upload-label">Upload Images
+                  <h3>{t.admin.images}</h3>
+                  <label className="upload-label">{t.admin.uploadImages}
                     <input type="file" accept="image/*" multiple onChange={handleMultipleImageUpload} style={{ display: 'none' }} />
                   </label>
                   <div className="url-input-group">
                     <input type="text" placeholder="Image URL" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} className="form-input" />
-                    <button type="button" onClick={addImageFromUrl} className="btn-secondary">Add URL</button>
+                    <button type="button" onClick={addImageFromUrl} className="btn-secondary">{t.admin.addUrl}</button>
                   </div>
                   {uploading && <div className="progress-bar" style={{ width: `${uploadProgress}%`, padding: '5px' }}>{uploadProgress}%</div>}
                   
@@ -1383,12 +1383,12 @@ function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
                     </div>
                   )}
                 </div>
-                <button type="submit" className="btn-primary" disabled={uploading}>Create</button>
+                <button type="submit" className="btn-primary" disabled={uploading}>{t.admin.create}</button>
               </form>
             </div>
             
             <div className="admin-list">
-              <h2>Portfolio ({portfolios.length})</h2>
+              <h2>{t.admin.portfolio} ({portfolios.length})</h2>
               <div className="portfolio-admin-grid">
                 {portfolios.map(item => (
                   <div key={item.id || item._id} className="portfolio-admin-card">
@@ -1396,9 +1396,9 @@ function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
                     <div className="info">
                       <h3>{item.title}</h3>
                       <p>{item.category}</p>
-                      <p>{item.images?.length || 0} photos</p>
-                      <button onClick={() => openImageManager(item)} className="edit-btn">Manage Images</button>
-                      <button onClick={() => handleDeletePortfolio(item.id || item._id)} className="delete-btn">Delete</button>
+                      <p>{item.images?.length || 0} {t.admin.images}</p>
+                      <button onClick={() => openImageManager(item)} className="edit-btn">{t.admin.manageImages}</button>
+                      <button onClick={() => handleDeletePortfolio(item.id || item._id)} className="delete-btn">{t.admin.delete}</button>
                     </div>
                   </div>
                 ))}
@@ -1411,22 +1411,22 @@ function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
           <>
             <div className="admin-form">
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <h2>Add Partner</h2>
-                {partners.length > 0 && <button onClick={handleDeleteAllPartners} className="delete-all-btn">Delete All</button>}
+                <h2>{t.admin.addPartner}</h2>
+                {partners.length > 0 && <button onClick={handleDeleteAllPartners} className="delete-all-btn">{t.admin.deleteAll}</button>}
               </div>
               <form onSubmit={handleAddPartner}>
-                <input type="text" placeholder="Name" value={partnerFormData.name} onChange={(e) => setPartnerFormData({ ...partnerFormData, name: e.target.value })} required className="form-input" />
-                <label className="upload-label">Upload Logo
+                <input type="text" placeholder={t.admin.name} value={partnerFormData.name} onChange={(e) => setPartnerFormData({ ...partnerFormData, name: e.target.value })} required className="form-input" />
+                <label className="upload-label">{t.admin.logo}
                   <input type="file" accept="image/*" onChange={handlePartnerImageUpload} style={{ display: 'none' }} />
                 </label>
                 {uploading && <div className="progress-bar" style={{ width: `${uploadProgress}%`, padding: '5px' }}>{uploadProgress}%</div>}
                 {partnerImagePreview && (
                   <div className="image-preview">
                     <img src={partnerImagePreview} alt="Preview" />
-                    <button onClick={() => { setPartnerImagePreview(''); setPartnerFormData({ ...partnerFormData, logo: '' }); }}>Remove</button>
+                    <button onClick={() => { setPartnerImagePreview(''); setPartnerFormData({ ...partnerFormData, logo: '' }); }}>{t.admin.delete}</button>
                   </div>
                 )}
-                <button type="submit" className="btn-primary">Add Partner</button>
+                <button type="submit" className="btn-primary">{t.admin.addPartner}</button>
               </form>
             </div>
             <div className="partner-admin-grid">
@@ -1434,7 +1434,7 @@ function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
                 <div key={partner.id || partner._id} className="partner-admin-card">
                   <img src={partner.logo} alt={partner.name} />
                   <h3>{partner.name}</h3>
-                  <button onClick={() => handleDeletePartner(partner.id || partner._id)} className="delete-btn">Delete</button>
+                  <button onClick={() => handleDeletePartner(partner.id || partner._id)} className="delete-btn">{t.admin.delete}</button>
                 </div>
               ))}
             </div>
@@ -1445,22 +1445,22 @@ function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
           <>
             <div className="admin-form">
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <h2>Add Client</h2>
-                {clients.length > 0 && <button onClick={handleDeleteAllClients} className="delete-all-btn">Delete All</button>}
+                <h2>{t.admin.addClient}</h2>
+                {clients.length > 0 && <button onClick={handleDeleteAllClients} className="delete-all-btn">{t.admin.deleteAll}</button>}
               </div>
               <form onSubmit={handleAddClient}>
-                <input type="text" placeholder="Name" value={clientFormData.name} onChange={(e) => setClientFormData({ ...clientFormData, name: e.target.value })} required className="form-input" />
-                <label className="upload-label">Upload Logo
+                <input type="text" placeholder={t.admin.name} value={clientFormData.name} onChange={(e) => setClientFormData({ ...clientFormData, name: e.target.value })} required className="form-input" />
+                <label className="upload-label">{t.admin.logo}
                   <input type="file" accept="image/*" onChange={handleClientImageUpload} style={{ display: 'none' }} />
                 </label>
                 {uploading && <div className="progress-bar" style={{ width: `${uploadProgress}%`, padding: '5px' }}>{uploadProgress}%</div>}
                 {clientImagePreview && (
                   <div className="image-preview">
                     <img src={clientImagePreview} alt="Preview" />
-                    <button onClick={() => { setClientImagePreview(''); setClientFormData({ ...clientFormData, logo: '' }); }}>Remove</button>
+                    <button onClick={() => { setClientImagePreview(''); setClientFormData({ ...clientFormData, logo: '' }); }}>{t.admin.delete}</button>
                   </div>
                 )}
-                <button type="submit" className="btn-primary">Add Client</button>
+                <button type="submit" className="btn-primary">{t.admin.addClient}</button>
               </form>
             </div>
             <div className="client-admin-grid">
@@ -1468,7 +1468,7 @@ function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
                 <div key={client.id || client._id} className="client-admin-card">
                   <img src={client.logo} alt={client.name} />
                   <h3>{client.name}</h3>
-                  <button onClick={() => handleDeleteClient(client.id || client._id)} className="delete-btn">Delete</button>
+                  <button onClick={() => handleDeleteClient(client.id || client._id)} className="delete-btn">{t.admin.delete}</button>
                 </div>
               ))}
             </div>
@@ -1478,13 +1478,13 @@ function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
         {activeTab === 'services' && (
           <>
             <div className="admin-form">
-              <h2>{editingService ? 'Edit Service' : 'Add Service'}</h2>
+              <h2>{editingService ? t.admin.editService : t.admin.addService}</h2>
               <form onSubmit={editingService ? handleUpdateService : handleAddService}>
-                <input type="text" placeholder="Title" value={editingService ? editServiceForm.title : serviceFormData.title} onChange={(e) => editingService ? setEditServiceForm({ ...editServiceForm, title: e.target.value }) : setServiceFormData({ ...serviceFormData, title: e.target.value })} required className="form-input" />
-                <textarea placeholder="Description" value={editingService ? editServiceForm.description : serviceFormData.description} onChange={(e) => editingService ? setEditServiceForm({ ...editServiceForm, description: e.target.value }) : setServiceFormData({ ...serviceFormData, description: e.target.value })} rows="3" required className="form-textarea" />
+                <input type="text" placeholder={t.admin.title} value={editingService ? editServiceForm.title : serviceFormData.title} onChange={(e) => editingService ? setEditServiceForm({ ...editServiceForm, title: e.target.value }) : setServiceFormData({ ...serviceFormData, title: e.target.value })} required className="form-input" />
+                <textarea placeholder={t.admin.description} value={editingService ? editServiceForm.description : serviceFormData.description} onChange={(e) => editingService ? setEditServiceForm({ ...editServiceForm, description: e.target.value }) : setServiceFormData({ ...serviceFormData, description: e.target.value })} rows="3" required className="form-textarea" />
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <button type="submit" className="btn-primary">{editingService ? 'Update' : 'Add'}</button>
-                  {editingService && <button onClick={handleCancelEdit} className="btn-secondary">Cancel</button>}
+                  <button type="submit" className="btn-primary">{editingService ? t.admin.edit : t.admin.add}</button>
+                  {editingService && <button onClick={handleCancelEdit} className="btn-secondary">{t.admin.cancel}</button>}
                 </div>
               </form>
             </div>
@@ -1493,8 +1493,8 @@ function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
                 <div key={service.id || service._id} className="service-admin-card">
                   <h3>{service.title}</h3>
                   <p>{service.description}</p>
-                  <button onClick={() => handleEditService(service)} className="edit-btn">Edit</button>
-                  <button onClick={() => handleDeleteService(service.id || service._id)} className="delete-btn">Delete</button>
+                  <button onClick={() => handleEditService(service)} className="edit-btn">{t.admin.edit}</button>
+                  <button onClick={() => handleDeleteService(service.id || service._id)} className="delete-btn">{t.admin.delete}</button>
                 </div>
               ))}
             </div>
@@ -1503,23 +1503,22 @@ function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
 
         {activeTab === 'packages' && (
           <div className="admin-form">
-            <h2>Manage Packages</h2>
+            <h2>{t.admin.managePackages}</h2>
             
-            {/* Add/Edit Form */}
             <div className="package-form">
-              <h3>{editingPackage ? 'Edit Package' : 'Add New Package'}</h3>
+              <h3>{editingPackage ? t.admin.editPackage : t.admin.addPackage}</h3>
               <form onSubmit={handlePackageSubmit}>
                 <select 
                   value={packageForm.type} 
                   onChange={(e) => setPackageForm({ ...packageForm, type: e.target.value })}
                   className="form-select"
                 >
-                  <option value="social">Social Media</option>
-                  <option value="photo">Photography Sessions</option>
+                  <option value="social">{t.pricing.socialTitle}</option>
+                  <option value="photo">{t.pricing.photoTitle}</option>
                 </select>
                 <input 
                   type="text" 
-                  placeholder="Package Name" 
+                  placeholder={t.admin.packageName} 
                   value={packageForm.name} 
                   onChange={(e) => setPackageForm({ ...packageForm, name: e.target.value })}
                   required 
@@ -1527,14 +1526,14 @@ function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
                 />
                 <input 
                   type="text" 
-                  placeholder="Price (e.g., $299)" 
+                  placeholder={t.admin.price} 
                   value={packageForm.price} 
                   onChange={(e) => setPackageForm({ ...packageForm, price: e.target.value })}
                   required 
                   className="form-input" 
                 />
                 <textarea 
-                  placeholder="Features (comma separated, e.g., 5 Photos, 2 Reels, 1 Story)" 
+                  placeholder={t.admin.features} 
                   value={packageForm.features} 
                   onChange={(e) => setPackageForm({ ...packageForm, features: e.target.value })}
                   required 
@@ -1547,26 +1546,25 @@ function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
                     checked={packageForm.popular} 
                     onChange={(e) => setPackageForm({ ...packageForm, popular: e.target.checked })}
                   />
-                  Mark as "Most Popular"
+                  {t.admin.popular}
                 </label>
                 <select 
                   value={packageForm.duration} 
                   onChange={(e) => setPackageForm({ ...packageForm, duration: e.target.value })}
                   className="form-select"
                 >
-                  <option value="month">Per Month</option>
-                  <option value="session">Per Session</option>
+                  <option value="month">{t.admin.perMonth}</option>
+                  <option value="session">{t.admin.perSession}</option>
                 </select>
                 <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-                  <button type="submit" className="btn-primary">{editingPackage ? 'Update' : 'Add'} Package</button>
-                  {editingPackage && <button type="button" onClick={resetPackageForm} className="btn-secondary">Cancel</button>}
+                  <button type="submit" className="btn-primary">{editingPackage ? t.admin.edit : t.admin.add}</button>
+                  {editingPackage && <button type="button" onClick={resetPackageForm} className="btn-secondary">{t.admin.cancel}</button>}
                 </div>
               </form>
             </div>
 
-            {/* Social Media Packages List */}
             <div className="packages-admin-list">
-              <h3>Social Media Packages</h3>
+              <h3>{t.pricing.socialTitle}</h3>
               <div className="packages-admin-grid">
                 {packagesData.social.map(pkg => (
                   <div key={pkg.id} className="package-admin-card">
@@ -1576,21 +1574,20 @@ function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
                       <ul className="package-features-admin">
                         {pkg.features.map((f, i) => <li key={i}>✓ {f}</li>)}
                       </ul>
-                      {pkg.popular && <span className="popular-badge">Popular</span>}
-                      <span className="duration-badge">{pkg.duration === 'month' ? 'Monthly' : 'Per Session'}</span>
+                      {pkg.popular && <span className="popular-badge">{t.admin.popularBadge}</span>}
+                      <span className="duration-badge">{pkg.duration === 'month' ? t.admin.monthly : t.admin.perSessionLabel}</span>
                     </div>
                     <div className="package-admin-actions">
-                      <button onClick={() => editPackage('social', pkg)} className="edit-btn">Edit</button>
-                      <button onClick={() => deletePackage('social', pkg.id)} className="delete-btn">Delete</button>
+                      <button onClick={() => editPackage('social', pkg)} className="edit-btn">{t.admin.edit}</button>
+                      <button onClick={() => deletePackage('social', pkg.id)} className="delete-btn">{t.admin.delete}</button>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Photography Sessions Packages List */}
             <div className="packages-admin-list">
-              <h3>Photography Sessions Packages</h3>
+              <h3>{t.pricing.photoTitle}</h3>
               <div className="packages-admin-grid">
                 {packagesData.photo.map(pkg => (
                   <div key={pkg.id} className="package-admin-card">
@@ -1600,12 +1597,12 @@ function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
                       <ul className="package-features-admin">
                         {pkg.features.map((f, i) => <li key={i}>✓ {f}</li>)}
                       </ul>
-                      {pkg.popular && <span className="popular-badge">Popular</span>}
-                      <span className="duration-badge">{pkg.duration === 'month' ? 'Monthly' : 'Per Session'}</span>
+                      {pkg.popular && <span className="popular-badge">{t.admin.popularBadge}</span>}
+                      <span className="duration-badge">{pkg.duration === 'month' ? t.admin.monthly : t.admin.perSessionLabel}</span>
                     </div>
                     <div className="package-admin-actions">
-                      <button onClick={() => editPackage('photo', pkg)} className="edit-btn">Edit</button>
-                      <button onClick={() => deletePackage('photo', pkg.id)} className="delete-btn">Delete</button>
+                      <button onClick={() => editPackage('photo', pkg)} className="edit-btn">{t.admin.edit}</button>
+                      <button onClick={() => deletePackage('photo', pkg.id)} className="delete-btn">{t.admin.delete}</button>
                     </div>
                   </div>
                 ))}
@@ -1631,18 +1628,18 @@ function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
         <div className="image-manager-modal">
           <div className="image-manager-content">
             <div className="image-manager-header">
-              <h2>Manage Images - {currentPortfolio.title}</h2>
+              <h2>{t.admin.manageImages} - {currentPortfolio.title}</h2>
               <button className="close-modal" onClick={closeImageManager}>×</button>
             </div>
             <div className="image-manager-body">
               <div className="add-images-section">
-                <h3>Add Images</h3>
-                <label className="upload-label">Upload
+                <h3>{t.admin.addImages}</h3>
+                <label className="upload-label">{t.admin.upload}
                   <input type="file" accept="image/*" multiple onChange={handleAddImagesToPortfolio} style={{ display: 'none' }} />
                 </label>
                 <div className="url-input-group">
                   <input type="text" placeholder="Image URL" value={imageUrlInput} onChange={(e) => setImageUrlInput(e.target.value)} className="form-input" />
-                  <button onClick={addImageUrlToManager} className="btn-secondary">Add URL</button>
+                  <button onClick={addImageUrlToManager} className="btn-secondary">{t.admin.addUrl}</button>
                 </div>
                 {newImagePreviews.length > 0 && (
                   <>
@@ -1653,12 +1650,12 @@ function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
                         </div>
                       ))}
                     </div>
-                    <button onClick={saveNewImagesToPortfolio} className="btn-primary">Save Images</button>
+                    <button onClick={saveNewImagesToPortfolio} className="btn-primary">{t.admin.saveImages}</button>
                   </>
                 )}
               </div>
               <div className="existing-images-section">
-                <h3>Existing Images ({currentPortfolio.images?.length})</h3>
+                <h3>{t.admin.existingImages} ({currentPortfolio.images?.length})</h3>
                 <div className="existing-images-grid">
                   {currentPortfolio.images?.map((img, idx) => (
                     <div key={idx} className="existing-image-item">
@@ -1725,14 +1722,12 @@ function App() {
   });
   const t = translations[lang];
   
-  // Logo based on theme
   const logoSrc = darkMode ? '/logo-dark.png' : '/logo-light.png';
 
   useEffect(() => {
     emailjs.init(EMAILJS_PUBLIC_KEY);
   }, []);
 
-  // Apply theme
   useEffect(() => {
     if (darkMode) {
       document.body.classList.remove('light-mode');
@@ -1743,7 +1738,6 @@ function App() {
     }
   }, [darkMode]);
 
-  // Close language menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (showLangMenu && !e.target.closest('.lang-wrapper') && !e.target.closest('.lang-menu')) {
