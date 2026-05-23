@@ -3000,3 +3000,6 @@ body.dark-mode .image-manager-content {
   font-weight: bold;
   margin: 10px 0;
 }
+.floating-scroll {
+  display: none !important;
+}

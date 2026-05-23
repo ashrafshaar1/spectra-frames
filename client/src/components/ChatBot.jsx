@@ -2,9 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FaPaperPlane, FaRobot, FaTimes, FaSpinner, FaUser } from 'react-icons/fa';
 import './ChatBot.css';
 
-// Groq API Key - ضع مفتاحك الحقيقي هنا
-// روح على console.groq.com سجل دخول واخذ API Key يبدأ بـ gsk_
-const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY; // استبدل هذا بمفتاحك
+// Groq API Key - من متغيرات البيئة
+const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 
 function ChatBot({ onClose }) {
   const [messages, setMessages] = useState([
@@ -30,14 +29,14 @@ function ChatBot({ onClose }) {
     inputRef.current?.focus();
   }, []);
 
-  // Check if question is photography-related (simple filter)
+  // Check if question is photography-related
   const isPhotographyQuestion = (text) => {
     const keywords = [
       'camera', 'photo', 'photograph', 'lens', 'edit', 'light', 'exposure', 
       'aperture', 'shutter', 'iso', 'portrait', 'wedding', 'landscape', 
       'film', 'digital', 'sensor', 'flash', 'tripod', 'composition', 
       'raw', 'jpeg', 'photoshop', 'lightroom', 'capture', 'shoot', 'studio',
-      'photography', 'photographer', 'picture', 'image', 'shoot', 'session',
+      'photography', 'photographer', 'picture', 'image', 'session',
       'تصوير', 'كاميرا', 'عدسة', 'بورتريه', 'زواج', 'تعديل', 'صور'
     ];
     const lowerText = text.toLowerCase();
@@ -221,7 +220,7 @@ Remember: You are ONLY for PHOTOGRAPHY conversations.`
           <textarea
             ref={inputRef}
             className="chatbot-input"
-            placeholder="Ask me about photography, cameras, editing..."
+            placeholder="Ask me about photography..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
