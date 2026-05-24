@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import './App.css';
 import { FaFacebookF, FaInstagram, FaTiktok, FaWhatsapp, FaUserLock, FaPlay, FaPause, FaGlobe, FaSun, FaMoon, FaRobot } from 'react-icons/fa';
 import emailjs from '@emailjs/browser';
@@ -123,22 +123,29 @@ function LoadingScreen({ onComplete, logoSrc }) {
 // Packages Page Component
 function PackagesPage({ packagesData, t }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
+  // Effect to handle scrolling to contact section when navigating back
+  useEffect(() => {
+    if (location.pathname === '/' && location.hash === '#contact') {
+      setTimeout(() => {
+        const contactSection = document.getElementById('contact');
+        if (contactSection) {
+          contactSection.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 150);
+    }
+  }, [location]);
+
   const hasSocialPackages = packagesData.social.length > 0;
   const hasPhotoPackages = packagesData.photo.length > 0;
 
   const scrollToContact = () => {
-    navigate('/');
-    setTimeout(() => {
-      const contactSection = document.getElementById('contact');
-      if (contactSection) {
-        contactSection.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 100);
+    navigate('/#contact');
   };
 
   if (!hasSocialPackages && !hasPhotoPackages) {
@@ -215,6 +222,7 @@ function PackagesPage({ packagesData, t }) {
 
 // Home Page Component
 function HomePage({ scrollToSection, portfolios, refreshPortfolios, t, packagesData, logoSrc }) {
+  const location = useLocation();
   const [services, setServices] = useState([]);
   const [clients, setClients] = useState([]);
   const [partners, setPartners] = useState([]);
@@ -228,6 +236,18 @@ function HomePage({ scrollToSection, portfolios, refreshPortfolios, t, packagesD
   });
   const [videoPlaying, setVideoPlaying] = useState(true);
   const videoRef = useRef(null);
+
+  // Handle hash navigation from packages page
+  useEffect(() => {
+    if (location.hash === '#contact') {
+      setTimeout(() => {
+        const contactSection = document.getElementById('contact');
+        if (contactSection) {
+          contactSection.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 200);
+    }
+  }, [location]);
 
   const loadData = () => {
     fetch(`${API_URL}/clients`).then(res => res.json()).then(data => setClients(data)).catch(err => console.error('Failed to load clients:', err));
@@ -527,7 +547,7 @@ function PortfolioDetail() {
   );
 }
 
-// Admin Panel Component (مختصر للطول)
+// Admin Panel Component (مختصر للطول - نفس الكود السابق)
 function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
   const [portfolios, setPortfolios] = useState([]);
   const [partners, setPartners] = useState([]);

@@ -57,18 +57,21 @@ body.chatbot-open {
 
 @media (max-width: 768px) {
   .chatbot-container {
-    width: 95%;
-    height: 55vh;
-    max-height: 55vh;
+    width: 100%;
+    width: calc(100% - 20px);
+    max-width: 400px;
+    height: 65vh;
+    max-height: 65vh;
     position: relative;
     bottom: 10px;
-    border-radius: 16px 16px 16px 16px;
+    margin: 0 auto;
+    border-radius: 20px;
     transition: height 0.3s ease;
   }
   
   /* عندما يكون الكيبورد مفتوحاً */
   .chatbot-container.keyboard-open {
-    height: 40vh;
+    height: 45vh;
   }
 }
 
@@ -151,12 +154,12 @@ body.light-mode .chatbot-container {
 
 @media (max-width: 768px) {
   .chatbot-messages {
-    max-height: calc(55vh - 85px);
+    max-height: calc(65vh - 85px);
     overflow-y: auto;
   }
   
   .chatbot-container.keyboard-open .chatbot-messages {
-    max-height: calc(40vh - 85px);
+    max-height: calc(45vh - 85px);
   }
 }
 
@@ -313,7 +316,7 @@ body.light-mode .chatbot-input-area {
 
 @media (max-width: 768px) {
   .chatbot-input {
-    font-size: 13px;
+    font-size: 14px;
     padding: 7px 10px;
   }
 }
@@ -425,4 +428,15 @@ body.light-mode .chatbot-input {
 .chatbot-messages::-webkit-scrollbar-thumb {
   background: rgba(212, 175, 55, 0.5);
   border-radius: 4px;
+}
+
+/* تحسينات إضافية لأجهزة iPhone */
+@supports (padding: max(0px)) {
+  .chatbot-input-area {
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+  
+  .chatbot-container {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
 }
