@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FaPaperPlane, FaRobot, FaTimes, FaSpinner, FaUser } from 'react-icons/fa';
 import './ChatBot.css';
 
-// Groq API Key - من متغيرات البيئة
+// Groq API Key
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 
 function ChatBot({ onClose }) {
@@ -19,7 +19,7 @@ function ChatBot({ onClose }) {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -29,44 +29,43 @@ function ChatBot({ onClose }) {
     inputRef.current?.focus();
   }, []);
 
-  // منع تمرير الصفحة الرئيسية عند فتح الشات وإصلاح الكيبورد
+  // Fix keyboard overlay on mobile using Visual Viewport API
   useEffect(() => {
-    // منع التمرير في الصفحة الرئيسية
-    document.body.classList.add('chatbot-open');
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.width = '100%';
-    document.body.style.height = '100%';
-    
-    // كشف فتح وإغلاق الكيبورد على التلفون
     const handleResize = () => {
       const chatbotContainer = document.querySelector('.chatbot-container');
-      // إذا كان ارتفاع النافذة أقل من 600، الكيبورد مفتوح
-      const isKeyboardOpen = window.innerHeight < 600;
+      const chatInput = document.querySelector('.chatbot-input');
       
-      if (chatbotContainer) {
-        if (isKeyboardOpen) {
-          chatbotContainer.classList.add('keyboard-open');
-          // لف الشات للأسفل عند فتح الكيبورد
+      if (window.visualViewport) {
+        const viewportHeight = window.visualViewport.height;
+        const windowHeight = window.innerHeight;
+        const keyboardHeight = windowHeight - viewportHeight;
+        
+        if (keyboardHeight > 150) { // Keyboard is open
+          if (chatbotContainer) {
+            chatbotContainer.style.height = `calc(100% - ${keyboardHeight}px)`;
+            chatbotContainer.classList.add('keyboard-open');
+          }
+          // Scroll to input
           setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-          }, 100);
+            if (chatInput) {
+              chatInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 50);
         } else {
-          chatbotContainer.classList.remove('keyboard-open');
+          if (chatbotContainer) {
+            chatbotContainer.style.height = '';
+            chatbotContainer.classList.remove('keyboard-open');
+          }
         }
       }
     };
     
-    window.addEventListener('resize', handleResize);
-    
-    return () => {
-      document.body.classList.remove('chatbot-open');
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.height = '';
-      window.removeEventListener('resize', handleResize);
-    };
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+      return () => {
+        window.visualViewport.removeEventListener('resize', handleResize);
+      };
+    }
   }, []);
 
   // Check if question is photography-related
@@ -98,7 +97,6 @@ function ChatBot({ onClose }) {
     setInput('');
     setIsLoading(true);
 
-    // Check if question is photography-related
     if (!isPhotographyQuestion(userInput)) {
       const botMessage = {
         id: Date.now() + 1,
@@ -112,7 +110,6 @@ function ChatBot({ onClose }) {
     }
 
     try {
-      // Build conversation history for Groq
       const history = [
         { 
           role: 'system', 
@@ -123,13 +120,10 @@ IMPORTANT RULES:
 2. Keep responses friendly, professional, and concise (max 3-4 sentences).
 3. Mention Spectra Frames services when relevant: Wedding Photography, Portrait Sessions, Commercial Photography, Social Media Content, and our photography packages.
 4. You can give photography tips, camera recommendations, editing advice, and explain photography concepts.
-5. Do NOT provide contact information unless asked - then direct them to the contact form on the website.
-
-Remember: You are ONLY for PHOTOGRAPHY conversations.` 
+5. Do NOT provide contact information unless asked - then direct them to the contact form on the website.` 
         }
       ];
       
-      // Add previous messages (last 10 for context)
       const recentMessages = messages.slice(-10);
       for (const msg of recentMessages) {
         if (msg.sender === 'user') {
@@ -139,7 +133,6 @@ Remember: You are ONLY for PHOTOGRAPHY conversations.`
         }
       }
       
-      // Add current user message
       history.push({ role: 'user', content: userInput });
 
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -158,15 +151,12 @@ Remember: You are ONLY for PHOTOGRAPHY conversations.`
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Groq API error:', errorData);
         throw new Error(`API error: ${response.status}`);
       }
 
       const data = await response.json();
       let botReply = data.choices[0]?.message?.content || "I'm not sure how to respond to that. Could you ask about photography?";
 
-      // Clean up response if needed
       if (botReply.length > 500) {
         botReply = botReply.substring(0, 500) + '...';
       }
@@ -214,8 +204,8 @@ Remember: You are ONLY for PHOTOGRAPHY conversations.`
   };
 
   return (
-    <div className="chatbot-overlay">
-      <div className="chatbot-container">
+    <div className="chatbot-overlay" onClick={onClose}>
+      <div className="chatbot-container" onClick={(e) => e.stopPropagation()}>
         <div className="chatbot-header">
           <div className="chatbot-header-info">
             <div className="chatbot-avatar">
