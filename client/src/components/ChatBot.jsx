@@ -33,20 +33,18 @@ function ChatBot({ onClose }) {
   useEffect(() => {
     // منع التمرير في الصفحة الرئيسية
     document.body.classList.add('chatbot-open');
-    
-    // تمرير الصفحة لأعلى عند فتح الشات على التلفون
-    if (window.innerWidth <= 768) {
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }, 50);
-    }
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.height = '100%';
     
     // كشف فتح وإغلاق الكيبورد على التلفون
     const handleResize = () => {
       const chatbotContainer = document.querySelector('.chatbot-container');
+      // إذا كان ارتفاع النافذة أقل من 600، الكيبورد مفتوح
+      const isKeyboardOpen = window.innerHeight < 600;
+      
       if (chatbotContainer) {
-        // إذا كان ارتفاع النافذة أقل من المعتاد، الكيبورد مفتوح
-        const isKeyboardOpen = window.innerHeight < 600;
         if (isKeyboardOpen) {
           chatbotContainer.classList.add('keyboard-open');
           // لف الشات للأسفل عند فتح الكيبورد
@@ -63,6 +61,10 @@ function ChatBot({ onClose }) {
     
     return () => {
       document.body.classList.remove('chatbot-open');
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
       window.removeEventListener('resize', handleResize);
     };
   }, []);

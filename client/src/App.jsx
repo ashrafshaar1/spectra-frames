@@ -131,6 +131,16 @@ function PackagesPage({ packagesData, t }) {
   const hasSocialPackages = packagesData.social.length > 0;
   const hasPhotoPackages = packagesData.photo.length > 0;
 
+  const scrollToContact = () => {
+    navigate('/');
+    setTimeout(() => {
+      const contactSection = document.getElementById('contact');
+      if (contactSection) {
+        contactSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  };
+
   if (!hasSocialPackages && !hasPhotoPackages) {
     return (
       <div className="packages-page">
@@ -142,7 +152,7 @@ function PackagesPage({ packagesData, t }) {
           </div>
           <div className="empty-packages">
             <p>{t.pricing.emptyMessage}</p>
-            <button className="btn-primary" onClick={() => navigate('/#contact')}>{t.contact.send}</button>
+            <button className="btn-primary" onClick={scrollToContact}>{t.contact.send}</button>
           </div>
         </div>
       </div>
@@ -172,7 +182,7 @@ function PackagesPage({ packagesData, t }) {
                   <ul className="package-features">
                     {pkg.features.map((feature, i) => (<li key={i}>✓ {feature}</li>))}
                   </ul>
-                  <button className="package-btn" onClick={() => window.location.href = 'mailto:spectraframes.00@gmail.com?subject=Social Media Package Booking'}>{t.pricing.bookNow} →</button>
+                  <button className="package-btn" onClick={scrollToContact}>{t.pricing.bookNow} →</button>
                 </div>
               ))}
             </div>
@@ -192,7 +202,7 @@ function PackagesPage({ packagesData, t }) {
                   <ul className="package-features">
                     {pkg.features.map((feature, i) => (<li key={i}>✓ {feature}</li>))}
                   </ul>
-                  <button className="package-btn" onClick={() => window.location.href = 'mailto:spectraframes.00@gmail.com?subject=Photography Session Booking'}>{t.pricing.bookNow} →</button>
+                  <button className="package-btn" onClick={scrollToContact}>{t.pricing.bookNow} →</button>
                 </div>
               ))}
             </div>
@@ -517,7 +527,7 @@ function PortfolioDetail() {
   );
 }
 
-// Admin Panel Component
+// Admin Panel Component (مختصر للطول)
 function AdminPanel({ packagesData, setPackagesData, t, logoSrc }) {
   const [portfolios, setPortfolios] = useState([]);
   const [partners, setPartners] = useState([]);

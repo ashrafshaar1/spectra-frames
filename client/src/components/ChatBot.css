@@ -411,3 +411,18 @@ body.light-mode .chatbot-input {
   transform: scale(1.1);
   box-shadow: 0 8px 25px rgba(212, 175, 55, 0.5);
 }
+
+/* تحسين التمرير داخل الشات */
+.chatbot-messages::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chatbot-messages::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.chatbot-messages::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.5);
+  border-radius: 4px;
+}
